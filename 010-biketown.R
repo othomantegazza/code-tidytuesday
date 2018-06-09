@@ -3,13 +3,20 @@ library(ggmap)
 library(tidyverse)
 library(lubridate)
 
+
+# Get data ----------------------------------------------------------------
+
 dat <- read_csv("data/week10_biketown.csv") %>%
   # The type of StartDate isn't guessed right
   mutate(StartDate = mdy(StartDate)) %>%
   # A column with weekdays will be useful later
   mutate(start_day = weekdays(StartDate)) %>%
-  mutate(start_hour = hour(StartTime))
+  mutate(start_hour = hour(StartTime)) %>%
+  mutate(start_month = month(StartDate))
   
+
+# Get Map -----------------------------------------------------------------
+
 # Map inspired by https://twitter.com/WireMonkey/status/1004790383451176962
 portland_path <- "data/portland_map.Rdata" 
 if(!file.exists(portland_path)) {
@@ -22,8 +29,45 @@ save(portland, file = portland_path)
   load(portland_path)
 }
 
+
+# Test subset -------------------------------------------------------------
+
+jpeg(filename = "plots/portland-weekdays-hours.jpeg",
+     width = 4000, height = 8000)
 ggmap(portland) +
-  geom_count(data = dat %>% 
-               select(StartLatitude, StartLongitude),
+  geom_count(data = dat,
              aes(x = StartLongitude,
-                 y = StartLatitude))
+                 y = StartLatitude)) +
+  facet_grid(start_hour ~ start_day)
+dev.off()
+
+jpeg(filename = "plots/portland-month.jpeg",
+     width = 8000, height = 1000)
+ggmap(portland) +
+  geom_count(data = dat,
+             aes(x = StartLongitude,
+                 y = StartLatitude)) +
+  facet_grid(. ~ start_month)
+dev.off()
+
+
+jpeg(filename = "plots/portland-weekdays.jpeg",
+     width = 8000, height = 1000)
+ggmap(portland) +
+  geom_count(data = dat,
+             aes(x = StartLongitude,
+                 y = StartLatitude)) +
+  facet_grid(. ~ start_day)
+dev.off()
+
+
+# Make gif with months ----------------------------------------------------
+
+library(gganimate)
+p <- ggmap(portland) +
+  geom_count(data = dat,
+             aes(x = StartLongitude,
+                 y = StartLatitude,
+                 frame = start_month))
+
+gganimate(p)
