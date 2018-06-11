@@ -44,9 +44,8 @@ save(portland, file = portland_path)
 
 # Make gif with months ----------------------------------------------------
 
-# a small transformation necessary because
-# I did not manage to make gganimate work
-# on geom_count
+# a small transformation necessary because I did not manage to
+# make gganimate work on geom_count
 
 dat <- dat %>%
   group_by(StartHub) %>%
