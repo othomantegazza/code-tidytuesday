@@ -16,3 +16,23 @@ if(!file.exists(dat_path)) {
   load(dat_path)
 }
 
+
+# Share per country? -----------------------------------------
+
+dat <- dat %>% 
+  arrange(desc(tv_audience_share)) %>%
+  mutate(rank = 1:nrow(.)) %>%
+  filter(rank <= 50)
+
+
+# Plot rank share by country ----------------------------------------------
+
+ggplot(data = dat,
+       aes(x = rank,
+           y = tv_audience_share)) + 
+  # geom_point(alpha = .01) + 
+  geom_linerange(aes(ymin = 0, ymax = tv_audience_share), lwd = 4) + 
+  geom_hline(yintercept = 0, lwd = .05) +
+  geom_rug(aes(x = rank, y = NULL), alpha = .5) +
+  facet_wrap(facets = "confederation", ncol = 1) +
+  theme_bw()
