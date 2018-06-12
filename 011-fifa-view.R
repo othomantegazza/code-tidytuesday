@@ -54,8 +54,8 @@ capitals <- world.cities %>%
   right_join(dat) %>%
   filter(complete.cases(.))
  
-# plot(uefa)
-# https://www.r-graph-gallery.com/a-smooth-transition-between-chloropleth-and-cartogram/
+
+# Tidy --------------------------------------------------------------------
 
 uefa <- tidy(uefa) %>%
   left_join(dat) %>%
@@ -64,6 +64,11 @@ uefa <- tidy(uefa) %>%
          med_lat = mean(range(lat))) %>%
   ungroup()
 
+
+# Plot --------------------------------------------------------------------
+
+# credits:
+# https://www.r-graph-gallery.com/a-smooth-transition-between-chloropleth-and-cartogram/
 
 svg(filename = "plots/uefa.svg",
     width = 9, 
