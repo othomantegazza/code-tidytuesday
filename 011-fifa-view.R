@@ -70,9 +70,11 @@ uefa <- tidy(uefa) %>%
 # credits:
 # https://www.r-graph-gallery.com/a-smooth-transition-between-chloropleth-and-cartogram/
 
-svg(filename = "plots/uefa.svg",
+jpeg(filename = "plots/uefa.jpg",
     width = 9, 
-    height = 9)
+    height = 9,
+    units = "in",
+    res = 200)
 ggplot() +
   geom_polygon(data = uefa,
                aes(fill = tv_audience_share,
