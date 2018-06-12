@@ -2,6 +2,7 @@ library(tidyverse)
 library(maptools)
 library(maps)
 library(broom)
+library(shadowtext)
 
 # Get data ----------------------------------------------------------------
 
@@ -41,6 +42,18 @@ dat <- dat %>%
 
 uefa <- wrld_simpl[wrld_simpl$NAME %in% dat$country, ]
 
+
+# Get Capitals ------------------------------------------------------------
+
+capitals <- world.cities %>% 
+  filter(capital == 1) %>%
+  rename(country = "country.etc") %>%
+  mutate(country = if_else(country == "UK",
+                           true = "United Kingdom",
+                           false = country)) %>%
+  right_join(dat) %>%
+  filter(complete.cases(.))
+ 
 # plot(uefa)
 # https://www.r-graph-gallery.com/a-smooth-transition-between-chloropleth-and-cartogram/
 
@@ -51,18 +64,41 @@ uefa <- tidy(uefa) %>%
          med_lat = mean(range(lat))) %>%
   ungroup()
 
-ggplot(data = uefa,
-       aes(fill = tv_audience_share,
-           x = long,
-           y = lat,
-           group = group,
-           label = tv_audience_share)) +
-  geom_polygon(size=0, alpha=0.9) +
-  geom_text(aes(x = med_long,
-                y = med_lat,
-                size = tv_audience_share*2),
-            colour = "darkgrey") +
+
+svg(filename = "plots/uefa.svg",
+    width = 9, 
+    height = 9)
+ggplot() +
+  geom_polygon(data = uefa,
+               aes(fill = tv_audience_share,
+                   x = long,
+                   y = lat,
+                   group = group),
+               size=1) +
+  geom_shadowtext(data = capitals,
+                  aes(x = long,
+                      y = lat,
+                      label = tv_audience_share,
+                      size = tv_audience_share)) +
   xlim(-10, 50) +
   ylim(32, 77) +
-  theme_void()
-
+  annotate("text", x = -10, y = 74,
+          label =  "TV audience share of FIFA World Cup, 2010", size = 6) +
+  annotate("text", x = -10, y = 72,
+           label =  "UEFA Countries", size = 5,
+           hjust = 1.2) +
+  coord_map(projection = "conic", lat0 = 50) +
+  theme_void() +
+  scale_fill_gradient(name="TV Audience Share",
+                     breaks=c(0, 1, 2, 3),
+                     guide = guide_legend(keyheight = unit(3, units = "mm"),
+                                          keywidth=unit(12, units = "mm"), 
+                                          label.position = "bottom",
+                                          title.position = 'top',
+                                          nrow=1),
+                     high = "#001a33", low = "#cce6ff") +
+  scale_size(guide = FALSE,
+             range = c(0, 10)) +
+  theme(text = element_text(size = 14),
+        legend.position = c(.5, .05))
+dev.off()
