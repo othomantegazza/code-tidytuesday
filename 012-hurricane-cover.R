@@ -39,8 +39,21 @@ if(!file.exists(local_data)) {
 
 dat$hurricanes <- dat$hurricanes %>% mutate(Date = mdy(Date))
 dat$states <- dat$states %>% mutate(Date = mdy(Date))
-dat$tv_hurricane <- dat$tv_hurricane %>% mutate(Date = mdy(Date))
+dat$tv_hurricane <- dat$tv_hurricane %>% 
+  mutate(Date = mdy(Date)) %>%
+  rename_at(.vars = vars(Harvey:Jose), .funs = ~paste0(., "_tv"))
 dat$top_online_news <- NULL
-dat$google_trends <- dat$google_trends %>% rename(Date = "Day")
+dat$google_trends <- dat$google_trends %>% 
+  rename(Date = "Day") 
 
 tst <- dat %>% reduce(full_join)
+
+
+# Hurricane measures ------------------------------------------------------
+
+hurs <- dat[c(1,2,5)] %>%
+  reduce(full_join)
+
+hurs %>%
+  select(contains("Irma")) %>%
+  pairs
