@@ -20,96 +20,38 @@ if(!file.exists("data/20-rtrolls.Rdata")) {
 # dat <- read_csv(file = "data/IRAhandle_tweets_1.csv")
 
 
-# Explore data ------------------------------------------------------------
+# Get top types ------------------------------------------------------------
 
-dat %>% map(~length(unique(.)))
-
-unique(dat$region)
-table(dat$author)
-table(dat$language)
-hist(dat$followers)
-table(dat$account_type)
-
-dat %>%
-  filter(account_type == "Right") %>%
-  # View() %>%
-  # group_by(author) %>%
-  # tally() %>%
-  # arrange(desc(n))
-  filter(author == "AMELIEBALDWIN") %>%
-  pull(content)
- 
-
-dat %>% 
-  filter(followers > 20000) %>%
-  pull(author) %>% unique()
-
-dat_max <- dat %>%
-  group_by(author, account_type) %>%
-  summarise(max_followers = max(followers))
-
-ggplot(dat_max,
-       aes(x = reorder(account_type,
-                       max_followers,
-                       na.rm = TRUE),
-           y = max_followers)) +
-  geom_boxplot() +
-  scale_y_log10() +
-  theme_bw()
-
-pdf(file = "plots/20-rtrolls.pdf",
-    width = 5, height = 20)
-ggplot(dat_max %>% 
-         mutate(max_followers = max_followers + 1),
-       aes(x = max_followers,
-           y = account_type)) +
-  ggridges::geom_density_ridges(alpha = .5) +
-  scale_x_log10() +
-  # facet_grid(account_type ~ ., scales = "free_y") +
-  theme_bw()
-dev.off()
+top_accounts <- dat %>%
+  group_by(account_type) %>%
+  tally() %>%
+  arrange(desc(n)) %>%
+  top_n(6) %>%
+  pull(account_type)
 
 
+# plot top accounts -------------------------------------------------------
+
+jpeg(filename = "plots/rtrolls.jpg",
+     width = 7, 
+     height = 5,
+     units = "in",
+     res = 200)
 ggplot(dat %>%
-         filter(account_type %in% c("Russian", "Right", "left")) %>%
+         filter(account_type %in% top_accounts,
+                post_type != "RETWEET") %>%
          # mutate(followers = log10(followers)) %>%
          filter(followers >= 1),
        aes(x = followers,
            y = account_type)) +
        # )) +
-  ggridges::geom_density_ridges(alpha = .5) +
+  ggridges::geom_density_ridges(alpha = .5, fill = "lightblue") +
   # geom_histogram() +
   scale_x_log10() +
   # facet_grid(account_type ~ ., scales = "free_y") +
-  ggridges::theme_ridges()
-
-ggplot(dat_max %>%
-         filter(account_type %in% c("Russian", "Right", "left")) %>%
-         # mutate(followers = log10(followers)) %>%
-         filter(max_followers >= 1),
-       aes(x = max_followers,
-           y = account_type)) +
-  # )) +
-  ggridges::geom_density_ridges(alpha = .5) +
-  # geom_histogram() +
-  scale_x_log10() +
-  # facet_grid(account_type ~ ., scales = "free_y") +
-  ggridges::theme_ridges()
-
-ggplot(dat %>%
-         filter(account_type %in% c("Russian", "Right", "left")) %>%
-         # mutate(followers = log10(followers)) %>%
-         filter(followers >= 1),
-       aes(y = followers,
-           x = account_type)) +
-  # )) +
-  geom_violin(alpha = .5) +
-  # geom_histogram() +
-  scale_y_log10() +
-  # facet_grid(account_type ~ ., scales = "free_y") +
-  theme_bw()
-
-dat %>% pull(account_type) %>% table()
-
-dat %>% filter(account_type == "Russian") %>%
-  pull(content) 
+  theme_bw() +
+  ggtitle("Followers of Different IRA Account Types",
+          subtitle = "Excluding retweets") +
+  xlab("Number of Followers at Time of the Tweet (log scale)") +
+  ylab("Specific Account Type (by Linvill and Warren)")
+dev.off()
