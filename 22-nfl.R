@@ -71,12 +71,11 @@ dat %>%
                       trans = "log",
                       breaks = c(2, 10, 50, 250, 1250, 6000)) +
   # geom_point() +
-  theme_bw()
+  theme_bw() +
+  labs(title = "Results of Rush Attempts in Yards",
+       subtitle = "Recorded in NFL from 2000 to 2017",
+       caption = "Source: www.pro-football-reference.com, plot by @othomn",
+       x = "Rush Attempts",
+       y = "Rush Yards")
 dev.off()
 
-dat %>%
-  ggplot(aes(x = rush_att  %>% as.character() %>% as_factor(),
-             y = rush_yds)) +
-  geom_boxplot()
-  geom_point()
-/
