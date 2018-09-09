@@ -34,14 +34,20 @@ ggplot(dat,
                       y = vit_a,
                       label = item))
 
-dat %>%
-  filter(vit_a > 150 | vit_c > 150) %>%
-  View()
+# dat %>%
+#   filter(vit_a > 150 | vit_c > 150) %>%
+#   View()
 
-tidy_fit <- dat %>%
+
+# Try Broom ---------------------------------------------------------------
+
+
+
+fit <- dat %>%
   lm(formula = calories ~ total_fat,
-     data = .) %>%
-  tidy()
+     data = .)
+
+tidy_fit <- fit %>% tidy()
 
 fit %>% 
   augment() %>%
@@ -49,12 +55,16 @@ fit %>%
 
 augment(tidy_fit)
 
+
+# Check words in item's name ----------------------------------------------
+
+
 get_kword_cals <- function(kword)
 {
   print(kword)
   dat %>%
     filter(str_detect(item,
-                      fixed(kword))) %>%
+                      coll(kword))) %>%
     mutate(keyword = kword) #%>%
     # select(keyword, calories)
 }
@@ -78,8 +88,47 @@ tst %>% summarise(cal_median = median(calories),
 
 tst %>% ggplot(aes(x = reorder(keyword, calories),
                    y = calories)) +
-  geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 90))
+  geom_boxplot(outlier.alpha = 0) +
+  geom_point(alpha = .1) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90,
+                                   vjust = .5,
+                                   hjust = 1)) +
+  coord_flip()
+  
+dat %>% 
+  filter(grepl("King", item)) %>%
+  View()
+
+# Check PCA ---------------------------------------------------------------
+
+dat_pc <- dat %>% 
+  replace_na(replace = list(vit_a = 0,
+                            vit_c = 0,
+                            calcium = 0)) %>%
+  # column_to_rownames("restaurant") %>%
+  drop_na()
+
+pc <- dat_pc %>% 
+  select_if(is.numeric) %>%
+  prcomp()
+
+pc %>%
+  tidy()
+
+pc_tidy <- pc %>% 
+  augment(., data = dat_pc)
+
+pc_tidy %>%
+  ggplot(aes(x = restaurant,
+             y = .fittedPC9)) +
+  geom_jitter(height = 0) 
+
+dat %>%
+  arrange(desc(sodium)) %>%
+  View()
 
 "https://sharlagelfand.netlify.com/posts/tidy-ttc/"  
-"http://varianceexplained.org/r/op-ed-text-analysis/?utm_content=bufferb84e1&utm_medium=social&utm_source=twitter.com&utm_campaign=buffer"   
+paste0("http://varianceexplained.org/r/op-ed-text-analysis/",
+       "?utm_content=bufferb84e1&utm_medium=social&utm_source=twitter.",
+       "com&utm_campaign=buffer")
