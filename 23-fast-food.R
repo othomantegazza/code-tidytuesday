@@ -64,4 +64,3 @@ dat_kword %>%
        x = "Word",
        caption = "Source: fastfoodnutrition.org, plot by @othomn")
 dev.off()
-  
