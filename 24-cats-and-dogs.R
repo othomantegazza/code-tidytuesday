@@ -60,7 +60,8 @@ tst %>%
        subtitle = "In the US, split by region",
        x = "",
        y = "Household Ratio", 
-       colour = "Preferred Pet")
+       colour = "Preferred Pet",
+       caption = "Source: data.world, plot by @othomn")
 dev.off()
 
 
