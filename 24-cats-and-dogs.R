@@ -23,36 +23,44 @@ if(!file.exists(dat_path)) {
 # replicate https://socviz.co/maps.html#map-u.s.-state-level-data
 
 # get the census column from socviz
-# to facet macro-regions
+# to facet regions
 
 tst <- dat %>%
   left_join(socviz::election %>%
               select(state, census)) %>%
-  mutate(ratio_owner = percent_dog_owners/percent_cat_owners,
+  mutate(ratio_owner = n_dog_households/n_cat_households,
          main_household = case_when(ratio_owner > 1 ~ "Dog",
                                     ratio_owner < 1 ~ "Cat",
-                                    TRUE ~ "Both"))
+                                    TRUE ~ "Both"),
+         main_household = factor(main_household,
+                                 levels = c("Cat", "Both", "Dog")))
 
-# tst <- dat %>%
-#   left_join(socviz::election %>%
-#               select(state, census)) %>%
-#   mutate(ratio_owner = avg_dogs_per_household/avg_cats_per_household,
-#          main_household = case_when(ratio_owner > 1 ~ "Dog",
-#                                     ratio_owner < 1 ~ "Cat",
-#                                     TRUE ~ "Both"))
-#   
 
+png(filename = "plots/24-cats-and-dogs.png",
+    height = 2500, width = 1700,
+    res = 300)
 tst %>%
   ggplot(aes(x = reorder(state, ratio_owner),
              y = ratio_owner,
              colour = main_household)) +
-  geom_point(size = 2) +
   geom_hline(yintercept = 1) +
+  geom_point(size = 2) +
   facet_grid(census ~ .,
              scales = "free_y",
              space = "free") +
+  scale_color_viridis_d(begin = .1, end = .9) +
   coord_flip() +
-  theme_minimal()
+  scale_y_log10(limits = c(.6, 1.7),
+                breaks = c(.625, .8, 1, 1.25, 1.6),
+                labels = c("x1.6\n (Cat)", "x1.25", "1", "x1.25", "x1.6\n(Dog)")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 12)) +
+  labs(title = "Households with Cats and/or Dogs",
+       subtitle = "In the US, split by region",
+       x = "",
+       y = "Household Ratio", 
+       colour = "Preferred Pet")
+dev.off()
 
 
 
