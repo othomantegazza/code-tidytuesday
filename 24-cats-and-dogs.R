@@ -20,7 +20,8 @@ if(!file.exists(dat_path)) {
 
 # plot --------------------------------------------------------------------
 
-# replicate https://socviz.co/maps.html#map-u.s.-state-level-data
+# code tries to replicate:
+# https://socviz.co/maps.html#map-u.s.-state-level-data
 
 # get the census column from socviz
 # to facet regions
