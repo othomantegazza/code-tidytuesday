@@ -69,7 +69,7 @@ dev.off()
 
 
 png(filename = "plots/24-cats-and-dogs-2nd-take.png",
-    height = 2500, width = 1500,
+    height = 2500, width = 1600,
     res = 300)
 tst %>%
   select(state, census,
