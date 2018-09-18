@@ -65,7 +65,48 @@ tst %>%
 dev.off()
 
 
+# A slightly different take -----------------------------------------------
 
+
+png(filename = "plots/24-cats-and-dogs-2nd-take.png",
+    height = 2500, width = 1600,
+    res = 300)
+tst %>%
+  select(state, census,
+         percent_dog_owners, percent_cat_owners) %>%
+  gather(percent_dog_owners:percent_cat_owners,
+         key = pet,
+         value = percent) %>%
+  mutate(pet = case_when(pet == "percent_dog_owners" ~ "Dog",
+                         pet == "percent_cat_owners" ~ "Cat")) %>% 
+  ggplot(aes(x = reorder(state, percent),
+             y = percent,
+             fill = pet,
+             pch = pet)) +
+  geom_line(aes(group = state), colour = "grey") +
+  # geom_hline(yintercept = 1) +
+  geom_point(size = 2,
+             alpha = 1) +
+  facet_grid(census ~ .,
+             scales = "free_y",
+             space = "free") +
+  scale_fill_viridis_d(begin = .1, end = .9,
+                       guide = guide_legend(title = "Pet owned")) +
+  scale_shape_manual(values = c(21, 23),
+                     guide = guide_legend(title = "Pet owned")) +
+  coord_flip() +
+  scale_y_continuous(breaks = 1:5*10,
+                     labels = c(paste0(1:5*10, "%"))) +
+  theme_minimal() +
+  # guides(shape = guide_legend())
+  labs(title = "Households with Cats and/or Dogs",
+       subtitle = "In the US, split by region",
+       x = "",
+       y = "Pet Owners [% of Households]", 
+       fill = "Preferred Pet",
+       caption = "Source: data.world, plot by @othomn")
+dev.off()
+  
 
 
 
