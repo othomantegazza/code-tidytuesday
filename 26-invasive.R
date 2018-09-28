@@ -1,5 +1,6 @@
 library(tidyverse)
 library(countrycode)
+library(scales)
 
 # want to plot cost/GDP for countries split by continents
 
@@ -62,13 +63,24 @@ dat <- dat_risk %>%
   left_join(codelist_panel %>%
               rename(country = country.name.en) %>%
               select(country, continent, region) %>%
-              distinct()) 
+              distinct()) %>%
+  # fix missing continents
+  mutate(continent = replace(continent, country == "Czech Republic", "Europe"),
+         continent = replace(continent, country == "Bosnia and Herzegovina", "Europe"),
+         continent = replace(continent, country == "USA", "Americas"),
+         continent = replace(continent, country == "Korea Republic of", "Asia"),
+         continent = replace(continent, country == "Georgia (Republic)", "Europe"),
+         continent = replace(continent, country == "Congo (Republic of)", "Africa"),
+         continent = replace(continent, country == "Trinidad and Tobago", "Americas"),
+         continent = replace(continent, country == "Russian Federation", "Asia")
+  )
 
+dat %>% filter(is.na(continent)) %>% View
 
 # plot --------------------------------------------------------------------
 
 png(filename = "plots/26-invasives.png",
-    height = 4000, width = 1700,
+    height = 4700, width = 1500,
     res = 300)
 dat %>%
   ggplot(aes(x = reorder(country,
@@ -77,14 +89,42 @@ dat %>%
              size = invasion_threat,
              colour = log(invasion_cost))) +
   geom_point(alpha = .8) +
-  # facet_grid(continent ~ .,
-  #            scales = 'free',
-  #            space = "free") +
-  facet_wrap(facets = "continent", ncol = 1, scales = "free_y") +
+  facet_grid(continent ~ .,
+             scales = 'free',
+             space = "free") +
+  # facet_wrap(facets = "continent", ncol = 1, scales = "free_y") +
   coord_flip() +
   scale_size_continuous(range = c(.1,3)) +
   scale_color_viridis_c() +
   # scale_y_log10() +
   scale_y_continuous(labels = scales::percent) +
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        legend.box = "vertical") +
+  labs(title = "Agricolture is Affected by\nInvasive Species",
+       x = "",
+       y = "Cost in Proportion to GDP",
+       caption = "data: griis.org; Paini et al., PNAS July 5, 2016 \n plot by @othomn",
+       size = "Invasion Threat",
+       colour = "Invasion Costs [log USD]")
 dev.off()  
+
+# Scatterplot -------------------------------------------------------------
+
+
+png(filename = "plots/26-invasives-xy.png",
+    height = 2200, width = 2200,
+    res = 300)
+dat %>%
+  ggplot(aes(x = invasion_cost,
+             y = gdp_proportion,
+             colour = continent,
+             size = invasion_threat)) +
+  geom_point(alpha = .7) +
+  scale_x_log10() +
+  scale_y_continuous(trans = "logit",
+                     breaks = boot::inv.logit(c(-10, -8, -6,-4, -2, 0, 2, 4)),
+                     labels = scales::percent) +
+  scale_size_continuous(range = c(.1,4)) +
+  theme_minimal()
+dev.off()
