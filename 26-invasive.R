@@ -1,6 +1,7 @@
 library(tidyverse)
 library(countrycode)
 library(scales)
+library(ggrepel)
 
 # want to plot cost/GDP for countries split by continents
 
@@ -75,7 +76,7 @@ dat <- dat_risk %>%
          continent = replace(continent, country == "Russian Federation", "Asia")
   )
 
-dat %>% filter(is.na(continent)) %>% View
+# dat %>% filter(is.na(continent)) %>% View
 
 # plot --------------------------------------------------------------------
 
@@ -101,7 +102,7 @@ dat %>%
   theme_minimal() +
   theme(legend.position = "bottom",
         legend.box = "vertical") +
-  labs(title = "Agricolture is Affected by\nInvasive Species",
+  labs(title = "Agriculture is Affected by\nInvasive Species",
        x = "",
        y = "Cost in Proportion to GDP",
        caption = "data: griis.org; Paini et al., PNAS July 5, 2016 \n plot by @othomn",
@@ -109,22 +110,76 @@ dat %>%
        colour = "Invasion Costs [log USD]")
 dev.off()  
 
-# Scatterplot -------------------------------------------------------------
+# Scatterplot logit -------------------------------------------------------
 
-
-png(filename = "plots/26-invasives-xy.png",
-    height = 2200, width = 2200,
+png(filename = "plots/26-invasives-xy-logit.png",
+    height = 1700, width = 2200,
     res = 300)
 dat %>%
-  ggplot(aes(x = invasion_cost,
-             y = gdp_proportion,
-             colour = continent,
-             size = invasion_threat)) +
-  geom_point(alpha = .7) +
+  ggplot(aes(colour = continent,
+             x = invasion_cost,
+             y = gdp_proportion)) +
+  geom_point(aes(size = invasion_threat),
+             alpha = .7) +
+  geom_text(data = dat %>%
+              top_n(2, wt = gdp_proportion),
+            aes(label = country),
+            size = 2.5,
+            nudge_y = -.3,
+            show.legend = FALSE) +
+  geom_text(data = dat %>%
+              top_n(-4, wt = gdp_proportion),
+            aes(label = country),
+            size = 2.5,
+            nudge_y = -.3,
+            show.legend = FALSE) +
   scale_x_log10() +
   scale_y_continuous(trans = "logit",
                      breaks = boot::inv.logit(c(-10, -8, -6,-4, -2, 0, 2, 4)),
                      labels = scales::percent) +
   scale_size_continuous(range = c(.1,4)) +
-  theme_minimal()
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0)) +
+  labs(title = "Agriculture is Affected by Invasive Species",
+       x = "Cost of Invasive Species on Agriculture [log USD]",
+       y = "Cost in Proportion to GDP [logit spaced]",
+       caption = "data: griis.org; Paini et al., PNAS July 5, 2016 | plot by @othomn",
+       size = "Invasion Threat",
+       colour = "Continent")
 dev.off()
+# Scatterplot -------------------------------------------------------------
+
+png(filename = "plots/26-invasives-xy.png",
+    height = 1700, width = 2200,
+    res = 300)
+dat %>%
+  ggplot(aes(colour = continent,
+             x = invasion_cost,
+             y = gdp_proportion)) +
+  geom_point(aes(size = invasion_threat),
+             alpha = .7) +
+  geom_text_repel(data = dat %>%
+                    top_n(9,
+                          gdp_proportion),
+                  aes(label = country),
+                  size = 4,
+                  show.legend = FALSE) +
+  geom_text_repel(data = dat %>%
+                    top_n(4,
+                          invasion_cost),
+                  aes(label = country),
+                  size = 4,
+                  show.legend = FALSE) +
+  scale_x_log10() +
+  scale_y_continuous(labels = scales::percent) +
+  scale_size_continuous(range = c(.1,4)) +
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0)) +
+  labs(title = "Agriculture is Affected by Invasive Species",
+       x = "Cost of Invasive Species on Agriculture [log USD]",
+       y = "Cost in Proportion to GDP",
+       caption = "data: griis.org; Paini et al., PNAS July 5, 2016 | plot by @othomn",
+       size = "Invasion Threat",
+       colour = "Continent")
+dev.off()
+
