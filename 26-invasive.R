@@ -136,7 +136,7 @@ dat %>%
   scale_x_log10() +
   scale_y_continuous(trans = "logit",
                      breaks = boot::inv.logit(c(-10, -8, -6,-4, -2, 0, 2, 4)),
-                     labels = scales::percent) +
+                     labels = scales::percent_format(.001)) +
   scale_size_continuous(range = c(.1,4)) +
   theme_minimal() +
   theme(plot.caption = element_text(hjust = 0)) +
@@ -147,6 +147,7 @@ dat %>%
        size = "Invasion Threat",
        colour = "Continent")
 dev.off()
+
 # Scatterplot -------------------------------------------------------------
 
 png(filename = "plots/26-invasives-xy.png",
