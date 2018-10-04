@@ -1,7 +1,8 @@
+# to get english weekdays
 Sys.setlocale("LC_TIME", "en_US.UTF8")
+
 library(tidyverse)
 library(lubridate)
-library(ggbeeswarm)
 library(ggridges)
 
 # load data ---------------------------------------------------------------
@@ -14,6 +15,8 @@ if(!file.exists(dat_path)) {
     read_csv(paste0("https://raw.githubusercontent.com/",
                     "rfordatascience/tidytuesday/master/data/",
                     "2018-10-02/us_births_2000-2014.csv")) %>%
+    # date is more useful in one single line
+    # stored as date
     mutate(date = paste(year, month, date_of_month,
                         sep = "-"),
            date = date %>% lubridate::ymd())  %>%
@@ -26,16 +29,11 @@ if(!file.exists(dat_path)) {
 }
 
 
-# explore -----------------------------------------------------------------
+# plot --------------------------------------------------------------------
 
-dat %>%
-  ggplot(aes(x = date %>% wday(label = TRUE),
-             y = births)) +
-  geom_violin(draw_quantiles = .5) +
-  # geom_boxplot(colour = "grey30", ) +
-  geom_quasirandom(alpha = .1) +
-  theme_bw() 
-
+png(filename = "plots/27-births.png",
+    height = 1500, width = 2400,
+    res = 300)
 dat %>%
   ggplot(aes(x = births,
              y = date %>% wday(label = TRUE) %>% fct_rev(),
@@ -45,9 +43,11 @@ dat %>%
                                rel_min_height = .01) +
   scale_fill_viridis_c(option = "D") +
   theme_ridges() +
+  theme(plot.caption = element_text(colour = "grey50")) +
   labs(x = "Births per day",
        y = "",
-       title = "Birth per Weekday",
+       title = "Births per Weekday",
        subtitle = "Measured in the US | 2000-2014",
-       fill = "Births \n per day")
-  
+       fill = "Births \n per day",
+       caption = "Data: ssa.gov | Source: Fivethirtyeight | Plot by @othomn")
+dev.off()  
