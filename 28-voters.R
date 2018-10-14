@@ -1,5 +1,6 @@
 library(tidyverse)
 library(lubridate)
+library(rvest)
 
 # Get data ----------------------------------------------------------------
 
@@ -19,12 +20,49 @@ if(!file.exists(dat_path)) {
 }
 
 
+# Parse wikipedia ---------------------------------------------------------
+
+elect_80 <- read_html("https://en.wikipedia.org/wiki/United_States_presidential_election,_1980")
+
+
+# The table with Elector number is after the h2 "Statistics"
+
+# Get all h2 and all tables
+elect_nodes <- 
+  elect_80 %>%
+  html_nodes("h2,table")
+
+hit <- which(elect_nodes %>% html_text() == "Statistics[edit]")
+
+# 
+voters <- 
+  elect_nodes[[hit + 1]] %>%
+  html_table(fill = TRUE)
+
+# Get also the results by state
+
+h3_tables <- 
+  elect_80 %>%
+  html_nodes("h3,table")
+
+hit_state <- 
+  h3_tables %>%
+  html_text() %>%
+  str_detect("Results by state") %>%
+  which()
+
+by_state <- 
+  h3_tables[[hit_state + 2]] %>%
+  html_table()
+
+
 # Filter full census ------------------------------------------------------
 
 dat <- 
   # dat %>% filter(state == "United States") 
   dat %>%
   filter(! state %>% str_detect("United States")) %>%
+  filter(complete.cases(.)) %>%
   group_by(year) %>%
   summarise(votes = sum(votes, na.rm = TRUE),
             eligible_voters = sum(eligible_voters, na.rm = TRUE)) %>%
@@ -42,8 +80,15 @@ dat %>%
              y = voters)) +
   geom_line(aes(group = year),
             lwd = 0.2) +
+  geom_linerange(data = . %>%
+                   filter(variable %in% c("votes_midterm", 
+                                          "votes_presidential")),
+                 aes(ymax = voters),
+                 ymin = 0,
+                 colour = "grey",
+                 lty = 2) +
   geom_point(aes(colour = variable),
-             size = 2) +
+             size = 2.5) +
   ylim(0, NA) +
   # scale_x_reverse() +
   coord_flip() +
