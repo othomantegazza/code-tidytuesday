@@ -22,10 +22,51 @@ if(!file.exists(dat_path)) {
 
 # Parse wikipedia ---------------------------------------------------------
 
-elect_80 <- read_html("https://en.wikipedia.org/wiki/United_States_presidential_election,_1980")
+# years with presidential election since the 80s
+pres_years <- seq(1980, 2012, 4)
 
+pres_htmls <-
+  pres_years %>%
+  # all html pages from wikipedia
+  {paste0("https://en.wikipedia.org/wiki/",
+          "United_States_presidential_election,_",
+          .)} %>%
+  map(read_html) 
 
-# The table with Elector number is after the h2 "Statistics"
+# parse the number of electors from wikipedia pages
+# wiki_html <- 
+#   paste0("https://en.wikipedia.org/wiki/",
+#          "United_States_presidential_election,_",
+#          1980) %>%
+#   read_html()
+
+parse_electors <- function(wiki_html) 
+  {
+  # The table with Elector number is after the h2 "Statistics"
+  nodes <- 
+    wiki_html %>%
+    # get h2s h3s and tables
+    html_nodes("h2,h3,table")
+  
+  # which node is ""Statistics[edit]"
+  hit <- 
+    nodes %>%
+    html_text() %>%
+    {which(. == "Statistics[edit]")}
+  
+  print(hit)
+  
+  # the table is the node right after
+  voters_table <- 
+    nodes[hit + 1] %>%
+    html_table(fill = TRUE)
+}
+
+voters_stats <- 
+  pres_htmls %>%
+  map(parse_electors)
+  
+
 
 # Get all h2 and all tables
 elect_nodes <- 
@@ -55,6 +96,43 @@ by_state <-
   h3_tables[[hit_state + 2]] %>%
   html_table()
 
+
+
+# Try from other websites -------------------------------------------------
+
+# years with presidential election since the 80s
+pres_years <- seq(1980, 2012, 4)
+
+url_2 <- paste0("https://uselectionatlas.org",
+                "/RESULTS/data.php?year=",
+                pres_years,
+                "&datatype=national&def=1&f=0&off=0&elect=0")
+
+get_table2 <- function(url) 
+{
+  read_html(url) %>%
+    html_nodes("table") %>%
+    .[[4]] %>%
+    html_table(fill = TRUE)
+}
+
+by_state <- 
+  url_2 %>%
+  map(get_table2)
+
+
+# Voters turnout percentages ----------------------------------------------
+
+# presidentials and midterm
+
+# from http://www.electproject.org/national-1789-present
+ 
+"https://docs.google.com/spreadsheets/d/1bH38j6_e8yA9xq8OMlyLOL6h_iTS7ABQMKNxzFgKBDo/edit#gid=435419492"
+
+
+# Voters turnout presidentials --------------------------------------------
+
+"https://en.wikipedia.org/wiki/Voter_turnout_in_the_United_States_presidential_elections"
 
 # Filter full census ------------------------------------------------------
 
