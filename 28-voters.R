@@ -1,6 +1,7 @@
 library(tidyverse)
 library(lubridate)
 library(rvest)
+library(googlesheets)
 
 # Get data ----------------------------------------------------------------
 
@@ -19,121 +20,6 @@ if(!file.exists(dat_path)) {
   load(dat_path)
 }
 
-
-# Parse wikipedia ---------------------------------------------------------
-
-# years with presidential election since the 80s
-pres_years <- seq(1980, 2012, 4)
-
-pres_htmls <-
-  pres_years %>%
-  # all html pages from wikipedia
-  {paste0("https://en.wikipedia.org/wiki/",
-          "United_States_presidential_election,_",
-          .)} %>%
-  map(read_html) 
-
-# parse the number of electors from wikipedia pages
-# wiki_html <- 
-#   paste0("https://en.wikipedia.org/wiki/",
-#          "United_States_presidential_election,_",
-#          1980) %>%
-#   read_html()
-
-parse_electors <- function(wiki_html) 
-  {
-  # The table with Elector number is after the h2 "Statistics"
-  nodes <- 
-    wiki_html %>%
-    # get h2s h3s and tables
-    html_nodes("h2,h3,table")
-  
-  # which node is ""Statistics[edit]"
-  hit <- 
-    nodes %>%
-    html_text() %>%
-    {which(. == "Statistics[edit]")}
-  
-  print(hit)
-  
-  # the table is the node right after
-  voters_table <- 
-    nodes[hit + 1] %>%
-    html_table(fill = TRUE)
-}
-
-voters_stats <- 
-  pres_htmls %>%
-  map(parse_electors)
-  
-
-
-# Get all h2 and all tables
-elect_nodes <- 
-  elect_80 %>%
-  html_nodes("h2,table")
-
-hit <- which(elect_nodes %>% html_text() == "Statistics[edit]")
-
-# 
-voters <- 
-  elect_nodes[[hit + 1]] %>%
-  html_table(fill = TRUE)
-
-# Get also the results by state
-
-h3_tables <- 
-  elect_80 %>%
-  html_nodes("h3,table")
-
-hit_state <- 
-  h3_tables %>%
-  html_text() %>%
-  str_detect("Results by state") %>%
-  which()
-
-by_state <- 
-  h3_tables[[hit_state + 2]] %>%
-  html_table()
-
-
-
-# Try from other websites -------------------------------------------------
-
-# years with presidential election since the 80s
-pres_years <- seq(1980, 2012, 4)
-
-url_2 <- paste0("https://uselectionatlas.org",
-                "/RESULTS/data.php?year=",
-                pres_years,
-                "&datatype=national&def=1&f=0&off=0&elect=0")
-
-get_table2 <- function(url) 
-{
-  read_html(url) %>%
-    html_nodes("table") %>%
-    .[[4]] %>%
-    html_table(fill = TRUE)
-}
-
-by_state <- 
-  url_2 %>%
-  map(get_table2)
-
-
-# Voters turnout percentages ----------------------------------------------
-
-# presidentials and midterm
-
-# from http://www.electproject.org/national-1789-present
- 
-"https://docs.google.com/spreadsheets/d/1bH38j6_e8yA9xq8OMlyLOL6h_iTS7ABQMKNxzFgKBDo/edit#gid=435419492"
-
-
-# Voters turnout presidentials --------------------------------------------
-
-"https://en.wikipedia.org/wiki/Voter_turnout_in_the_United_States_presidential_elections"
-
 # Filter full census ------------------------------------------------------
 
 dat <- 
@@ -147,8 +33,8 @@ dat <-
   gather(key = "variable", value = "voters",
          votes, eligible_voters) %>%
   mutate(variable = case_when(variable == "eligible_voters" ~ "eligible_voters",
-                            year %in% seq(1982, 2014, 4) ~ "votes_midterm",
-                            year %in% seq(1980, 2012, 4) ~ "votes_presidential"))
+                              year %in% seq(1982, 2014, 4) ~ "votes_midterm",
+                              year %in% seq(1980, 2012, 4) ~ "votes_presidential"))
 
 
 # Plot full census --------------------------------------------------------
@@ -176,3 +62,93 @@ dat %>%
   #                        option = "E") +
   # ggthemes::scale_color_few() +
   theme_minimal()
+
+
+
+# Get presidentual elections from us election data ------------------------
+
+# years with presidential election since the 80s
+pres_years <- seq(1980, 2012, 4)
+
+pres_urls <- paste0("https://uselectionatlas.org",
+                "/RESULTS/data.php?year=",
+                pres_years,
+                "&datatype=national&def=1&f=0&off=0&elect=0")
+
+parse_pres <- function(url) 
+{
+  read_html(url) %>%
+    html_nodes("table") %>%
+    .[[4]] %>%
+    html_table(fill = TRUE)
+}
+
+by_state <- 
+  pres_urls %>%
+  map(parse_pres)
+
+
+# Voters turnout percentages ----------------------------------------------
+
+# presidentials and midterm
+
+# from http://www.electproject.org/national-1789-present
+ 
+perc_url <- paste0("https://docs.google.com/spreadsheets/d/",
+                   "1bH38j6_e8yA9xq8OMlyLOL6h_iTS7ABQMKNxzFgKBDo/",
+                   "edit?usp=sharing")
+
+# the package googlesheets didn't work in this case
+# luckily rvest parses it as an html table
+perc_url %>%
+  read_html() %>%
+  html_nodes("table") %>%
+  .[[1]] %>%
+  html_table()
+
+
+# Voters turnout presidentials --------------------------------------------
+
+pres_turnout <- 
+  paste0("https://en.wikipedia.org/wiki/",
+         "Voter_turnout_in_the_United_States_presidential_elections") %>%
+  read_html() %>%
+  html_nodes("table") %>%
+  .[[1]] %>%
+  html_table() %>%
+  as_tibble() %>%
+  rename(year = "Election",
+         voting_pop = "Voting Age Population (VAP)[clarification needed][8]",
+         votes = "Turnout[clarification needed][8]") %>%
+  select(year, voting_pop, votes) %>%
+  filter(year %in% 1980:2012) %>%
+  mutate_all(~str_replace_all(.,",", "")) %>%
+  mutate_all(as.numeric) %>%
+  gather(key = "variable",
+         value = "value",
+         voting_pop, votes)
+  
+pres_turnout %>%
+  ggplot(aes(x = year,
+             y = value)) +
+  geom_line(aes(group = year),
+            lwd = 0.2) +
+  geom_linerange(data = pres_turnout %>%
+                   filter(variable == "votes"),
+                 aes(ymax = value),
+                 ymin = 0,
+                 colour = "grey",
+                 lty = 2) +
+  geom_point(aes(colour = variable),
+             size = 2.5) +
+  ylim(0, NA) +
+  # scale_x_reverse() +
+  coord_flip() +
+  scale_color_manual(values = scico::scico(10, palette = "lajolla")[c(8, 6, 3)]) +
+  # scico::scale_colour_scico(begin = .2, end = .8, palette = "berlin") +
+  # scale_colour_viridis_d(begin = .2, end = .9,
+  #                        option = "E") +
+  # ggthemes::scale_color_few() +
+  theme_minimal()
+
+
