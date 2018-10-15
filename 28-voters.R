@@ -63,7 +63,7 @@ dat %>%
   # ggthemes::scale_color_few() +
   theme_minimal()
 
-
+# Many NA, don't know if it is reliable.
 
 # Get presidentual elections from us election data ------------------------
 
@@ -100,12 +100,27 @@ perc_url <- paste0("https://docs.google.com/spreadsheets/d/",
 
 # the package googlesheets didn't work in this case
 # luckily rvest parses it as an html table
-perc_url %>%
+perc_votes <- 
+  perc_url %>%
   read_html() %>%
   html_nodes("table") %>%
   .[[1]] %>%
-  html_table()
+  html_table(header = FALSE) %>%
+  as_tibble() %>%
+  slice(3:n()) %>%
+  mutate_all(as.numeric)
+  
+# the columns 2 and 3 encode for presidential years
+pres_percent <- 
+  perc_votes %>%
+  select(year = "X2",
+         percent = "X3")
 
+# 4 and 5 for midterms
+midterm_percent <- 
+  perc_votes %>% 
+  select(year = "X4",
+         percent = "X5")
 
 # Voters turnout presidentials --------------------------------------------
 
