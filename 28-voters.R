@@ -167,3 +167,19 @@ pres_turnout %>%
   theme_minimal()
 
 
+# Try read US census from pdf ---------------------------------------------
+
+library(tabulizer)
+
+
+census_url <- "https://www.census.gov/prod/2011pubs/12statab/election.pdf"
+
+census_table <- 
+  census_url %>%
+  extract_tables(pages = 2)
+
+save(census_table, file = "data/28-voter-census.Rdata")
+
+census_table[[1]] %>%
+  as_tibble() %>%
+  View()
