@@ -1,4 +1,5 @@
 library(tidyverse)
+library(magrittr)
 library(lubridate)
 library(rvest)
 library(googlesheets)
@@ -174,12 +175,61 @@ library(tabulizer)
 
 census_url <- "https://www.census.gov/prod/2011pubs/12statab/election.pdf"
 
-census_table <- 
-  census_url %>%
-  extract_tables(pages = 2)
+census_path <- "data/28-voter-census.Rdata"
 
-save(census_table, file = "data/28-voter-census.Rdata")
+if(!file.exists(census_path)) {
+  census_table <- 
+    census_url %>%
+    extract_tables(pages = 2)
+  
+  save(census_table, file = census_path)
+  
+} else {
+  load(census_path)
+}
 
 census_table[[1]] %>%
   as_tibble() %>%
+  View()
+
+
+# Tidy census  ------------------------------------------------------------
+
+census_tidy <- 
+  # Its a matrix within a list
+  census_table[[1]] %>%
+  as_tibble() %>%
+  # colnames are spread over first columns
+  slice(8:n()) %>%
+  # data from 1972 to 2010 
+  select(V7, V8, V9, V10, V12) %>%
+  # The year is in V7 and has some dots
+  # at the end
+  rename(year = "V7") %>%
+  mutate(year = str_sub(year,
+                        start = 1,
+                        end = 4) %>% as.numeric()) %>%
+  # The population in voting age is in V8
+  # in the last lines the first 2 or 3 is actually a note
+  rename(voting_pop = "V8") %>% 
+  mutate(voting_pop = str_replace(voting_pop, "2 ", "") %>% 
+           str_replace("3 ", "") %>%
+           str_replace(",", "") %>%
+           as.numeric()*1000) %>% 
+  # The ones that voted for the President is in V9
+  rename(presidential = "V9") %>%
+  mutate(presidential = str_replace(presidential, ",", "") %>%
+           na_if("(X)")%>%
+           as.numeric()*1000) %>%  
+  # V10 contains both 
+  # the percentage that voted for the President
+  # and the ones that voted for the representative
+  mutate(president_perc= str_split_fixed(V10, " ", n = 2)[,1] %>%
+           na_if("(X)") %>%
+           as.numeric(),
+         representative = str_split_fixed(V10, " ", n = 2)[,2] %>%
+           str_replace(",", "") %>%
+           as.numeric()*1000) %>%
+  select(-V10) %T>%
+  
   View()
