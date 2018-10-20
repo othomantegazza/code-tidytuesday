@@ -168,6 +168,19 @@ pres_turnout %>%
   theme_minimal()
 
 
+# Main opponents ----------------------------------------------------------
+
+opponents_url <- paste0("https://en.wikipedia.org/wiki/", 
+                        "List_of_United_States_presidential_candidates")
+
+opponents <- 
+  opponents_url %>%
+  read_html() %>%
+  html_nodes("table") %>%
+  .[[3]] %>%
+  html_table() %T>%
+  View()
+
 # Try read US census from pdf ---------------------------------------------
 
 library(tabulizer)
@@ -230,6 +243,60 @@ census_tidy <-
          representative = str_split_fixed(V10, " ", n = 2)[,2] %>%
            str_replace(",", "") %>%
            as.numeric()*1000) %>%
-  select(-V10) %T>%
-  
+  select(-V10) %>%
+  # percentage that voted at representative is in V12
+  rename(representative_perc = "V12") %>%
+  mutate(representative_perc = as.numeric(representative_perc)) %>%
+  # better order for columns
+  select(year, 
+         voting_pop,
+         presidential,
+         president_perc,
+         representative,
+         representative_perc) %T>%
   View()
+  # gather(key = "election", value = "voters",
+  #        presidential, representative) %>% 
+  # gather(key = "election_perc", value = "voters_percent",
+  #        president_perc, representative_perc) %>% 
+  # arrange(year) %T>%
+
+# what is a reasonable way to gather this dataset?
+
+tst <- 
+  census_tidy %>% 
+  select(-contains("perc")) %>%
+  gather(key = "measure", value = "voters",
+         presidential, representative, voting_pop) %>% 
+  arrange(year)  %>% 
+  filter(complete.cases(.)) %T>%
+  # estimate percentage again
+  # mutate(voters_perc = voters/voting_pop) %T>%
+  View()
+
+
+# Plot --------------------------------------------------------------------
+
+tst %>%
+  ggplot(aes(x = year %>% as.character() %>% as_factor() %>% fct_rev(),
+             y = voters)) +
+  geom_line(aes(group = year),
+            lwd = 0.2) +
+  geom_linerange(data = . %>%
+                   filter(measure == "representative"),
+                 aes(ymax = voters),
+                 ymin = 0,
+                 colour = "grey",
+                 lty = 2) +
+  geom_point(aes(colour = measure),
+             size = 2.5) +
+  ylim(0, NA) +
+  # scale_x_reverse() +
+  coord_flip() +
+  scale_color_manual(values = scico::scico(10, palette = "lajolla")[c(6, 8, 3)]) +
+  # scico::scale_colour_scico(begin = .2, end = .8, palette = "berlin") +
+  # scale_colour_viridis_d(begin = .2, end = .9,
+  #                        option = "E") +
+  # ggthemes::scale_color_few() +
+  theme_minimal()
+
