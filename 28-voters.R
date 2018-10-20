@@ -173,13 +173,37 @@ pres_turnout %>%
 opponents_url <- paste0("https://en.wikipedia.org/wiki/", 
                         "List_of_United_States_presidential_candidates")
 
+pull_lastname <- function(i) {
+  i %>%
+    str_split(pattern = "\\(", 
+              n = 2,
+              simplify = TRUE) %>%
+    .[, 1] %>%
+    str_split(pattern = " ",
+              simplify = TRUE) %>%
+    as.character() %>%
+    tail(2) %>%
+    .[1]
+}
+
+opponents$Republican %>% map_chr(pull_lastname)
+
 opponents <- 
   opponents_url %>%
   read_html() %>%
   html_nodes("table") %>%
   .[[3]] %>%
-  html_table() %T>%
-  View()
+  html_table() %>%
+  select(-Other) %>% 
+  # Keep only candidate's last name
+  # mutate(Democratic = str_split_fixed(Democratic, "\\(", 2)[,1],
+  #        Democratic = str_split(Democratic, " ") %>% map(., ~tail(., 2)[1]),
+  #        Republican = Republican) 
+  mutate(Democratic = Democratic %>% map_chr(pull_lastname),
+         Republican = Republican %>% map_chr(pull_lastname)) %>%
+  transmute(year = Year,
+            opponents = paste(Democratic, Republican, sep = " vs. ")) %T>%
+  View() 
 
 # Try read US census from pdf ---------------------------------------------
 
@@ -255,29 +279,35 @@ census_tidy <-
          representative,
          representative_perc) %T>%
   View()
-  # gather(key = "election", value = "voters",
-  #        presidential, representative) %>% 
-  # gather(key = "election_perc", value = "voters_percent",
-  #        president_perc, representative_perc) %>% 
-  # arrange(year) %T>%
 
 # what is a reasonable way to gather this dataset?
-
-tst <- 
+census_to_plot <- 
   census_tidy %>% 
   select(-contains("perc")) %>%
   gather(key = "measure", value = "voters",
          presidential, representative, voting_pop) %>% 
   arrange(year)  %>% 
-  filter(complete.cases(.)) %T>%
-  # estimate percentage again
-  # mutate(voters_perc = voters/voting_pop) %T>%
-  View()
+  filter(complete.cases(.)) 
+
+tot_pop <- 
+  census_to_plot %>% 
+  filter(measure == "voting_pop") %>%
+  select(year, 
+         voting_pop = voters) %>%
+  distinct()
 
 
+census_to_plot <- 
+  census_to_plot %>%
+  left_join(tot_pop) %>%
+  mutate(perc = voters/voting_pop) %>%
+  select(-voting_pop) %>%
+  left_join(opponents)
+
+tst %>% pull(measure)
 # Plot --------------------------------------------------------------------
 
-tst %>%
+p <- census_to_plot %>%
   ggplot(aes(x = year %>% as.character() %>% as_factor() %>% fct_rev(),
              y = voters)) +
   geom_line(aes(group = year),
@@ -286,17 +316,48 @@ tst %>%
                    filter(measure == "representative"),
                  aes(ymax = voters),
                  ymin = 0,
-                 colour = "grey",
+                 colour = "grey40",
                  lty = 2) +
   geom_point(aes(colour = measure),
              size = 2.5) +
-  ylim(0, NA) +
-  # scale_x_reverse() +
+  geom_text(data = . %>%
+              filter(measure == "representative") %>%
+              mutate(label = paste0(perc %>% round(3)*100, "%")),
+            aes(label = label),
+            size = 2.5,
+            colour = "grey40",
+            nudge_y = -1.2e+07,
+            nudge_x = .35) +
+  geom_text(data = . %>%
+              filter(measure == "presidential") %>%
+              mutate(label = paste0(perc %>% round(3)*100, "%")),
+            aes(label = label),
+            size = 2.5,
+            colour = "grey40",
+            nudge_y = +1.2e+07,
+            nudge_x = .35) +
+  geom_text(data = . %>%
+              filter(measure == "voting_pop"),
+            aes(label = opponents),
+            size = 2.5,
+            colour = "grey40",
+            nudge_y = 5e+06,
+            hjust = 0, 
+            vjust = 0) +
+  ylim(0, 3e+08) +
   coord_flip() +
   scale_color_manual(values = scico::scico(10, palette = "lajolla")[c(6, 8, 3)]) +
-  # scico::scale_colour_scico(begin = .2, end = .8, palette = "berlin") +
-  # scale_colour_viridis_d(begin = .2, end = .9,
-  #                        option = "E") +
-  # ggthemes::scale_color_few() +
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "top", legend.justification = 0) +
+  guides(colour = guide_legend(title = NULL,
+                               label.position = "right",
+                               nrow=1)) +
+  labs(title = "Voters in the US",
+       x = "",
+       y = "voters [n]")
 
+png(filename = "plots/28-voters.png",
+    height = 2000, width = 1700,
+    res = 300)
+p %>% print()
+dev.off()
