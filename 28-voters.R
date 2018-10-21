@@ -126,7 +126,7 @@ census_to_plot <-
   left_join(tot_pop) %>%
   mutate(perc = voters/voting_pop) %>%
   select(-voting_pop) %>%
-  left_join(opponents)
+  left_join(opponents) 
 
 # Plot --------------------------------------------------------------------
 
@@ -169,15 +169,23 @@ p <- census_to_plot %>%
             vjust = 0) +
   ylim(0, 3e+08) +
   coord_flip() +
-  scale_color_manual(values = scico::scico(10, palette = "lajolla")[c(6, 8, 3)]) +
+  scale_color_manual(values = scico::scico(10, palette = "lajolla")[c(6, 8, 3)],
+                     breaks = c("presidential",
+                                "representative",
+                                "voting_pop"),
+                     labels = c("Voters,\nPresidential",
+                                "Voters,\nRepresentative",
+                                "Population\nof Voting Age")) +
   theme_minimal() +
   theme(legend.position = "top", legend.justification = 0) +
   guides(colour = guide_legend(title = NULL,
                                label.position = "right",
                                nrow=1)) +
-  labs(title = "Voters in the US",
+  labs(title = "In US, How Many People of Age Do Vote?",
+       subtitle = "From 1972 to 2010, split in Presidential and Representative elections",
        x = "",
-       y = "voters [n]")
+       y = "voters [n]",
+       caption = "Data: US Census - www.census.gov | Plot: @othomn")
 
 png(filename = "plots/28-voters.png",
     height = 2000, width = 1700,
