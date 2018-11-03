@@ -63,32 +63,49 @@ dat %>%
   geom_line() +
   theme_bw()
 
+# set roll median function
+roll_median_7 <- tibbletime::rollify(~median(., na.rm = T), 30)
 
 # poisson model over same day one week ago
 # to much variance
 # model p-value on longer time span?
-tst <- dat %>% 
-  filter(package == "acepack") %>%
+dat_test <- dat %>% 
+  # filter(package == "acepack") %>%
+  group_by(package) %>%
   arrange(date) %>% 
   mutate(count = count %>% na_if(0),
-         prev_count = count[c(rep(NA, 7),
-                              1:(n() - 7))]) %>% 
+         prev_count = lag(count, 7)) %>% 
   mutate(p = ppois(q = count,
                    lambda = prev_count,
                    lower.tail = FALSE) %>%
            na_if(-Inf),
-         log_p = -log(p))
+         log_p = -log(p)) %>% 
+  # roll mean
+  ungroup() %>% 
+  group_by(package) %>%
+  arrange(date) %>% 
+  mutate(med_log = log_p %>%
+           roll_median_7()) %>% 
+  ungroup()
   
-tst %>% 
-  filter(package == "acepack") %>%
+trending_packs <- 
+  dat_test %>%
+  filter(date == max(date)) %>%
+  arrange(med_log) %>%
+  dplyr::top_n(n = 5) %>%
+  pull(package)
+
+dat_test %>% 
+  # filter(package == "ggraph") %>% #View()
+  filter(package %in% trending_packs) %>%
   gather(key = "measure",
          value = "value",
-         count, log_p) %>%
+         count, log_p, med_log) %>%
   ggplot(aes(x = date,
              y = value)) +
   geom_point() +
   geom_line() +
-  facet_grid(measure ~ ., scales = "free_y") +
+  facet_grid(measure ~ package, scales = "free_y") +
   theme_bw()
 
 # Two tops ----------------------------------------------------------------
