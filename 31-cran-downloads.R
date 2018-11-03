@@ -27,17 +27,17 @@ from <- to %m-% months(12)
 
 load("data/31-cran-downloads.Rdata")
 
-# temporary
+
+
+# Tidy --------------------------------------------------------------------
+
+# kludge, remove a bigg spike in tidyverse downloads
 dat <- 
   dat %>%
   filter(date != max(date),
          count != max(count))
 
-# dat %>% View()
-
-# Tidy --------------------------------------------------------------------
-
-# packages with 0 counts?
+# remove packages with 0 counts
 no_counts <- 
   dat %>%
   group_by(package) %>%
@@ -50,70 +50,6 @@ dat <-
   filter(! package %in% no_counts) %>%
   as_tibble()
 
-# Plot --------------------------------------------------------------------
-
-dat_scaled <- 
-  dat %>% 
-  group_by(package) %>%
-  filter(count > 0) %>%
-  mutate(scaled_count = count %>%
-           log() %>%
-           scales::rescale(from = range(.),
-                           to = c(0,1)))
-
-p <- dat_scaled %>% 
-  ggplot(aes(x = date,
-             y = package,
-             fill = scaled_count)) +
-  geom_tile()
-
-p + scale_fill_viridis_c()
-
-png("plots/31-cran-test.png",
-    height = 2000,
-    width = 700,
-    res = 300)
-p + 
-  scale_fill_viridis_c(guide = FALSE) +
-  theme_void()
-dev.off()
-
-dat_scaled %>% 
-  ggplot(aes(x = date,
-             y = count %>% log(),
-             group = package)) +
-  geom_line(alpha = .3) +
-  theme_bw()
-
-
-# Subset ------------------------------------------------------------------
-
-set.seed(1)
-
-pack_sub <- 
-  dat_scaled$package %>% 
-  unique() %>%
-  sample(100)
-
-p_subset <- 
-  dat_scaled %>%
-  filter(package %in% pack_sub) %>% 
-  ggplot(aes(x = date,
-             y = package,
-             fill = scaled_count)) +
-  geom_tile()
-  
-p_subset + scale_fill_viridis_c()
-  
-
-png("plots/31-cran-test-subset.png",
-    height = 1000,
-    width = 700,
-    res = 300)
-p_subset + 
-  scale_fill_viridis_c(guide = FALSE) +
-  theme_void()
-dev.off()
 
 # Poisson model  ----------------------------------------------------------
 
@@ -178,8 +114,3 @@ dat %>%
   facet_grid(package ~ .) +
   theme_bw()
 
-
-# Poisson on weeks --------------------------------------------------------
-
-dat %>%
-  mutate(week = )
