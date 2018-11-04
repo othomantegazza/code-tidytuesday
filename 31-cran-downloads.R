@@ -64,10 +64,19 @@ dat %>%
 
 # On how many days should I roll the median ?
 # this parameter controls the responsiveness of the algorithm!!
-
+n_med <- 30
+n_mean <- 14
 # set roll median function
-roll_median <- tibbletime::rollify(~median(., na.rm = T), 30)
+roll_median <- tibbletime::rollify(~median(., na.rm = T), n_med)
+roll_mean <- tibbletime::rollify(~mean(., na.rm = T), n_mean)
 
+get_upper_bound <- function(n) {
+  if(is.na(n)) {
+    NA_real_
+  } else {
+    poisson.test(n, conf.level = 0.99)$conf.int[2]
+  }
+}
 
 # poisson model over same day one week ago
 # to much variance
@@ -82,18 +91,22 @@ dat_test <- dat %>%
                    lower.tail = FALSE) %>%
            na_if(-Inf),
          log_p = -log(p)) %>% 
-  # roll mean
+  mutate(up_bound = map(prev_count, get_upper_bound) %>% purrr::flatten_dbl(),
+         conf = up_bound - prev_count,
+         dist = (count - prev_count) / conf) %>%
   ungroup() %>% 
   group_by(package) %>%
   arrange(date) %>% 
   mutate(med_log = log_p %>%
-           roll_median()) %>% 
+           roll_median(),
+         mean_dist = dist %>%
+           roll_mean()) %>% 
   ungroup()
   
 trending_packs <- 
   dat_test %>%
   filter(date == max(date)) %>%
-  arrange(med_log) %>%
+  arrange(mean_dist) %>%
   dplyr::top_n(n = 5) %>%
   pull(package)
 
@@ -130,7 +143,7 @@ plot_trend <- function(package = "clipr",
     filter(package == !!package) %>%
     gather(key = "measure",
            value = "value",
-           count, med_log) %>% 
+           count, med_log, mean_dist) %>% 
     ggplot(aes(x = date,
                y = value)) +
     geom_density(stat = "identity",
@@ -142,4 +155,8 @@ plot_trend <- function(package = "clipr",
     labs(title = glue("#{n} {package}"))
 }
 
-plot_trend()
+to_plot <- tibble(n = 1:5,
+                  package = trending_packs) %>%
+  pmap(plot_trend) %>%
+  map(print)
+
