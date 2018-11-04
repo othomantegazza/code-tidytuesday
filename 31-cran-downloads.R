@@ -1,49 +1,47 @@
 library(tidyverse)
-library(magrittr)
 library(cranlogs)
 library(lubridate)
-library(ggridges)
-
+library(tibbletime)
 
 
 # Set time span of one year to now ----------------------------------------
 
-to <- today()
+to <- today() - days(1)
 
 from <- to %m-% months(12)
 
 # Get data ----------------------------------------------------------------
 
-# dat <-
-#   installed.packages() %>%
-#   as_tibble() %$%
-#   Package %>%
-#   # cran_downloads(when = "last-month")
-#   cran_downloads(from = from,
-#                  to = to)
-# 
-# 
-# save(dat, file = "data/31-cran-downloads.Rdata")
+data_path <- "data/31-cran-downloads.Rdata"
 
-load("data/31-cran-downloads.Rdata")
-
-
+if(!file.exists(data_path)) {
+  dat <-
+    installed.packages() %>%
+    as_tibble() %$%
+    Package %>%
+    cran_downloads(from = from,
+                   to = to)
+  
+  save(dat, file = data_path)
+} else {
+  load(data_path)
+}
 
 # Tidy --------------------------------------------------------------------
 
 # kludge, remove a bigg spike in tidyverse downloads
-dat <- 
-  dat %>%
-  filter(date != max(date),
-         count != max(count))
+# dat <- 
+#   dat %>%
+#   filter(date != max(date),
+#          count != max(count))
 
 # remove packages with 0 counts
 no_counts <- 
   dat %>%
   group_by(package) %>%
   summarise(counts = sum(count)) %>%
-  filter(counts == 0) %$%
-  package
+  filter(counts == 0) %>%
+  pull(package)
 
 dat <- 
   dat %>%
@@ -63,14 +61,16 @@ dat %>%
   geom_line() +
   theme_bw()
 
+# On how many days should I roll the median ?
+# this parameter controls the responsiveness of the algorithm!!
+
 # set roll median function
-roll_median_7 <- tibbletime::rollify(~median(., na.rm = T), 30)
+roll_median <- tibbletime::rollify(~median(., na.rm = T), 30)
 
 # poisson model over same day one week ago
 # to much variance
 # model p-value on longer time span?
 dat_test <- dat %>% 
-  # filter(package == "acepack") %>%
   group_by(package) %>%
   arrange(date) %>% 
   mutate(count = count %>% na_if(0),
@@ -85,7 +85,7 @@ dat_test <- dat %>%
   group_by(package) %>%
   arrange(date) %>% 
   mutate(med_log = log_p %>%
-           roll_median_7()) %>% 
+           roll_median()) %>% 
   ungroup()
   
 trending_packs <- 
@@ -106,28 +106,5 @@ dat_test %>%
   geom_point() +
   geom_line() +
   facet_grid(measure ~ package, scales = "free_y") +
-  theme_bw()
-
-# Two tops ----------------------------------------------------------------
-
-# estimate on last 14 days
-
-top_pack <- 
-  dat %>% 
-  filter(date >= max(date) - days(14)) %>%
-  group_by(package) %>% 
-  summarise(count = sum(count)) %>% 
-  top_n(2) %>% 
-  pull(package)
-
-dat %>%
-  filter(package %in% top_pack) %>% 
-  rename(downloads = "count") %>% 
-  ggplot(aes(x = date,
-             y = downloads,
-             group = package)) +
-  geom_point() +
-  geom_line() +
-  facet_grid(package ~ .) +
   theme_bw()
 
