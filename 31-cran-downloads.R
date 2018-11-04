@@ -2,6 +2,7 @@ library(tidyverse)
 library(cranlogs)
 library(lubridate)
 library(tibbletime)
+library(glue)
 
 
 # Set time span of one year to now ----------------------------------------
@@ -67,6 +68,7 @@ dat %>%
 # set roll median function
 roll_median <- tibbletime::rollify(~median(., na.rm = T), 30)
 
+
 # poisson model over same day one week ago
 # to much variance
 # model p-value on longer time span?
@@ -96,7 +98,6 @@ trending_packs <-
   pull(package)
 
 dat_test %>% 
-  # filter(package == "ggraph") %>% #View()
   filter(package %in% trending_packs) %>%
   gather(key = "measure",
          value = "value",
@@ -108,3 +109,37 @@ dat_test %>%
   facet_grid(measure ~ package, scales = "free_y") +
   theme_bw()
 
+dat_test %>%
+  filter(package %in% trending_packs[1]) %>%
+  gather(key = "measure",
+         value = "value",
+         count, log_p, med_log) %>% # View()
+  ggplot(aes(x = date,
+             y = measure)) +
+  ggridges::geom_density_ridges(aes(height = value),
+                                stat = "identity",
+                                scale = .9,
+                                panel_scaling = FALSE) +
+  ggridges::theme_ridges()
+
+
+plot_trend <- function(package = "clipr",
+                       n = 1)
+{
+  dat_test %>% 
+    filter(package == !!package) %>%
+    gather(key = "measure",
+           value = "value",
+           count, med_log) %>% 
+    ggplot(aes(x = date,
+               y = value)) +
+    geom_density(stat = "identity",
+                 colour = NA,
+                 fill = "red") +
+    facet_grid(measure ~ ., 
+               scales = "free_y") +
+    theme_minimal()+
+    labs(title = glue("#{n} {package}"))
+}
+
+plot_trend()
