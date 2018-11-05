@@ -31,7 +31,7 @@ if(!file.exists(data_path)) {
 # Tidy --------------------------------------------------------------------
 
 # Remove a big spike in tidyverse downloads
-dat <- 
+dat <-
   dat %>%
   mutate(count = case_when(package == "tidyverse" & count == 835133 ~ NA_real_,
                            TRUE ~ count))
@@ -98,15 +98,20 @@ dat_test <- dat %>%
            roll_mean()) %>% 
   ungroup()
   
+
+# Plot results ------------------------------------------------------------
+
+# How many of the top packages should be plotted
+n_trends <- 10
+
 trending_packs <- 
   dat_test %>%
   filter(date == max(date)) %>%
   arrange(mean_dist) %>%
-  dplyr::top_n(n = 5) %>%
+  dplyr::top_n(n = n_trends) %>%
   pull(package)
 
 
-# Plot results ------------------------------------------------------------
 
 plot_trend <- function(package = "clipr",
                        n = 1)
@@ -115,19 +120,37 @@ plot_trend <- function(package = "clipr",
     filter(package == !!package) %>%
     gather(key = "measure",
            value = "value",
-           count, med_log, mean_dist) %>% 
+           count, mean_dist) %>% 
+    mutate(measure = case_when(measure == "count" ~ 
+                                 str_wrap("Count of Daily Downloads",
+                                          width = 20),
+                               measure == "mean_dist" ~
+                                 str_wrap("Trend, Estimated with a Cycle
+                                          Corrected Poisson Model",
+                                          width = 20),
+           TRUE ~ measure)) %>% 
     ggplot(aes(x = date,
                y = value)) +
     geom_density(stat = "identity",
                  colour = NA,
                  fill = "red") +
     facet_grid(measure ~ ., 
-               scales = "free_y") +
-    theme_minimal()+
-    labs(title = glue("#{n} {package}"))
+               scales = "free_y"
+               # labeller = function(v) {
+               #   list(count = "Count of Daily Downloads",
+               #        mean_dist = "Trend, Estimated with a Cycle Corrected Poisson Model") %>%
+               #     .[[v]] 
+               # }
+               ) +
+    theme_minimal() +
+    theme(strip.text.y = element_text(angle = 0,
+                                      size = 11)) +
+    labs(title = glue("#{n} {package}"),
+         y = NULL,
+         x = "Date")
 }
 
-to_plot <- tibble(n = 5:1,
+to_plot <- tibble(n = n_trends:1,
                   package = trending_packs) %>%
   arrange(n) %>% 
   pmap(plot_trend) %>%
