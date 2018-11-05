@@ -30,13 +30,15 @@ if(!file.exists(data_path)) {
 
 # Tidy --------------------------------------------------------------------
 
-# kludge, remove a bigg spike in tidyverse downloads
-# dat <- 
-#   dat %>%
-#   filter(date != max(date),
-#          count != max(count))
+# Remove a big spike in tidyverse downloads
+dat <- 
+  dat %>%
+  mutate(count = case_when(package == "tidyverse" & count == 835133 ~ NA_real_,
+                           TRUE ~ count))
 
-# remove packages with 0 counts
+# Remove packages with 0 counts
+# They come from other repositories than cran
+
 no_counts <- 
   dat %>%
   group_by(package) %>%
@@ -52,15 +54,7 @@ dat <-
 
 # Poisson model  ----------------------------------------------------------
 
-# as in: TREND DETECTION IN SOCIAL DATA by Scott Hendickson
-
-dat %>% 
-  filter(package == "acepack") %>%
-  ggplot(aes(x = date,
-             y = count)) +
-  geom_point() +
-  geom_line() +
-  theme_bw()
+# inspired by: TREND DETECTION IN SOCIAL DATA by Scott Hendickson
 
 # On how many days should I roll the median ?
 # this parameter controls the responsiveness of the algorithm!!
@@ -70,6 +64,9 @@ n_mean <- 14
 roll_median <- tibbletime::rollify(~median(., na.rm = T), n_med)
 roll_mean <- tibbletime::rollify(~mean(., na.rm = T), n_mean)
 
+# They work with poisson confidence intervals,
+# Why? because they respond better then pvalues when
+# measurement are far away from expected value?
 get_upper_bound <- function(n) {
   if(is.na(n)) {
     NA_real_
@@ -78,9 +75,7 @@ get_upper_bound <- function(n) {
   }
 }
 
-# poisson model over same day one week ago
-# to much variance
-# model p-value on longer time span?
+# Get an estimate of the distance
 dat_test <- dat %>% 
   group_by(package) %>%
   arrange(date) %>% 
@@ -110,31 +105,8 @@ trending_packs <-
   dplyr::top_n(n = 5) %>%
   pull(package)
 
-dat_test %>% 
-  filter(package %in% trending_packs) %>%
-  gather(key = "measure",
-         value = "value",
-         count, log_p, med_log) %>%
-  ggplot(aes(x = date,
-             y = value)) +
-  geom_point() +
-  geom_line() +
-  facet_grid(measure ~ package, scales = "free_y") +
-  theme_bw()
 
-dat_test %>%
-  filter(package %in% trending_packs[1]) %>%
-  gather(key = "measure",
-         value = "value",
-         count, log_p, med_log) %>% # View()
-  ggplot(aes(x = date,
-             y = measure)) +
-  ggridges::geom_density_ridges(aes(height = value),
-                                stat = "identity",
-                                scale = .9,
-                                panel_scaling = FALSE) +
-  ggridges::theme_ridges()
-
+# Plot results ------------------------------------------------------------
 
 plot_trend <- function(package = "clipr",
                        n = 1)
@@ -155,8 +127,9 @@ plot_trend <- function(package = "clipr",
     labs(title = glue("#{n} {package}"))
 }
 
-to_plot <- tibble(n = 1:5,
+to_plot <- tibble(n = 5:1,
                   package = trending_packs) %>%
+  arrange(n) %>% 
   pmap(plot_trend) %>%
   map(print)
 
