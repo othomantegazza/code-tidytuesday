@@ -104,7 +104,7 @@ dat_test <- dat %>%
 # Plot results ------------------------------------------------------------
 
 # How many of the top packages should be plotted
-n_trends <- 10
+n_trends <- 4
 
 trending_packs <- 
   dat_test %>%
@@ -132,10 +132,12 @@ plot_trend <- function(package = "clipr",
                                           width = 20),
            TRUE ~ measure)) %>% 
     ggplot(aes(x = date,
-               y = value)) +
+               y = value,
+               fill = measure)) +
     geom_density(stat = "identity",
-                 colour = NA,
-                 fill = "red") +
+                 colour = NA
+                 # fill = "red"
+                 ) +
     facet_grid(measure ~ ., 
                scales = "free_y"
                # labeller = function(v) {
@@ -144,9 +146,17 @@ plot_trend <- function(package = "clipr",
                #     .[[v]] 
                # }
                ) +
+    scale_fill_manual(values = c("mediumslateblue",
+                                 "mediumvioletred"), 
+                      guide = FALSE) +
     theme_minimal() +
     theme(strip.text.y = element_text(angle = 0,
-                                      size = 11)) +
+                                      size = 11),
+          title = element_text(size = 14,
+                               face = "bold",
+                               colour = "grey20"),
+          axis.title = element_text(size = 10,
+                                    colour = "grey40")) +
     labs(title = glue("#{n} {package}"),
          y = NULL,
          x = "Date")
@@ -164,9 +174,10 @@ to_plot <- tibble(n = n_trends:1,
 # Save plot ---------------------------------------------------------------
 
 png(filename = "plots/31-cran-downloads.png",
-    width = 4000, height = 3500,
+    width = 2000, height = n_trends*700,
     res = 300)
 p <- plot_grid(plotlist = to_plot,
-               nrow = 5)
-p %>% print()
+               nrow = n_trends) %>%
+  add_sub(label = "Data: cran.r-project.org | Plot by @othomn")
+p %>% ggdraw() 
 dev.off()
