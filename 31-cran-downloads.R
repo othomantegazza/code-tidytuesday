@@ -139,13 +139,7 @@ plot_trend <- function(package = "clipr",
                  # fill = "red"
                  ) +
     facet_grid(measure ~ ., 
-               scales = "free_y"
-               # labeller = function(v) {
-               #   list(count = "Count of Daily Downloads",
-               #        mean_dist = "Trend, Estimated with a Cycle Corrected Poisson Model") %>%
-               #     .[[v]] 
-               # }
-               ) +
+               scales = "free_y") +
     scale_fill_manual(values = c("mediumslateblue",
                                  "mediumvioletred"), 
                       guide = FALSE) +
@@ -173,11 +167,14 @@ to_plot <- tibble(n = n_trends:1,
 
 # Save plot ---------------------------------------------------------------
 
-png(filename = "plots/31-cran-downloads.png",
-    width = 2000, height = n_trends*700,
-    res = 300)
+
 p <- plot_grid(plotlist = to_plot,
                nrow = n_trends) %>%
   add_sub(label = "Data: cran.r-project.org | Plot by @othomn")
+
+png(filename = "plots/31-cran-downloads.png",
+    width = 2000,
+    height = n_trends*700,
+    res = 300)
 p %>% ggdraw() 
 dev.off()
