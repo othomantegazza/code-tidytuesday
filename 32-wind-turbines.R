@@ -1,5 +1,6 @@
 library(tidyverse)
 library(maps)
+# library(cowplot)
 
 # Get data ----------------------------------------------------------------
 
@@ -40,50 +41,84 @@ dat_tidy <-
 
 usa_map <- map_data("state")
 
-dat_tidy %>%
+map_plot <- 
+  dat_tidy %>%
   ggplot(aes(x = xlong,
-             y = ylat,
-             colour = t_cap)) +
-  geom_point(size = .5, 
-             alpha = .3) +
+             y = ylat
+             # colour = t_cap
+             )) +
+  # geom_point(size = .3, 
+  #            alpha = .1) +
   geom_map(data=usa_map,
            map=usa_map,
            aes(x=long, y=lat,
                map_id=region),
-           colour = "grey30", fill = NA,
-           size = .2) +
-  facet_grid(. ~ year_span) +
-  coord_map(projection = "conic", lat = 40) +
-  lims(x = c(-119, -74),
+           colour = "grey60", fill = "grey96",
+           size = .4) +
+  geom_bin2d(
+    bins = c(80, 50)
+    ) +
+  facet_wrap(facets = "year_span",
+             ncol = 1) +
+  coord_map(projection = "conic",
+            lat = 41) +
+  lims(x = c(-124.5, -67.5),
        y = c(25, 50)) +
-  scale_color_viridis_c(guide = guide_colourbar(title.vjust = .7,
-                                                barwidth = 20,
-                                                barheight = .3)) +
+  scale_fill_viridis_c(guide = guide_colourbar(breaks = c(1000, 1500),
+                                               title.vjust = 1,
+                                               barwidth = 12,
+                                               barheight = .4)) +
   theme_void() +
-  theme(legend.position = "bottom") +
-  labs(title = "Wind Turbine Installed in the US")
+  theme(strip.text = element_text(size = 12,
+                                  colour = "grey40"), 
+        title = element_text(colour = "grey20",
+                             face = "bold"), 
+        legend.position = "bottom", 
+        plot.margin = margin(18, 10, 10, 10,
+                             unit = "pt")) + 
+  labs(title = "New Wind Turbunes in US mainland",
+       caption = "Source: ; plot by @othomn")
 
 
+
+
+png(filename = "plots/32-wind-turbines.png",
+    height = 3000, width = 1700,
+    res = 400)
+map_plot %>% print()
+dev.off()
 # Explore time patterns ---------------------------------------------------
 
-library(ggridges)
+# time_plot <- 
+#   dat_tidy %>% 
+#   ggplot(aes(x =  p_year,
+#              y = t_cap)) +
+#   # ggbeeswarm::geom_quasirandom(size = .2,
+#   #                              alpha = .2)
+#   stat_bin2d(binwidth = c(1, 500),
+#              alpha = .7) +
+#   scale_fill_viridis_c(
+#     option = "E",
+#     guide = guide_colourbar(title.vjust = 1,
+#                             barwidth = 7,
+#                             barheight = .2)
+#   ) +
+#   coord_flip() +
+#   theme_bw() +
+#   theme(legend.position = "top") 
 
-dat_tidy %>% 
-  ggplot(aes(x = t_cap,
-             y = p_year %>%
-               as.character() %>% 
-               as.factor() %>%
-               fct_rev())) +
-  # ggbeeswarm::geom_quasirandom() +
-  # scale_colour_viridis_c() 
-  geom_density_ridges(panel_scaling = FALSE)
-
-dat_tidy %>% 
-  ggplot(aes(x =  p_year,
-             y = t_cap)) +
-  # ggbeeswarm::geom_quasirandom(size = .2,
-  #                              alpha = .2)
-  stat_bin2d(binwidth = c(1, 500)) +
-  scale_fill_viridis_c() +
-  theme_bw()
 # dat %>% filter(t_cap > 5000) %>% pull(p_name)
+
+
+# Put them together -------------------------------------------------------
+
+# p <- plot_grid(map_plot,
+#                time_plot,
+#                ncol = 2,
+#                rel_widths = c(1.6,1))
+# 
+# png(filename = "plots/32-wind-turbines.png",
+#     height = 2000, width = 2200,
+#     res = 300)
+# p %>% print()
+# dev.off()
