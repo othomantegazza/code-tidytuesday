@@ -3,7 +3,8 @@ library(cranlogs)
 library(lubridate)
 library(tibbletime)
 library(glue)
-
+library(magrittr)
+library(cowplot)
 
 # Set time span of one year to now ----------------------------------------
 
@@ -96,7 +97,8 @@ dat_test <- dat %>%
            roll_median(),
          mean_dist = dist %>%
            roll_mean()) %>% 
-  ungroup()
+  ungroup() %>%
+  filter(date > (max(date) - months(3)))
   
 
 # Plot results ------------------------------------------------------------
@@ -153,6 +155,18 @@ plot_trend <- function(package = "clipr",
 to_plot <- tibble(n = n_trends:1,
                   package = trending_packs) %>%
   arrange(n) %>% 
-  pmap(plot_trend) %>%
+  pmap(plot_trend) %T>%
   map(print)
 
+
+
+
+# Save plot ---------------------------------------------------------------
+
+png(filename = "plots/31-cran-downloads.png",
+    width = 4700, height = 3500,
+    res = 300)
+p <- plot_grid(plotlist = to_plot,
+               nrow = 5)
+p %>% print()
+dev.off()
