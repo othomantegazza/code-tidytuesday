@@ -1,6 +1,5 @@
 library(tidyverse)
 library(maps)
-# library(cowplot)
 
 # Get data ----------------------------------------------------------------
 
@@ -17,6 +16,7 @@ if(!file.exists(dat_file)) {
 } else {
   load(dat_file)
 }
+
 # Remove NA ---------------------------------------------------------------
 
 dat <- 
@@ -37,18 +37,15 @@ dat_tidy <-
                                p_year >= 1994 & p_year <= 2006 ~ "1994 - 2006",
                                p_year >= 2007 & p_year <= 2018 ~ "2007 - 2018"))
 
-# explore geographical patterns--------------------------------------------------------
+
+# Plot on map -------------------------------------------------------------
 
 usa_map <- map_data("state")
 
 map_plot <- 
   dat_tidy %>%
   ggplot(aes(x = xlong,
-             y = ylat
-             # colour = t_cap
-             )) +
-  # geom_point(size = .3, 
-  #            alpha = .1) +
+             y = ylat)) +
   geom_map(data=usa_map,
            map=usa_map,
            aes(x=long, y=lat,
@@ -66,7 +63,7 @@ map_plot <-
        y = c(25, 50)) +
   scale_fill_viridis_c(guide = guide_colourbar(breaks = c(1000, 1500),
                                                title.vjust = 1,
-                                               barwidth = 12,
+                                               barwidth = 10.5,
                                                barheight = .4)) +
   theme_void() +
   theme(strip.text = element_text(size = 12,
@@ -77,48 +74,13 @@ map_plot <-
         plot.margin = margin(18, 10, 10, 10,
                              unit = "pt")) + 
   labs(title = "New Wind Turbunes in US mainland",
-       caption = "Source: ; plot by @othomn")
+       caption = "Source: ; plot by @othomn", 
+       fill = "Count")
 
-
-
+# Save plot ---------------------------------------------------------------
 
 png(filename = "plots/32-wind-turbines.png",
     height = 3000, width = 1700,
     res = 400)
 map_plot %>% print()
 dev.off()
-# Explore time patterns ---------------------------------------------------
-
-# time_plot <- 
-#   dat_tidy %>% 
-#   ggplot(aes(x =  p_year,
-#              y = t_cap)) +
-#   # ggbeeswarm::geom_quasirandom(size = .2,
-#   #                              alpha = .2)
-#   stat_bin2d(binwidth = c(1, 500),
-#              alpha = .7) +
-#   scale_fill_viridis_c(
-#     option = "E",
-#     guide = guide_colourbar(title.vjust = 1,
-#                             barwidth = 7,
-#                             barheight = .2)
-#   ) +
-#   coord_flip() +
-#   theme_bw() +
-#   theme(legend.position = "top") 
-
-# dat %>% filter(t_cap > 5000) %>% pull(p_name)
-
-
-# Put them together -------------------------------------------------------
-
-# p <- plot_grid(map_plot,
-#                time_plot,
-#                ncol = 2,
-#                rel_widths = c(1.6,1))
-# 
-# png(filename = "plots/32-wind-turbines.png",
-#     height = 2000, width = 2200,
-#     res = 300)
-# p %>% print()
-# dev.off()
