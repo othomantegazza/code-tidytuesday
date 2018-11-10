@@ -164,7 +164,7 @@ to_plot <- tibble(n = n_trends:1,
 # Save plot ---------------------------------------------------------------
 
 png(filename = "plots/31-cran-downloads.png",
-    width = 4700, height = 3500,
+    width = 4000, height = 3500,
     res = 300)
 p <- plot_grid(plotlist = to_plot,
                nrow = 5)

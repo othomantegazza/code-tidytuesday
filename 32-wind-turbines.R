@@ -73,8 +73,8 @@ map_plot <-
         legend.position = "bottom", 
         plot.margin = margin(18, 10, 10, 10,
                              unit = "pt")) + 
-  labs(title = "New Wind Turbunes in US mainland",
-       caption = "Source: ; plot by @othomn", 
+  labs(title = "New Wind Turbines in US Mainland",
+       caption = "Source: usgs.gov | plot by @othomn", 
        fill = "Count")
 
 # Save plot ---------------------------------------------------------------
