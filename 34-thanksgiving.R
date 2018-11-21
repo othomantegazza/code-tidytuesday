@@ -1,6 +1,5 @@
 library(tidyverse)
-library(data.tree)
-library(igraph)
+library(glue)
 
 # Get Data ----------------------------------------------------------------
 
@@ -21,44 +20,115 @@ if(!file.exists(dat_path)) {
 }
 
 
-# Explore -----------------------------------------------------------------
-
-dat %>% 
-  group_by(celebrate) %>%
-  tally() 
+# Alluvial plot -------------------------------------------------------------
 
 dat_smp <- 
   dat %>% 
-  filter(celebrate == "Yes") %>% 
-  select(main_dish,
-         main_prep,
-         stuffing, cranberry) %>% 
-  # mutate_all(as_factor)
-  group_by_all() %>%
+  filter(celebrate == "Yes") %>%
+  select(
+    age,
+    # gender,
+    # prayer,
+    friendsgiving,
+    # black_friday,
+    # community_type,
+    # us_region,
+    cranberry
+    ) %>%
+  filter(complete.cases(.)) %>%
+  filter(!cranberry %>% str_detect("Other")) %>%
+  group_by_all() %>% 
   count()
+  
 
 library(ggalluvial)
-dat_smp %>% 
-  ggplot(aes(axis1 = main_dish, axis2 = main_prep, axis3 = stuffing,
-             y = n)) +
+p_all <- 
+  dat_smp %>% 
+  ggplot(aes(
+    axis1 = cranberry,
+    axis2 = friendsgiving,
+    axis3 = age,
+    y = n)) +
+  theme_minimal() +
   geom_alluvium(aes(fill = cranberry)) +
-  geom_stratum() + geom_text(stat = "stratum", label.strata = TRUE)
+  geom_stratum(fill = "grey98") +
+  geom_text(stat = "stratum",
+            label.strata = TRUE) +
+  scale_x_continuous(breaks = 1:3,
+                     labels = c("Cranberry Sauce",
+                                "Friendsgiving",
+                                "Age")) +
+  scale_fill_viridis_d() +
+  labs(title = "Cranberry Sauce Types at Thanksgiving",
+       subtitle = "Data Polled on Nov. 17, 2015",
+       fill = "Cranberry\nSauce",
+       caption = "Data source: fivethirtyeight.com | Plot by @othomn")
 
 
-# dat_smp %>% treemap::treemap(index = c("main_dish",
-#                                        "main_prep",
-#                                        "stuffing"),
-#                              vSize = "n")
-    
-tst <- dat_smp %>% 
-  mutate(pathString = paste("Dinner", 
-                            main_dish,
-                            stuffing,
-                            cranberry,
-                            sep = "/")) %>%
-  data.tree::as.Node()
+png(filename = "plots/34-thanksgiving_all.png",
+    height = 1400, width = 2300,
+    res = 300)
+p_all %>% print()
+dev.off() 
 
-tst %>% print("n")
 
-tst %>% data.tree::as.igraph.Node()
+  
+# bar plot ----------------------------------------------------------------
+
+dat_ratio <- 
+  dat %>% 
+  select(cranberry,
+         us_region) %>%
+  filter(complete.cases(.)) %>%
+  filter(!cranberry %>% str_detect("Other")) %>% 
+  group_by_all() %>% 
+  count() %>% 
+  group_by(us_region) %>%
+  mutate(all = n %>% sum()) %>% 
+  ungroup() %>% 
+  mutate(ratio = n/all) 
+  
+lvl <- dat_ratio %>%
+  filter(cranberry == "Homemade") %>%
+  arrange(ratio) %>%
+  pull(us_region)
+  
+p_bar <- 
+  dat_ratio %>% 
+  mutate(us_region = factor(us_region,
+                            levels = lvl),
+         cranberry = factor(cranberry,
+                            levels = (c(
+                              "None", "Canned", "Homemade"
+                              )))) %>% 
+  ggplot(aes(x = us_region,
+             y = ratio,
+             fill = cranberry)) +
+  geom_bar(stat = "identity",
+           colour = "grey80") +
+  geom_text(data = . %>%
+              group_by(us_region) %>%
+              summarise(n = sum(n)),
+            aes(label = glue("n = {n}"),
+                fill = NULL),
+            y = 0.02, 
+            colour = "#208C88", 
+            hjust = 0) +
+  scale_fill_viridis_d(option = "D") +
+  coord_flip(expand = FALSE) +
+  theme_minimal() + 
+  theme(panel.grid = element_blank(),
+        legend.text = element_text(colour = "grey40"), 
+        title = element_text(colour = "grey20")) +
+  labs(x = "",
+       title = "Where is Homemade Cranberry Sauce Most Common?",
+       subtitle = "For Thanksgiving, Data Polled on Nov. 17, 2015",
+       fill = "Cranberry\nSauce",
+       caption = "Data source: fivethirtyeight.com | Plot by @othomn")
+
+png(filename = "plots/34-thanksgiving.png",
+    height = 1400, width = 2300,
+    res = 300)
+p_bar %>% print()
+dev.off() 
 
