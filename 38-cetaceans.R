@@ -17,11 +17,7 @@ dat_url <- paste0("https://raw.githubusercontent.com/",
 
 if(!file.exists(dat_path)) {
   dat <- 
-    read_csv(dat_url
-             # col_types = cols(
-             #   birthYear = col_double()
-             # )
-             )
+    read_csv(dat_url)
   
   save(dat, file = dat_path)
   
@@ -29,22 +25,7 @@ if(!file.exists(dat_path)) {
   load(dat_path)
 }
 
-
-# Wrangle -----------------------------------------------------------------
-
-# dat <- 
-#   dat %>% 
-#   mutate(birthYear = as.numeric(birthYear))
-
-
-# Explore -----------------------------------------------------------------
-
-dat %>% 
-  filter(status == "Died") %>% 
-  ggplot(aes(x = birthYear %>% as.numeric(), 
-             y = statusDate %>% year())) +
-  geom_point() +
-  facet_grid(. ~ acquisition)
+# Plot -----------------------------------------------------------------
 
 # prepare data for plots
 dat_acq <- 
@@ -56,15 +37,15 @@ dat_acq <-
 
 
 # set colors
-# sc_pal <- scico::scico(10, palette = "lajolla")[c(8, 6, 3)]
 sc_pal <- scico::scico(10, palette = "devon")[c(1, 4, 6)]
 
+
+# Put a density plot on top
 p_dens <- 
   dat_acq %>% 
   ggplot(aes(x = originDate,
              y = stat(count),
              fill = acquisition)) +
-  # geom_histogram() +
   geom_density(alpha = .5) +
   scale_fill_manual(
     values = sc_pal,
@@ -74,14 +55,15 @@ p_dens <-
                          keywidth=unit(14, units = "mm"), 
                          nrow = 1,
                          reverse = TRUE)) +
-  # guides(fill = FALSE) +
   theme_bw() +
   labs(x = NULL, 
        y = "Density",
        title = "New Cetaceans in Captivity in the US",
        subtitle = "Since the '90s, no new cetacean has been captured",
        fill = "Mean of Acquisition") +
-  theme(plot.title = element_text(colour = "grey20",
+  theme(text = element_text(family = "Arial Narrow",
+                             colour = "grey40"),
+        plot.title = element_text(colour = "grey20",
                                   face = "bold",
                                   size = 18, family = "Arial Narrow"),
         plot.subtitle = element_text(colour = "grey40",
@@ -93,7 +75,8 @@ p_dens <-
         plot.margin = margin(t = 10, r = 10, b = 0, l = 3, unit = "mm"),
         legend.position = "top")
 
-# p_dens
+
+# and a rug at the bottom
 
 half_width <- .33
 
@@ -102,8 +85,6 @@ p_point <-
   ggplot(aes(x = originDate,
              y = acquisition %>% as.numeric(),
              colour = acquisition)) +
-  # geom_jitter(width = 0, height = .1,
-  #             alpha = .3) +
   geom_linerange(aes(ymin = as.numeric(acquisition) - half_width,
                      ymax = as.numeric(acquisition) + half_width),
                  lwd = .2) +
@@ -113,12 +94,13 @@ p_point <-
   guides(colour = FALSE) +
   theme_bw() +
   theme(aspect.ratio = .12,
-        plot.margin = margin(t = 0, r = 10, b = 10, l = 3, unit = "mm")) +
+        plot.margin = margin(t = 0, r = 10, b = 10, l = 3, unit = "mm"),
+        text = element_text(family = "Arial Narrow",
+                            colour = "grey40")) +
   labs(x = "Day of Acquisiton",
        y = "",
        caption = "Sources: FOIA, Ceta-Base; collected by Amber Thomas | Plot by @othomn")
 
-# p_point
 
 
 # Put them together -------------------------------------------------------
