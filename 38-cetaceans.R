@@ -1,7 +1,10 @@
 library(tidyverse)
-library(glue)
 library(lubridate)
 library(rlang)
+library(gtable)
+library(gridExtra)
+library(grid)
+library(scico)
 
 # Get Data ----------------------------------------------------------------
 
@@ -43,6 +46,7 @@ dat %>%
   geom_point() +
   facet_grid(. ~ acquisition)
 
+# prepare data for plots
 dat_acq <- 
   dat %>% 
   filter(acquisition %in% c("Born", "Capture", "Rescue")) %>% 
@@ -50,20 +54,27 @@ dat_acq <-
     acquisition, levels = c("Rescue", "Born", "Capture")
   )) 
 
+
+# set colors
+sc_pal <- scico::scico(10, palette = "lajolla")[c(8, 6, 3)]
+
 p_dens <- 
-  dat %>% 
-  filter(acquisition %in% c("Born", "Capture", "Rescue")) %>% 
+  dat_acq %>% 
   ggplot(aes(x = originDate,
              y = stat(count),
              fill = acquisition)) +
   # geom_histogram() +
   geom_density(alpha = .5) +
-  # geom_rug() +
-  # facet_grid(acquisition ~ .) +
+  
+  scale_fill_manual(values = sc_pal) +
   guides(fill = FALSE) +
-  theme_bw()
+  theme_bw() +
+  labs(x = NULL) +
+  theme(aspect.ratio = .5,
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
 
-p_dens
+# p_dens
 
 half_width <- .33
 
@@ -79,17 +90,21 @@ p_point <-
                  lwd = .2) +
   scale_y_continuous(breaks = 1:3,
                      labels = levels(dat_acq$acquisition)) +
+  scale_color_manual(values = sc_pal) +
   guides(colour = FALSE) +
-  theme_bw()
+  theme_bw() +
+  theme(aspect.ratio = .2)
 
 p_point
 
 
 # Put them together -------------------------------------------------------
 
-library(gtable)
-library(grid)
+png(filename = "plots/38-cetaceans.png",
+    height = 1600, width = 2000,
+    res = 300)
 grid.newpage()
 gtable_rbind(p_dens %>% ggplotGrob(),
              p_point %>% ggplotGrob()) %>% 
   grid.draw()
+dev.off() 
