@@ -5,6 +5,7 @@ library(gtable)
 library(gridExtra)
 library(grid)
 library(scico)
+library(magrittr)
 
 # Get Data ----------------------------------------------------------------
 
@@ -24,6 +25,59 @@ if(!file.exists(dat_path)) {
 } else {
   load(dat_path)
 }
+
+# Statistics for number bound between 1 - 10? -----------------------------
+
+# Average votes between 1 and 10 are not normal distributed
+
+dat %>%
+  filter(genres %>% str_detect("Drama")) %>% 
+  ggplot(aes(x = date, y = av_rating)) +
+  geom_hex()
+
+# How to describe it?
+
+dat %>%
+  filter(genres %>% str_detect("Drama")) %>% 
+  ggplot(aes(x = date, y = av_rating, colour = share)) +
+  geom_point(alpha = .8) +
+  geom_smooth(method = "lm",
+              formula = y ~ poly(x, 3),
+              colour = "orange") +
+  scale_color_viridis_c(trans = "log")
+
+# Most of the high share ratings are above the regression line
+
+
+# Is Star Trek DS9 the only one below? ------------------------------------
+
+tst <- 
+  dat %>% 
+  filter(genres %>% str_detect("Drama")) %>% 
+  mutate(year = date %>% year() %>% as.factor())
+
+tst %>% 
+  ggplot(aes(x = year, y = av_rating)) +
+  # geom_boxplot() +
+  stat_summary(fun.y = "median", fun.ymax = "median", fun.ymin = "median",
+               na.rm = TRUE,
+               colour = "orange",
+               geom = "crossbar", width = 0.5) +
+  
+
+tst %>% 
+  group_by(year) %>% 
+  top_n(n = 1, wt = share) %>% 
+  arrange(year) %T>% 
+  View()
+  
+
+# Test a polynomial regr --------------------------------------------------
+
+dat %>% 
+
+dat %>%
+  filter(genres %>% str_detect("Drama")) %>% 
 
 # Explore genres rating ---------------------------------------------------
 
@@ -145,3 +199,15 @@ w_lm_ds9 <-
 w_lm_ds9 %>% autoplot()
 
 w_lm %>% tidy()
+
+
+# ratio vs av_rating ------------------------------------------------------
+
+dat %>% 
+  ggplot(aes(x = av_rating, y = share)) +
+  geom_hex()
+
+
+genre_df %>% 
+  filter(genre_id == "Drama") %>%
+  slice(1668)
