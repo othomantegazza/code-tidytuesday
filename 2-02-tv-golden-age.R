@@ -7,6 +7,21 @@ library(grid)
 library(scico)
 library(magrittr)
 
+
+# Set theme and functions -------------------------------------------------
+
+theme_set(theme_bw() + 
+            theme(legend.position = "right",
+                  text = element_text(family = "Arial Narrow",
+                                      colour = "grey40"),
+                  plot.title = element_text(colour = "grey20",
+                                            face = "bold",
+                                            size = 18, family = "Arial Narrow"),
+                  plot.subtitle = element_text(colour = "grey40",
+                                               face = "bold",
+                                               size = 12),
+                  aspect.ratio = .70))
+
 # Get Data ----------------------------------------------------------------
 
 
@@ -26,30 +41,63 @@ if(!file.exists(dat_path)) {
   load(dat_path)
 }
 
-# Statistics for number bound between 1 - 10? -----------------------------
 
-# Average votes between 1 and 10 are not normal distributed
+# Basic plot, then add layer ----------------------------------------------
 
-dat %>%
-  filter(genres %>% str_detect("Drama")) %>% 
-  ggplot(aes(x = date, y = av_rating)) +
-  geom_hex()
 
-# How to describe it?
-
+p <- 
 dat %>%
   filter(genres %>% str_detect("Drama")) %>% 
   ggplot(aes(x = date, y = av_rating, colour = share)) +
   geom_point(alpha = .8) +
+  scale_color_viridis_c(trans = "log10",
+                        breaks = c(.01, .1, 1, 10, 50)
+                        # limits = c(NA, 100)
+                        ) +
+  labs(x = "Original Airing Date",
+       y = "Average Rating",
+       colour = str_wrap("Share of yearly votes", width = 12))
+
+# How to describe it?
+# 1. Is it normally distributed?
+# 2. There is this issue with low share ratings :
+#   - https://www.evanmiller.org/how-not-to-sort-by-average-rating.html
+#   - https://redditblog.com/2009/10/15/reddits-new-comment-sorting-system/
+# 3. For best series share is higher, (they get more attention?)
+#   - It requires a slump to get high share and bad rating
+
+#  Most of the high share ratings are above the regression line -----------
+
+p + labs(title = "Series with high rating get more votes")
+
+p_lm <- 
+  p +
   geom_smooth(method = "lm",
               formula = y ~ poly(x, 3),
-              colour = "orange") +
-  scale_color_viridis_c(trans = "log")
-
-# Most of the high share ratings are above the regression line
-
+              colour = "orange")
 
 # Is Star Trek DS9 the only one below? ------------------------------------
+
+# base plot for highlightings
+
+
+p_lm +
+  geom_point(data = . %>% 
+               mutate(year = year(date)) %>% 
+               group_by(year) %>% 
+               top_n(n = 1, wt = share),
+             colour = "orange", size = 3) +
+  ggrepel::geom_text_repel(data = . %>% 
+                              mutate(year = year(date)) %>% 
+                              group_by(year) %>% 
+                              top_n(n = 1, wt = share) %>% 
+                              filter(av_rating < 8),
+                           aes(label = title), 
+                           angle = 90,
+                           colour = "orange",
+                           ylim = c(NA, 6))
+  
+
 
 tst <- 
   dat %>% 
