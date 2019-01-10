@@ -70,8 +70,8 @@ p <-
   dat_drama %>% 
   ggplot(aes(x = date, y = av_rating, colour = share)) +
   geom_point(alpha = .8, size = 2) +
-                        breaks = c(.01, .1, 1, 10, 50),
   scale_color_viridis_c(trans = "log10",
+                        breaks = c(.01, .1, 1, 10, 50),
                         # limits = c(NA, 100)
                         guide = guide_colourbar(barheight = 12)) +
   labs(x = "Original Airing Date",
