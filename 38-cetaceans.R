@@ -115,3 +115,45 @@ gtable_rbind(p_dens %>% ggplotGrob(),
   grid.draw()
 dev.off() 
 
+
+# Try logistic regression -------------------------------------------------
+
+dat2 <- 
+  dat_acq %>%
+  arrange(originDate) %>% 
+  # filter(acquisition %in% c("Born", "Capture")) %>% 
+  # mutate(acquisition = forcats::fct_relevel(acquisition)) %>% pull(acquisition)
+  mutate(acquisition = acquisition %>% 
+           fct_collapse(Others = c("Born", "Rescue")) %>% 
+           fct_inorder(f = .))#levels = c("Capture", "Others"))) #pull(acquisition)
+
+fit <- 
+  dat2 %>% 
+  {glm(acquisition ~ originDate, data = ., family = "binomial")}
+
+dat2 %>%
+  mutate(acquisition = as.numeric(acquisition) %>% `-`(1)) %>% #pull(acquisition)
+  ggplot(aes(x = originDate,
+             y = acquisition, #%>% as.numeric() %>% `-`(1),
+             colour = acquisition)) +# %>% as.character() %>% as_factor())) +
+  # geom_point() +
+  geom_linerange(aes(ymin = as.numeric(acquisition) - half_width*.2,
+                     ymax = as.numeric(acquisition) + half_width*.2),
+                 lwd = .2) +
+  geom_smooth(method = "glm",
+              method.args = list(family = "binomial"),
+              se = FALSE) +
+  scale_y_continuous(breaks = c(0,1),
+                     labels = levels(dat2$acquisition)) +
+  # scale_color_manual(values = sc_pal) +
+  guides(colour = FALSE) +
+  theme_bw() +
+  theme(aspect.ratio = .4,
+        plot.margin = margin(t = 0, r = 10, b = 10, l = 3, unit = "mm"),
+        text = element_text(family = "Arial Narrow",
+                            colour = "grey40")) +
+  labs(x = "Day of Acquisiton",
+       y = "",
+       caption = "Sources: FOIA, Ceta-Base; collected by Amber Thomas | Plot by @othomn")
+
+
