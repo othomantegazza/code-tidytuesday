@@ -118,7 +118,11 @@ dev.off()
 
 # Try logistic regression -------------------------------------------------
 
-dat2 <- 
+# For acquisition: use two levels:
+# - Capture: the original and less respectful method
+# - Others: Born +  Rescue = more modern and respectful methods
+
+dat_acq2 <- 
   dat_acq %>%
   arrange(originDate) %>% 
   # filter(acquisition %in% c("Born", "Capture")) %>% 
@@ -127,11 +131,58 @@ dat2 <-
            fct_collapse(Others = c("Born", "Rescue")) %>% 
            fct_inorder(f = .))#levels = c("Capture", "Others"))) #pull(acquisition)
 
+# reset colour palette with two levels
+# set colors
+sc_pal2 <- sc_pal[c(2,3,1)]
+
+# Put a density plot on top, again
+p_dens <- 
+  dat_acq2 %>% 
+  ggplot(aes(x = originDate,
+             y = stat(count),
+             fill = acquisition)) +
+  geom_density(alpha = .5) +
+  scale_fill_manual(
+    values = sc_pal2,
+    guide = guide_legend(title.vjust = .2,
+                         label.position = "top",
+                         keyheight = unit(4, units = "mm"),
+                         keywidth=unit(14, units = "mm"), 
+                         nrow = 1)) +
+  theme_bw() +
+  labs(x = NULL, 
+       y = "Density",
+       title = "New Cetaceans in Captivity in the US",
+       subtitle = str_wrap("With a classifier that estimates the probability that
+                           a new cetaceans was acquired by friendly means [Not Captured]
+                           as a function of the Day of Acquisition"),
+       fill = "Mean of Acquisition") +
+  theme(text = element_text(family = "Arial Narrow",
+                            colour = "grey40"),
+        plot.title = element_text(colour = "grey20",
+                                  face = "bold",
+                                  size = 18, family = "Arial Narrow"),
+        plot.subtitle = element_text(colour = "grey40",
+                                     face = "bold",
+                                     size = 12),
+        aspect.ratio = .35,
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.margin = margin(t = 10, r = 10, b = 0, l = 3, unit = "mm"),
+        legend.position = "top")
+
+p_dens
+
+# fit logistic regression
+
 fit <- 
   dat2 %>% 
   {glm(acquisition ~ originDate, data = ., family = "binomial")}
 
-dat2 %>%
+# plot it
+
+p_logit <- 
+  dat2 %>%
   mutate(acquisition = as.numeric(acquisition) %>% `-`(1)) %>% #pull(acquisition)
   ggplot(aes(x = originDate,
              y = acquisition, #%>% as.numeric() %>% `-`(1),
@@ -142,18 +193,35 @@ dat2 %>%
                  lwd = .2) +
   geom_smooth(method = "glm",
               method.args = list(family = "binomial"),
-              se = FALSE) +
-  scale_y_continuous(breaks = c(0,1),
-                     labels = levels(dat2$acquisition)) +
-  # scale_color_manual(values = sc_pal) +
+              se = FALSE,
+              colour = sc_pal2[3]) +
+  ggplot2::annotate(x = as_date(as_date("2004-01-01")),
+                    y = .5,
+                    geom = "label",
+                    label = "estimated probabilities\n(logistic regression)",
+                    fill = sc_pal2[3],
+                    colour = "white") +
+  scale_color_continuous(low = sc_pal2[1],
+                         high = sc_pal2[2]) +
   guides(colour = FALSE) +
   theme_bw() +
-  theme(aspect.ratio = .4,
+  theme(aspect.ratio = .28,
         plot.margin = margin(t = 0, r = 10, b = 10, l = 3, unit = "mm"),
         text = element_text(family = "Arial Narrow",
                             colour = "grey40")) +
   labs(x = "Day of Acquisiton",
-       y = "",
+       y = "PROBABILITY\nthat new Cetacean was NOT Captured",
        caption = "Sources: FOIA, Ceta-Base; collected by Amber Thomas | Plot by @othomn")
 
-
+p_logit
+ 
+# save new plot with logistic regression
+png(filename = "plots/38-cetaceans-logit.png",
+    height = 2000, width = 2200,
+    res = 300)
+grid.newpage()
+gtable_rbind(p_dens %>% ggplotGrob(),
+             p_logit %>% ggplotGrob(),
+             size = "max") %>% 
+  grid.draw()
+dev.off() 
