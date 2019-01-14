@@ -143,15 +143,16 @@ p_dens <-
              fill = acquisition)) +
   geom_density(alpha = .5) +
   scale_fill_manual(
+    labels = c("Capture", "Others\n[Born or Rescue]"),
     values = sc_pal2,
-    guide = guide_legend(title.vjust = .2,
+    guide = guide_legend(title.vjust = .2, 
                          label.position = "top",
                          keyheight = unit(4, units = "mm"),
                          keywidth=unit(14, units = "mm"), 
                          nrow = 1)) +
   theme_bw() +
   labs(x = NULL, 
-       y = "Density",
+       y = "Density\nNew Captives per Day",
        title = "New Cetaceans in Captivity in the US",
        subtitle = str_wrap("With a classifier that estimates the probability that
                            a new cetaceans was acquired by friendly means [Not Captured]
@@ -198,7 +199,7 @@ p_logit <-
   ggplot2::annotate(x = as_date(as_date("2004-01-01")),
                     y = .5,
                     geom = "label",
-                    label = "estimated probabilities\n(logistic regression)",
+                    label = "estimated probability\n(logistic regression)",
                     fill = sc_pal2[3],
                     colour = "white") +
   scale_color_continuous(low = sc_pal2[1],
@@ -210,7 +211,7 @@ p_logit <-
         text = element_text(family = "Arial Narrow",
                             colour = "grey40")) +
   labs(x = "Day of Acquisiton",
-       y = "PROBABILITY\nthat new Cetacean was NOT Captured",
+       y = "PROBABILITY\nthat new Cetacean\nwas NOT Captured",
        caption = "Sources: FOIA, Ceta-Base; collected by Amber Thomas | Plot by @othomn")
 
 p_logit
