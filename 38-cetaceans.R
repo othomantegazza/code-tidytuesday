@@ -155,7 +155,7 @@ p_dens <-
        y = "Density\nNew Captives per Day",
        title = "New Cetaceans in Captivity in the US",
        subtitle = str_wrap("With a classifier that estimates the probability that
-                           a new cetaceans was acquired by friendly means [Not Captured]
+                           a new cetacean was acquired by friendly means [Not Captured]
                            as a function of the Day of Acquisition"),
        fill = "Mean of Acquisition") +
   theme(text = element_text(family = "Arial Narrow",
@@ -177,13 +177,13 @@ p_dens
 # fit logistic regression
 
 fit <- 
-  dat2 %>% 
+  dat_acq2 %>% 
   {glm(acquisition ~ originDate, data = ., family = "binomial")}
 
 # plot it
 
 p_logit <- 
-  dat2 %>%
+  dat_acq2 %>%
   mutate(acquisition = as.numeric(acquisition) %>% `-`(1)) %>% #pull(acquisition)
   ggplot(aes(x = originDate,
              y = acquisition, #%>% as.numeric() %>% `-`(1),
