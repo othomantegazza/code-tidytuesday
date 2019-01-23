@@ -28,15 +28,15 @@ dat$prison_population %>% is.na() %>% sum()
 tst <- 
   dat %>% 
   filter(pop_category == "Total",
-         year > 1990,
+         year > 1988,
          year != 2016) %>% 
   group_by(state, county_name) %>% 
   mutate(has_na = anyNA(prison_population)) %>% 
   filter(!has_na) %>% 
   ungroup()
 
-tst %>%
-  filter(is.na(prison_population)) %>% View()
+# tst %>%
+#   filter(is.na(prison_population)) %>% View()
 
 tst_sum <- 
   tst %>% 
@@ -75,4 +75,41 @@ tst %>%
   geom_line() +
   scale_y_log10()
 
+# plot ratio
 
+tst_sum %>% 
+  ungroup() %>% 
+  group_by(year) %>% 
+  summarise(prison_population = sum(prison_population),
+            population = sum(population)) %>% 
+  mutate(ratio = prison_population/population) %>% 
+  ggplot(aes(x = year,
+             y = ratio)) +
+  geom_line()
+
+
+# Try with more details ---------------------------------------------------
+
+by_cat <- 
+  dat %>% 
+  filter(pop_category != "Total",
+         year > 1988,
+         year != 2016) %>% 
+  group_by(state, county_name) %>% 
+  mutate(has_na = anyNA(prison_population)) %>% 
+  filter(!has_na) %>% 
+  ungroup()
+
+by_cat %>% 
+  mutate(ratio = prison_population/population) %>% 
+  ggplot(aes(x = year,
+             y = ratio,
+             group = year)) +
+  geom_boxplot() +
+  facet_grid(pop_category ~ .,
+             scales = "free")
+
+# Observation:
+# -ratio of males much higher than ratio of women
+# -ratio of black higher than any other ratio, expecially asians
+# -ratio of latino high only in three states?
