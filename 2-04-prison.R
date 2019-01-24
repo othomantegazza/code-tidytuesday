@@ -20,6 +20,33 @@ if(!file.exists(dat_path)) {
 }
 
 
+# Check NAs ---------------------------------------------------------------
+
+dat_state <- 
+  dat %>% 
+  filter(pop_category == "Total",
+         year > 1982, 
+         year != 2016) %>% 
+  group_by(year, state) %>% 
+  summarise(prison_population = sum(prison_population, na.rm = TRUE),
+            population = sum(population, na.rm = TRUE)) %>% 
+  mutate(ratio = prison_population/population)
+
+p <- 
+  dat_state %>% 
+  ggplot(aes(x = year,
+             y = state,
+             fill = prison_population)) +
+  geom_raster() +
+  scale_fill_viridis_c(trans = "log")
+
+png(filename = "plots/2-04-prison-NAs.png",
+    height = 1500, width = 1500,
+    res = 300)
+p %>% print()
+dev.off()
+
+dat %>% filter(state == "NM") %>% pull(prison_population) %>% is.na() %>% all()
 
 # Only on counties without na? --------------------------------------------
 
