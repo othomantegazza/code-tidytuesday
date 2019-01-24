@@ -192,7 +192,7 @@ by_cat_hyp <-
 # https://github.com/GuangchuangYu/DOSE/blob/master/R/enricher_internal.R
 
 dhyper2 <- function(x, m, n, k, ...) dhyper(x, m, n, k, log = TRUE)
-phyper2 <- function(q, m, n, k, ...) phyper(q, m, n, k, lower.tail = FALSE)
+phyper2 <- function(q, m, n, k, ...) phyper(q, m, n, k, log.p = TRUE, lower.tail = FALSE)
 
 
 by_cat_hyp2 <- 
@@ -207,13 +207,21 @@ by_cat_hyp2 <-
             k = prison_population_total) %>% # balls drawn from the urn
   # apply dhyper() to every row
   mutate(d = pmap(., .f = dhyper2) %>% purrr::flatten_dbl(),
-         p = pmap(., .f = phyper2) %>% purrr::flatten_dbl())
+         log_p = pmap(., .f = phyper2) %>% purrr::flatten_dbl())
 
 by_cat_hyp2$d
-by_cat_hyp2$p
+by_cat_hyp2$log_p
 
 by_cat_hyp2 %>% 
+  # I could have filtered out this earlier,
+  # but it served as practical control
+  filter(pop_category != "Total") %>% 
+  # filter categories not overepresented
+  filter(log_p < -100) %>% 
   ggplot(aes(x = year,
-             y = -d)) +
-  geom_bar(stat = "identity") +
-  facet_grid(pop_category ~ .)
+             y = -log_p)) +
+  geom_bar(stat = "identity",
+           fill = "orange",
+           colour = "black") +
+  facet_grid(pop_category ~ .) +
+  theme_bw()
