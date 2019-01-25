@@ -1,58 +1,101 @@
-library(tidyverse)
+---
+title: "An analysis of Vera institute's prison dataset"
+subtitle: "Tidytuesday week 4"
+author: "Otho Mantegazza"
+date: 2019-01-25
+editor_options: 
+  chunk_output_type: console
+---
 
+# Intro
+
+This is week 4 of the social data project TidyTuesday. In this week, we explore the incarceration trend dataset. This dataset stores US demographic and incarceration data by county and by gender and ethnic profile for the last 30 years.
+
+The incarceration trend dataset is kindly provided by the [Vera Institute](https://www.vera.org/) on their [Github page](https://github.com/vera-institute/incarceration_trends). Analyzing this dataset aims at remembering of the social injustices still present in our world on Martin Luther King Jr. Day.
+
+I want to practice modelling rather than data wrangling and tidying, so I decided to start from the file `prison_population.csv`, from [Tidytuesday's github page](https://github.com/rfordatascience/tidytuesday) which has already been tidied by Thomas Mock.
+
+```{r, message = FALSE, warning = FALSE}
+# Setup -------------------------------------------------------------------
+library(tidyverse)
+theme_set(theme_bw())
+```
+
+```{r}
 # Get Data ----------------------------------------------------------------
 
+# download data directly from github and store them as Rdata locally.
 
 dat_path <- "data/2-04-prison.Rdata"
 dat_url <- paste0("https://raw.githubusercontent.com/",
                   "rfordatascience/tidytuesday/master/data/",
                   "/2019/2019-01-22/prison_population.csv")
-# dat_url <- "~/Desktop/tidytuesday/data/2019/2019-01-22/prison_population.csv"
-
 
 if(!file.exists(dat_path)) {
-  dat <- 
-    read_csv(dat_url)
   
+  dat <- read_csv(dat_url)
   save(dat, file = dat_path)
   
 } else {
   load(dat_path)
 }
+```
+
+# A strategy for missing values [NA]
 
 
-# Check NAs ---------------------------------------------------------------
+Collecting such detailed data is a massive effort, and some missing data are inevitable. For statistical modeling we must select a clear and explicit strategy to deal with measurements that are mixed with missing values.
 
+The dataset `prison_population.csv` has many missing values stored as `NA` in the column `prison_population`. That column counts incarcerated individuals, and it is aour main interest together with the `population` columns that stores a full population census.
+
+```{r}
+# how many NAs in the variable prison_population?
+dat$prison_population %>% is.na() %>% sum()
+```
+
+## Ignore the NAs
+
+A very basic strategy, could be just to ignore the NAs. We can try to plot a quick summary of prison population by state, using `sum(na.rm = TRUE)` to ignore NAs. But this strategy, introduce strange fluctuations in the measurements, because randomly occourring NAs increase or decrease the prison population counts with patterns that are not reflected in reality.
+
+```{r, fig.height=6}
+# Try sum(na.rm = TRUE) --------------------------------------------------------
+
+# summarize the data by state and year
 dat_state <- 
   dat %>% 
   filter(pop_category == "Total",
          year > 1982, 
          year != 2016) %>% 
   group_by(year, state) %>% 
-  summarise(prison_population = sum(prison_population, na.rm = TRUE),
-            population = sum(population, na.rm = TRUE)) %>% 
-  mutate(ratio = prison_population/population)
+  summarise(prison_population = prison_population %>% sum(na.rm = TRUE),
+            population = population %>% sum(na.rm = TRUE)) 
 
-p <- 
-  dat_state %>% 
+# plot them as an heatmap
+dat_state %>% 
   ggplot(aes(x = year,
              y = state,
              fill = prison_population)) +
   geom_raster() +
-  scale_fill_viridis_c(trans = "log")
+  scale_fill_viridis_c(trans = "log10", breaks = 10^(1:5)) +
+  # Do not add padding around x limits
+  scale_x_continuous(expand = expand_scale(0))
+```
 
-png(filename = "plots/2-04-prison-NAs.png",
-    height = 1500, width = 1500,
-    res = 300)
-p %>% print()
-dev.off()
+We can hypothesize that the sharp changes in the `prison_population` variable are caused by missing data, rather than by real changes in the population of prisons.
 
-dat %>% filter(state == "NM") %>% pull(prison_population) %>% is.na() %>% all()
+## A more solid strategy
 
-# Only on counties without na? --------------------------------------------
+As a more solid strategy to deal with missing values, we can keep only measurements from counties in which the variable `prison_population` never has missing values.
 
-dat$prison_population %>% is.na() %>% sum()
+For example, if in a county we did not count the prison population for two years, and we thus have missing values, when we sum the data for those county to the others ignoring NAs, we would notice a sharp increase and decrease in prison population, that was not reflected in reality.
 
+It is better to remove measurements from that county altogether. In this way we have lost some measurements, but the one that we have should reflect better the real trends in prison population.
+
+(If we needed to retain more measurements, we could have tried to impute missing values, but in this case we don't need to. Because we should have already enough measurements to make insightful observations).
+
+We can use `dplyr` to create the new variable `has_na` that is `TRUE` if any measurement from that county contains missing values. And then we can use to filter out those observations.
+
+```{r}
 dat_clean <- 
   dat %>% 
   filter(pop_category == "Total",
@@ -62,22 +105,17 @@ dat_clean <-
   mutate(has_na = anyNA(prison_population)) %>% 
   filter(!has_na) %>% 
   ungroup()
+```
 
-# tst %>%
-#   filter(is.na(prison_population)) %>% View()
+Let's do again the heatmap, but after we have removed counties with missing values.
 
+```{r}
 pop_sum <- 
   dat_clean %>% 
   group_by(year, state) %>% 
   summarise(prison_population = sum(prison_population),
-            population = sum(population)) %>% 
-  mutate(ratio = prison_population/population)
+            population = sum(population))
 
-# tst_sum %>% 
-#   ggplot(aes(x = year,
-#              y = ratio,
-#              group = state)) +
-#   geom_line()
 
 # not clear, are there missing data in specific states?
 # maybe a heatmap can help
@@ -85,9 +123,11 @@ pop_sum <-
 pop_sum %>% 
   ggplot(aes(x = year,
              y = state,
-             fill = ratio)) +
+             fill = prison_population)) +
   geom_raster() +
-  scale_fill_viridis_c()
+  scale_fill_viridis_c(trans = "log10", breaks = 10^(1:5)) +
+  # Do not add padding around x limits
+  scale_x_continuous(expand = expand_scale(0))
 
 dat_clean %>% 
   filter(pop_category == "Total") %>% 
@@ -156,8 +196,9 @@ by_cat_sum <-
   ungroup()
 
 View(by_cat_sum)
+```
 
-
+```{r}
 # Use hypergeometric distribution to discuss category representati --------
 
 # are years and category balanced?
@@ -225,3 +266,6 @@ by_cat_hyp2 %>%
            colour = "black") +
   facet_grid(pop_category ~ .) +
   theme_bw()
+
+```
+

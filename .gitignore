@@ -1,6 +1,9 @@
 data/*
 plots/*
 
+# knitted blog posts
+*.html
+
 # History files
 .Rhistory
 .Rapp.history
