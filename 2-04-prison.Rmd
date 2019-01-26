@@ -185,7 +185,7 @@ Above, we can observe that:
 
 Just to be sure, we can also reproduce the same heatmap as above on all categories
 
-```{r}
+```{r, fig.width=8}
 by_cat %>% 
   mutate(ratio = prison_population/population) %>% 
   ggplot(aes(x = year,
@@ -193,9 +193,12 @@ by_cat %>%
              fill = prison_population)) +
   geom_raster() +
   facet_grid(. ~ pop_category) +
-  scale_fill_viridis_c(trans = "log10", breaks = 10^c(1:5))
+  scale_fill_viridis_c(trans = "log10", breaks = 10^c(1:5)) +
+  # because of facetting, the x axis is very tight
+  theme(axis.text.x = element_text(angle = 90, vjust = .5))
 ```
 
+We can see that data are still rather sparse, but the most important is that for each year/category we have sets of paired observation of `prison_population` and `population` without missing values.
 
 ## Hypergeometric test
 
@@ -211,16 +214,23 @@ by_cat_sum <-
   summarise(population = sum(population),
             prison_population = sum(prison_population)) %>% 
   ungroup()
-
-# are years and category balanced?
-
-by_cat_sum$pop_category %>% table() # yes, 26 years for each category!
 ```
 
-```{r}
-# Use hypergeometric distribution to discuss category representati --------
+Then we have to prepare the data for the function `phyper()` that will estimate the p-value of each observation under the hypergeometric distribution.
 
-# prepare table for hyopergeometric test:
+As state by its help page, the `phyper()` function requires thes parameters:
+
+> - q: vector of quantiles representing the number of white balls drawn without replacement from an urn which contains both black and white balls.
+- m: the number of white balls in the urn.
+- n: the number of black balls in the urn.
+- k: the number of balls drawn from the urn.
+
+>> From the help pages of the [stats package](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/00Index.html)
+
+We can reshape the dataset and place each of those values in a separate column. If we call each column as the appropriate parameter of the function `phyper()`, then we loop this function on each row of the dataset with [`pmap()`](https://r4ds.had.co.nz/iteration.html#mapping-over-multiple-arguments) and match all arguents automatically by name.
+
+```{r}
+# prepare a table for hyopergeometric test:
 # get category total next to each other category
 
 by_cat_tot <- 
@@ -232,24 +242,17 @@ by_cat_hyp <-
   by_cat_sum %>% 
   left_join(by_cat_tot, by = c("year" = "year_total"))
 
-# set a function for hypergeometric test
+# apply phyper() using pmap
 
-# phyper()
-# dhyper()
-# rhyper()
-# qhyper()
-
-# apply dhyper using pmap
-
-# Define phyper wrapper that contains "..."
+# Define phyper() wrapper that contains "..."
 # So that it can be used in pmap with extra variables
 # Test enrichment
 # inspired from
 # https://github.com/GuangchuangYu/DOSE/blob/master/R/enricher_internal.R
 
-dhyper2 <- function(x, m, n, k, ...) dhyper(x, m, n, k, log = TRUE)
-phyper2 <- function(q, m, n, k, ...) phyper(q, m, n, k, log.p = TRUE, lower.tail = FALSE)
-
+phyper2 <- function(q, m, n, k, ...) {
+  phyper(q, m, n, k, log.p = TRUE, lower.tail = FALSE)
+  }
 
 by_cat_hyp <- 
   by_cat_hyp %>% 
@@ -257,12 +260,13 @@ by_cat_hyp <-
   transmute(year = year,
             pop_category = pop_category,
             q = prison_population, # white balls drawn
-            x = prison_population, # white balls drawn
+            # x = prison_population, # white balls drawn
             m = population, # white balls in the urn
             n = population_total - population, # black balls in the urn
             k = prison_population_total) # balls drawn from the urn
-  
 ```
+
+This approach was inspired by the field of genomics and transcriptomics, in which the hypergeometric test is often used to test the if structureal or functional categories of genes are enriched in a given set. Some code here is inspired by [this bioconductor package](https://github.com/GuangchuangYu/DOSE/blob/master/R/enricher_internal.R)
 
 Then we can use [pmap()](https://r4ds.had.co.nz/iteration.html#mapping-over-multiple-arguments) to run an hypergeometric test on each row.
 
@@ -270,28 +274,14 @@ Then we can use [pmap()](https://r4ds.had.co.nz/iteration.html#mapping-over-mult
 # apply dhyper() to every row
 by_cat_hyp <- 
   by_cat_hyp %>% 
-  mutate(d = pmap(., .f = dhyper2) %>% purrr::flatten_dbl(),
-         log_p = pmap(., .f = phyper2) %>% purrr::flatten_dbl())
+  mutate(log_p = pmap(., .f = phyper2) %>% purrr::flatten_dbl())
 ```
 
-And plot
+And eventually we can plot the log p-values with inversed sign, to make the plot more intuitive.
 
 ```{r}
-by_cat_hyp %>% 
-  # I could have filtered out this earlier,
-  # but it served as practical control
-  filter(pop_category != "Total") %>% 
-  # filter categories not overepresented
-  filter(log_p < -100) %>% 
-  ggplot(aes(x = year,
-             y = -log_p)) +
-  geom_bar(stat = "identity",
-           fill = "orange",
-           colour = "black") +
-  facet_grid(pop_category ~ .) +
-  theme_bw()
-
-by_cat_hyp %>% 
+p <- 
+  by_cat_hyp %>% 
   # I could have filtered out this earlier,
   # but it served as practical control
   filter(pop_category != "Total") %>% 
@@ -303,5 +293,48 @@ by_cat_hyp %>%
            fill = "orange",
            colour = "black") +
   facet_grid(pop_category ~ .) 
+
+p %>% print()
 ```
 
+We can see that the categories "Black" and "Male" are far from what we would expect by chance, and, thus, members of that categories are overrepresented.
+
+# Adjust plot for publication
+
+We can asjust the plot labels for publication. Adding clearer labels, a title, and making small adjustments to the layout.
+
+```{r}
+p +
+  labs(title = "Categories that are Overrepresented in US Prisons",
+       subtitle = str_wrap("A quick exploratory analysis of 
+                           the VERA dataset, using a hypergeometric
+                           test to estimate which category is more 
+                           represented than expected"), width = 27,
+       y = "-log(p-value)",
+       x = "Year",
+       caption = "Source: www.vera.org | Plot by @othomn") +
+  theme(text = element_text(family = "Arial Narrow",
+                            colour = "grey40",
+                            size = 11),
+        axis.title = element_text(size = 14),
+        strip.text = element_text(colour = "grey20",
+                                  size = 14),
+        plot.title = element_text(colour = "grey20",
+                                  face = "bold",
+                                  size = 18),
+        plot.subtitle = element_text(face = "bold",
+                                     size = 12),
+        aspect.ratio = .2,   
+        plot.margin = margin(t = 10, r = 10, b = 0, l = 3,
+                             unit = "mm"))
+```
+
+# Interpretation and closing remarks
+
+This is a quick analysis and my take on [Tidytuesday week 4 dataset](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-01-22).
+
+My analysis shows an issue that is widely known, that African American are overrepresented in US prisons. But this just a statistical analysis, which could be helpful or misleading if not contextualized. If you have any suggestion on how to improve my analysis, please contact me.
+
+Unfortunately, in here I don't contextualize and I don't discuss this results. If you are interested in this topic, if you feel engaged by these results, and you want to know more, and interpretate this data, you'll have to contextualize this results. To do so, you'll have to read about history and societal issues. 
+
+Many thanks to Thomas Mock for bringing the work of the Vera institute to our attention on Martin Luther King Jr. Day.
