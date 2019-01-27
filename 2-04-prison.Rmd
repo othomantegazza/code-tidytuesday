@@ -9,11 +9,11 @@ editor_options:
 
 # Intro
 
-This is week 4 of the social data project TidyTuesday. In this week, we explore the incarceration trend dataset. This dataset stores US demographic and incarceration data by county and by gender and ethnic profile for the last 30 years.
+This is week 4 of the social data project TidyTuesday. In this week, we explore the incarceration trend dataset. This dataset stores US demographic and incarceration data by county and by gender / ethnic profile for the last 30 years.
 
 The incarceration trend dataset is kindly provided by the [Vera Institute](https://www.vera.org/) on their [Github page](https://github.com/vera-institute/incarceration_trends). Analyzing this dataset aims at remembering of the social injustices still present in our world on Martin Luther King Jr. Day.
 
-I want to practice modelling rather than data wrangling and tidying, so I decided to start from the file `prison_population.csv`, from [Tidytuesday's github page](https://github.com/rfordatascience/tidytuesday) which has already been tidied by Thomas Mock.
+For this analysis, I want to practice modelling rather than data wrangling and tidying, so I decided to start from the file `prison_population.csv`, from [Tidytuesday's github page](https://github.com/rfordatascience/tidytuesday) which has already been tidied by Thomas Mock.
 
 ```{r, message = FALSE, warning = FALSE}
 # Setup -------------------------------------------------------------------
@@ -44,9 +44,9 @@ if(!file.exists(dat_path)) {
 # A strategy for missing values [NA]
 
 
-Collecting such detailed data is a massive effort, and some missing data are inevitable. For statistical modeling we must select a clear and explicit strategy to deal with measurements that are mixed with missing values.
+Collecting such detailed data is a massive effort, and some missing values are inevitable. For statistical modeling we must select a clear and explicit strategy to deal with measurements that are mixed with missing values.
 
-The dataset `prison_population.csv` has many missing values stored as `NA` in the column `prison_population`. That column counts incarcerated individuals, and it is aour main interest together with the `population` columns that stores a full population census.
+The dataset `prison_population.csv` has many missing values stored as `NA` in the column `prison_population`. That column counts incarcerated individuals, and it is our main interest together with the `population` columns that stores a full population census.
 
 ```{r}
 # how many NAs in the variable prison_population?
@@ -55,7 +55,7 @@ dat$prison_population %>% is.na() %>% sum()
 
 ## Ignore the NAs
 
-A very basic strategy, could be just to ignore the NAs. We can try to plot a quick summary of prison population by state, using `sum(na.rm = TRUE)` to ignore NAs. But this strategy, introduce strange fluctuations in the measurements, because randomly occourring NAs increase or decrease the prison population counts with patterns that are not reflected in reality.
+A very basic strategy, could be just to ignore the NAs. We can try to plot a quick summary of prison population by state, using `sum(na.rm = TRUE)` to ignore NAs. But this strategy, introduce strange fluctuations in the measurements, because randomly occurring NAs increase or decrease the prison population counts with patterns that are not reflected in reality.
 
 ```{r, fig.height=6}
 # Try sum(na.rm = TRUE) --------------------------------------------------------
@@ -87,9 +87,9 @@ We can hypothesize that the sharp changes in the `prison_population` variable ar
 
 As a more solid strategy to deal with missing values, we can keep only measurements from counties in which the variable `prison_population` never has missing values.
 
-For example, if in a county we did not count the prison population for two years, and we thus have missing values, when we sum the data for those county to the others ignoring NAs, we would notice a sharp increase and decrease in prison population, that was not reflected in reality.
+For example, if in a county we did not count the prison population for two years, and we thus have missing values, when we sum the data for those county to the others ignoring NAs, we would notice a sharp increase and decrease in prison population, that is not reflected in reality.
 
-It is better to remove measurements from that county altogether. In this way we have lost some measurements, but the one that we have should reflect better the real trends in prison population.
+It is better to remove measurements from that county altogether. In this way we may lose some measurements. But the time series that we retain reflects better the real trends in prison population.
 
 (If we needed to retain more measurements, we could have tried to impute missing values, but in this case we don't need to. Because we should have already enough measurements to make insightful observations).
 
@@ -128,7 +128,7 @@ dat_clean %>%
   scale_x_continuous(expand = expand_scale(0))
 ```
 
-(If you compare this heatmap with the one before, you'll notice that here the colour scale is mapped to a linear scale, rather then a log scale, beacause in this case the differences are so smooth that they get inperceptible in log scale.)
+(If you compare this heatmap with the one before, you'll notice that here the colour scale is mapped to a linear scale, rather then a log scale, because in this case the differences are so smooth that they get imperceptible in log scale.)
 
 Now the progression through time is much smoother.
 
@@ -139,9 +139,9 @@ As you notice, I have restricted the time span from 1990 to 2015 to retain more 
 setdiff(dat$state, dat_clean$state)
 ```
 
-We can anyway go on, apply this system to remove NA to the observations split by gender and ethnic categories, and test on that dataset which category is overepresented in prison population.
+We can anyway go on, apply this system to remove NA to the observations split by gender and ethnic categories, and test on that dataset which category is overrepresented in prison population.
 
-# Which Category is Over Represented?
+# Which Category is Overrepresented?
 
 First, we can clean from missing values the observations that are split by categories.
 
@@ -179,11 +179,11 @@ by_cat %>%
 
 Above, we can observe that:
 
-- The ratio of african american [Black] incarcerated is higher than any other category, with median around 0.02.
+- The ratio of African american [Black] incarcerated is higher than any other category, with median around 0.02.
 - The ratio of males incarcerated is very high, with median going from 0.01 to 0.02.
-- The ratio of "Latino" incarcerated is high only in three states, which are outliers to the boxplot.
+- The ratio of `Latino` and `Native American` incarcerated are also high.
 
-Just to be sure, we can also reproduce the same heatmap as above on all categories
+Just to be sure, we can also reproduce the same heatmap as above on all categories.
 
 ```{r, fig.width=8}
 by_cat %>% 
@@ -198,11 +198,11 @@ by_cat %>%
   theme(axis.text.x = element_text(angle = 90, vjust = .5))
 ```
 
-We can see that data are still rather sparse, but the most important is that for each year/category we have sets of paired observation of `prison_population` and `population` without missing values.
+We can see that data are still sparse, but importantly, for each year/category we have sets of paired observation of `prison_population` and `population` without missing values.
 
 ## Hypergeometric test
 
-We can model this data with an [hypergeometric distribution](https://stattrek.com/probability-distributions/hypergeometric.aspx), and use it to test if a category of gender or ethnicity is overepresented. 
+We can model this data with an [hypergeometric distribution](https://stattrek.com/probability-distributions/hypergeometric.aspx), and use it to test if a category of gender or ethnicity is overrepresented. 
 
 First, we can (again) summarize observation by state and year (we don't want to test over-representation for every county).
 
@@ -218,7 +218,7 @@ by_cat_sum <-
 
 Then we have to prepare the data for the function `phyper()` that will estimate the p-value of each observation under the hypergeometric distribution.
 
-As state by its help page, the `phyper()` function requires thes parameters:
+As state by its help page, the `phyper()` function requires these parameters:
 
 > - q: vector of quantiles representing the number of white balls drawn without replacement from an urn which contains both black and white balls.
 - m: the number of white balls in the urn.
@@ -227,7 +227,7 @@ As state by its help page, the `phyper()` function requires thes parameters:
 
 >> From the help pages of the [stats package](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/00Index.html)
 
-We can reshape the dataset and place each of those values in a separate column. If we call each column as the appropriate parameter of the function `phyper()`, then we loop this function on each row of the dataset with [`pmap()`](https://r4ds.had.co.nz/iteration.html#mapping-over-multiple-arguments) and match all arguents automatically by name.
+We can reshape the dataset and place each of those values in a separate column. If we call each column as the appropriate parameter of the function `phyper()`, then we loop this function on each row of the dataset with [`pmap()`](https://r4ds.had.co.nz/iteration.html#mapping-over-multiple-arguments) and match all arguments automatically by name.
 
 ```{r}
 # prepare a table for hyopergeometric test:
@@ -266,7 +266,7 @@ by_cat_hyp <-
             k = prison_population_total) # balls drawn from the urn
 ```
 
-This approach was inspired by the field of genomics and transcriptomics, in which the hypergeometric test is often used to test the if structureal or functional categories of genes are enriched in a given set. Some code here is inspired by [this bioconductor package](https://github.com/GuangchuangYu/DOSE/blob/master/R/enricher_internal.R)
+This approach was inspired by the field of genomics and transcriptomics, in which the hypergeometric test is often used to test the if structural or functional categories of genes are enriched in a given set. Some code here is inspired by [this bioconductor package](https://github.com/GuangchuangYu/DOSE/blob/master/R/enricher_internal.R)
 
 Then we can use [pmap()](https://r4ds.had.co.nz/iteration.html#mapping-over-multiple-arguments) to run an hypergeometric test on each row.
 
@@ -277,7 +277,7 @@ by_cat_hyp <-
   mutate(log_p = pmap(., .f = phyper2) %>% purrr::flatten_dbl())
 ```
 
-And eventually we can plot the log p-values with inversed sign, to make the plot more intuitive.
+And eventually we can plot the log p-values with inverse sign, to make the plot more intuitive.
 
 ```{r}
 p <- 
@@ -301,10 +301,11 @@ We can see that the categories "Black" and "Male" are far from what we would exp
 
 # Adjust plot for publication
 
-We can asjust the plot labels for publication. Adding clearer labels, a title, and making small adjustments to the layout.
+We can adjust the plot labels for publication. Adding clearer labels, a title, and making small adjustments to the layout.
 
 ```{r}
-p +
+p2 <- 
+  p +
   labs(title = "Categories that are Overrepresented in US Prisons",
        subtitle = str_wrap("A quick exploratory analysis of 
                            the VERA dataset, using a hypergeometric
@@ -327,7 +328,19 @@ p +
         aspect.ratio = .2,   
         plot.margin = margin(t = 10, r = 10, b = 0, l = 3,
                              unit = "mm"))
+
+p2 %>% print()
 ```
+
+```{r, echo = FALSE, eval = FALSE}
+# save as png
+png(filename = "plots/2-04-prison.png",
+    height = 1400, width = 2300,
+    res = 300)
+p2 %>% print()
+dev.off() 
+```
+
 
 # Interpretation and closing remarks
 
@@ -335,6 +348,6 @@ This is a quick analysis and my take on [Tidytuesday week 4 dataset](https://git
 
 My analysis shows an issue that is widely known, that African American are overrepresented in US prisons. But this just a statistical analysis, which could be helpful or misleading if not contextualized. If you have any suggestion on how to improve my analysis, please contact me.
 
-Unfortunately, in here I don't contextualize and I don't discuss this results. If you are interested in this topic, if you feel engaged by these results, and you want to know more, and interpretate this data, you'll have to contextualize this results. To do so, you'll have to read about history and societal issues. 
+Unfortunately, in here I don't contextualize and I don't discuss this results. If you are interested in this topic, if you feel engaged by these results, and you want to know more. If you want to interpret this data, you'll have to contextualize this results. To do so, you'll have to read about history and societal issues! And if you are interested and you want to form an opinion, please, please, please, do read, explore and contextualize.
 
 Many thanks to Thomas Mock for bringing the work of the Vera institute to our attention on Martin Luther King Jr. Day.
