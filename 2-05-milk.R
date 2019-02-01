@@ -2,44 +2,6 @@ library(tidyverse)
 library(scico)
 library(tibbletime)
 
-# Get Data milk cow -------------------------------------------------------
-
-
-dat_path <- "data/2-05-milkcow-facts.Rdata"
-dat_url <- paste0("https://raw.githubusercontent.com/",
-                  "rfordatascience/tidytuesday/master/data/",
-                  "/2019/2019-01-29/milkcow_facts.csv")
-
-
-if(!file.exists(dat_path)) {
-  dat_milkcow <- 
-    read_csv(dat_url)
-  
-  save(dat_milkcow, file = dat_path)
-  
-} else {
-  load(dat_path)
-}
-
-
-# Get data Clean chese -----------------------------------------------------
-
-dat_path <- "data/2-05-clean-cheese.Rdata"
-dat_url <- paste0("https://raw.githubusercontent.com/",
-                  "rfordatascience/tidytuesday/master/data/",
-                  "2019/2019-01-29/clean_cheese.csv")
-
-if(!file.exists(dat_path)) {
-  dat_cheese <- 
-    read_csv(dat_url) %>% 
-    rename_all(tolower)
-  
-  save(dat_cheese, file = dat_path)
-  
-} else {
-  load(dat_path)
-}
-
 # Get data Milk products ---------------------------------------------------
 
 dat_path <- "data/2-05-milk-product-facts.Rdata"
@@ -58,132 +20,43 @@ if(!file.exists(dat_path)) {
 }
 
 
-# Percent density ---------------------------------------------------------
+# Percent ---------------------------------------------------------
 
 # roll over tibbles
 roll_percent <- rollify(.f = function(n) (n[2] - n[1])*100/n[1], 2)
 
-
-# With interesting patterns
-up <- c("butter", #"fluid_yogurt", 
-        "mozzarella", "total american cheese")
-down <- "fluid_milk"
-
-keep <- c(down, up)
-
-# why are those two dataset separated?
 dat <- 
-  dat_cheese %>%
-  full_join(dat_milkprods, by = "year") %>%
-  gather(cheddar:dry_whey,
-         key = "type", value = "lbs") %>% 
-  filter(complete.cases(.)) %>% 
-  filter(type %in% keep)
-
-dat_perc <-  
-  dat %>%
-  group_by(type) %>%
-  mutate(percent = roll_percent(lbs)) %>% 
-  ungroup() %>% 
-  filter(complete.cases(.)) 
-
-# how do I prepare a density dataset?
-get_density <- function(type_of_cheese) 
-{
-  dat_perc %>% 
-    filter(type == type_of_cheese) %>% 
-    pull(percent) %>% 
-    density(n = 2^12) %>% 
-    {tibble(type = type_of_cheese,
-            x = .$x,
-            y = .$y)}
-}
+  dat_milkprods %>%
+  select(year, butter) %>% 
+  mutate(percent = roll_percent(butter)) %>% 
+  filter(complete.cases(.))
 
 
-dens <- 
-  dat_perc$type %>% 
-  unique() %>% 
-  map_df(get_density)
+# plot --------------------------------------------------------------------
 
-# center the divergent fill to 0
-fill_lim <- dens$x %>% range() %>% abs() %>% max()
-
-dens %>% 
-  ggplot(aes(x = x,
-             y = y,
-             xend = x)) +
-  geom_segment(aes(colour = x),yend = 0) +
-  geom_line(color = "grey30", size = 1.5) +
-  facet_wrap(facets = "type", 
-             ncol = 1, scales = "free_y") +
-  # scale_color_viridis_c(option = "E")
-  scale_color_scico(palette = "roma",
-                    direction = 1,
-                    limits =  c(-fill_lim, fill_lim)) +
-  theme_grey() 
+# needed to center divergent palette
+lim <- 
+  dat$percent %>% 
+  range() %>% 
+  abs() %>% 
+  max()
 
 
-dat_perc %>% 
-  filter
-
-dat_perc %>% 
+p <- 
+  dat %>% 
+  mutate(yend = butter + (percent/10)) %>% 
   ggplot(aes(x = year,
-             y = percent,
-             xend = year)) +
-  geom_line() +
-  geom_segment(aes(colour = percent),
-               yend = 0) +
-  # geom_area(aes(fill = percent)) +
-  facet_grid(type ~ ., scales = "free_y")
-
-dat_perc %>% 
-  ggplot(aes(x = year,
-             y = percent,
-             colour = percent)) +
-  geom_smooth(aes(colour = ..y..),
-              se = FALSE) +
-  # geom_line() +
-  geom_point() +
-  scale_color_scico(palette = "roma",
-                    direction = 1,
-                    limits =  c(-fill_lim, fill_lim)) +
-  # geom_area(aes(fill = percent)) +
-  facet_grid(type ~ ., scales = "free_y") +
-  theme_minimal() +
-  theme(panel.background = element_rect(fill = "grey20"))
-
-scico_roma <- scico(2, palette = "roma")
-
-dat_perc %>% 
-  ggplot(aes(x = year,
-             y = percent,
-             fill = percent)) +
-  # geom_smooth(aes(colour = ..y..),
-  #             se = FALSE) +
-  # geom_line() +
-  # geom_point() +
-  geom_bar(stat = "identity") +
-  scale_fill_scico(palette = "roma",
-                   direction = 1,
-                   limits =  c(-fill_lim, fill_lim)) +
-  # scale_fill_gradient2(low = scico_roma[1],
-  #                      high = scico_roma[2],
-  #                      midpoint = 0) +
-  # geom_area(aes(fill = percent)) +
-  facet_wrap(facets = "type",
-             # scales = "free_y",
-             ncol = 1) +
-  theme_void() +
-  theme(#plot.background = element_rect(fill = "grey20"),
-        panel.background = element_rect(fill = "grey20"),
-        panel.grid = element_blank())
-
-
-dat_perc %>% 
-  filter(type == "butter") %>% 
-  mutate(yend = lbs + (percent/10)) %>% 
-  ggplot(aes(x = year,
-             y = lbs)) +
+             y = butter)) +
+  annotate(geom = "rect",
+           xmin = 2008, xmax = 2010,
+           ymin = -Inf, ymax = Inf,
+           fill = "grey80", alpha = .5) +
+  annotate(geom = "text",
+           x = 2009, y = 4,
+           label = "2008\nEconomic Crisis?",
+           family = "Arial Narrow",
+           colour = "grey40",
+           size = 3, fontface = "bold") +
   # geom_line(color = "grey80") +
   geom_segment(aes(yend = yend,
                    xend = ..x..,
@@ -197,11 +70,40 @@ dat_perc %>%
                 label = percent %>% 
                   round() %>% paste0("%"),
                 colour = percent),
-            size = 3) +
+            size = 2.7) +
   scale_colour_scico(palette = "roma",
                    direction = 1,
-                   limits =  c(-fill_lim, fill_lim),
+                   limits = c(-lim, lim),
                    guide = FALSE) +
   guides(colour = element_blank()) +
-  theme_bw()
- 
+  labs(title = "Fluctuations in Butter Consumptions",
+       subtitle = str_wrap("In the US between 1975 - 2017,
+                           with weight of sold butter in lbs 
+                           and its percent change compared to
+                           the previous year."),
+       y = "Sold Butter in lbs",
+       x = "Year",
+       caption = "Data: USDA | Plot by @othomn") +
+  theme_minimal() +
+  theme(text = element_text(family = "Arial Narrow",
+                            colour = "grey40",
+                            size = 11),
+        axis.title = element_text(size = 14),
+        plot.title = element_text(colour = "grey20",
+                                  face = "bold",
+                                  size = 18),
+        plot.subtitle = element_text(face = "bold",
+                                     size = 12),
+        aspect.ratio = .6,   
+        plot.margin = margin(t = 10, r = 15, b = 0, l = 10,
+                             unit = "mm"))
+
+p
+# Save --------------------------------------------------------------------
+
+png(filename = "plots/2-05-milk.png",
+    height = 1600, width = 2100,
+    res = 300)
+p %>% print()
+dev.off() 
+
