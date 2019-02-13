@@ -40,10 +40,15 @@ rd_wide_01 <-
   column_to_rownames() %>% 
   t()
 
-rd_wide_01 %>%  
+
+rd_hclust <- 
+  rd_wide_01 %>%  
   dist() %>%
-  hclust() %>%
-  plot()
+  hclust() 
+
+rd_hclust %>% plot()
+
+# ordered factor
 
 # kmeans
 k_clust <- 
@@ -65,27 +70,28 @@ clust_tidy <-
          value = "scaled_funding") %>% 
   rename(agency = "rownames") %>% 
   mutate(cluster = cluster %>%
-           as.character(),
-         # Set 0 to NA, better for percent changes
-         scaled_funding = scaled_funding %>% 
-           {case_when(. == 0 ~ NA_real_,
-                     TRUE ~ .)}) 
+           as.character()) %>% 
+  mutate(agency = agency %>% 
+           factor(levels = rd_hclust$labels[rd_hclust$order]))
   
-# roll percent change
-roll_percent <- rollify(.f = function(n) (n[2] - n[1])*100/n[1], 2)
-
-clust_percent <- 
-  clust_tidy %>% 
-  arrange(agency, year) %>% 
-  group_by(agency) %>% 
-  mutate(percent = roll_percent(scaled_funding)) #%>% View()
-
 
 # plot --------------------------------------------------------------------
 
-clust_percent %>% 
+lwidth = .5
+
+clust_tidy %>% 
   ggplot(aes(x = year,
-             y = percent,
-             fill = percent)) +
-  geom_bar(stat = "identity") +
-  facet_grid(agency ~ ., scales = "free_y")
+             y = scaled_funding,
+             fill = scaled_funding)) +
+  geom_bar(stat = "identity", width = .3) +
+  geom_hline(yintercept = 0, colour = "grey80") +
+  geom_hline(yintercept = .2, colour = "white", size = lwidth) +
+  geom_hline(yintercept = .4, colour = "white", size = lwidth) +
+  geom_hline(yintercept = .6, colour = "white", size = lwidth) +
+  geom_hline(yintercept = .8, colour = "white", size = lwidth) +
+  facet_grid(agency ~ .) +
+  theme_minimal() + 
+  scale_fill_viridis_c() + 
+  theme(axis.text.y = element_blank(),
+        panel.grid = element_blank())
+
