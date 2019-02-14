@@ -77,9 +77,27 @@ clust_tidy <-
 
 # plot --------------------------------------------------------------------
 
-lwidth = .5
+pwidth <- 5
+lwidth <- .5
+scfill <- 
+  scale_fill_viridis_c(
+    option = "D",
+    breaks = c(0, .2, .4, .6, .8, 1),
+    guide = guide_legend(
+      label.position = "top", 
+      keyheight = unit(2, units = "mm"),
+      keywidth=unit(15, units = "mm"), 
+      nrow = 1,
+      title.vjust = 0, 
+      title.theme = element_text(family = "Arial Narrow",
+                                 colour = "grey40",
+                                 size = 12.5,
+                                 face = "bold"))
+  ) 
 
-clust_tidy %>% 
+
+p <- 
+  clust_tidy %>% 
   ggplot(aes(x = year,
              y = scaled_funding,
              fill = scaled_funding)) +
@@ -91,7 +109,88 @@ clust_tidy %>%
   geom_hline(yintercept = .8, colour = "white", size = lwidth) +
   facet_grid(agency ~ .) +
   theme_minimal() + 
-  scale_fill_viridis_c() + 
+  scale_fill_viridis_c(
+    option = "D",
+    breaks = c(0, .2, .4, .6, .8, 1),
+    guide = guide_legend(
+      label.position = "top", 
+      keyheight = unit(2, units = "mm"),
+      keywidth=unit(8, units = "mm"), 
+      nrow = 1,
+      title.vjust = 0, 
+      title.theme = element_text(family = "Arial Narrow",
+                                 colour = "grey40",
+                                 size = 12.5,
+                                 face = "bold"))
+  ) + 
   theme(axis.text.y = element_blank(),
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        legend.position = "top")
 
+svglite::svglite(file = 'plots/2-07-funding-lines.svg',
+                 width = pwidth)
+p %>% print
+dev.off()
+
+
+# plot 2 ------------------------------------------------------------------
+
+p2 <- 
+  clust_tidy %>% 
+  ggplot(aes(x = year,
+             y = scaled_funding,
+             fill = scaled_funding,
+             colour = scaled_funding)) +
+  geom_point(size = .5) +
+  geom_bar(stat = "identity", width = .1) +
+  geom_hline(yintercept = 0, colour = "grey80") +
+  facet_grid(agency ~ .) +
+  theme_minimal() + 
+  scfill + 
+  scale_colour_viridis_c(guide = FALSE) + 
+  theme(axis.text.y = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "top")
+
+svglite::svglite(file = 'plots/2-07-funding-lines2.svg',
+                 width = 5)
+p2 %>% print()
+dev.off()
+
+
+# p3 line size ------------------------------------------------------------
+
+p3 <- 
+  clust_tidy %>% 
+  ggplot(aes(x = year,
+             y = scaled_funding,
+             fill = scaled_funding,
+             colour = scaled_funding,
+             group = agency)) +
+  # geom_point(size = .5) +
+  # geom_bar(stat = "identity", width = .1) +
+  geom_line(aes(size = scaled_funding)) +
+  geom_hline(yintercept = 0, colour = "grey80") +
+  facet_grid(agency ~ .) +
+  theme_minimal() + 
+  scale_size(guide = FALSE) +
+  scfill + 
+  scale_colour_viridis_c(guide = FALSE) + 
+  theme(axis.text.y = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "top",
+        text = element_text(colour = "grey40"),
+        strip.text = element_text(colour = "grey40"))
+
+p3
+
+svglite::svglite(file = 'plots/2-07-funding-lines3.svg',
+                 width = 5)
+p3 %>% print()
+dev.off()
+
+png(filename = "plots/2-07-funding-lines3.png",
+    height = 2000, width = 1400,
+    res = 300)
+p3 %>% print()
+dev.off() 
