@@ -169,7 +169,7 @@ p3 <-
              group = agency)) +
   # geom_point(size = .5) +
   # geom_bar(stat = "identity", width = .1) +
-  geom_line(aes(size = scaled_funding)) +
+  geom_ribbon(aes(size = scaled_funding)) +
   geom_hline(yintercept = 0, colour = "grey80") +
   facet_grid(agency ~ .) +
   theme_minimal() + 

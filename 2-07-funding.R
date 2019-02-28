@@ -265,3 +265,21 @@ png(filename = "plots/2-07-funding.png",
     res = 300)
 p %>% print()
 dev.off() 
+
+
+# heatmap -----------------------------------------------------------------
+
+
+k_clust %>%
+  broom::augment(data = rd_wide %>% scale() %>% t()) %>% 
+  rename_all(~str_sub(., 2, -1)) %>% 
+  gather(`1976`:`2017`, key = "year", value = "scaled_funding") %>% 
+  mutate(cluster = cluster %>% as.character()) %>% 
+  ggplot(aes(x = year,
+             y = rownames,
+             fill = scaled_funding)) +
+  geom_tile() +
+  facet_grid(cluster ~ ., scales = "free", space = "free") +
+  scale_fill_viridis_c(option = "D") +
+  theme_minimal() +
+  theme(aspect.ratio = 1) 
