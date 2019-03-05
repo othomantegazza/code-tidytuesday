@@ -1,0 +1,57 @@
+---
+title: "Jobs Gender"
+author: "Otho"
+date: "March 5, 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+dat_path <- "data/2-10-jobs-gender.Rdata"
+dat_url <- paste0("https://raw.githubusercontent.com/",
+                 "rfordatascience/tidytuesday/master/data/",
+                 "2019/2019-03-05/jobs_gender.csv")
+
+if(!file.exists(dat_path)) {
+  jobs_gender <- read.csv(dat_url)
+  
+  save(jobs_gender, file = dat_path)
+} else {
+  load(dat_path)
+}
+```
+
+```{r}
+jobs_gender %>% 
+  ggplot(aes(x = total_earnings_female,
+             y = total_earnings_male)) +
+  geom_point(alpha = .5) +
+  geom_abline(slope = 1, intercept = 0, colour = "blue") +
+  facet_wrap(facets = "year") +
+  scale_x_log10() +
+  scale_y_log10()
+```
+
+show only 2016
+
+```{r}
+jobs_gender %>% 
+  filter(year == 2016,
+         major_category == "Computer, Engineering, and Science") %>% 
+  ggplot(aes(x = total_earnings_female,
+             y = total_earnings_male,
+             colour = minor_category, 
+             size = total_workers)) +
+  geom_point(alpha = .5) +
+  geom_abline(slope = 1, intercept = 0, colour = "blue") +
+  scale_x_log10() +
+  scale_y_log10()
+```
+
+

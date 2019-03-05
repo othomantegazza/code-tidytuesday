@@ -4,6 +4,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+# get train data
+
 ```{r}
 library(tidyverse)
 
@@ -23,56 +25,112 @@ if(!file.exists(small_path)) {
 }
 ```
 
-```{r}
-train_small %>% 
-  mutate(avg_delay_all_arriving = case_when(
-    avg_delay_all_arriving < 0 ~ 0,
-    TRUE ~ avg_delay_all_arriving)) %>% 
-  ggplot(aes(x = year,
-             y = avg_delay_all_arriving,
-             group = year)) +
-  geom_boxplot() +
-  scale_y_log10()
+# remove negative delays
 
+```{r}
 
 train_small_0 <- 
   train_small %>% 
-  mutate(avg_delay_all_arriving = case_when(avg_delay_all_arriving < 0 ~ 0,
-                                            TRUE ~ avg_delay_all_arriving))
-  
+  mutate(avg_delay_all_arriving = 
+           case_when(avg_delay_all_arriving < 0 ~ 0,
+                     TRUE ~ avg_delay_all_arriving))
 
 train_small_0 %>% 
   ggplot(aes(x = journey_time_avg,
              y = avg_delay_all_arriving)) +
   geom_point() +
   geom_smooth()
-
-
-train_small_0 %>% 
-  ggplot(aes(x = year)) +
-  geom_bar()
-
-train_small_0
 ```
+
+# Station coordinates
 
 ```{r}
-library(tidyverse)
+nodes <- 
+  train_small_0 %>% 
+  select(station = departure_station) %>% 
+  distinct()
 
-trains_path <- "data/2-09-train-delays.Rdata"
-trains_url <- paste0("https://raw.githubusercontent.com/",
-                 "rfordatascience/tidytuesday/master/data/",
-                 "2019/2019-02-26/regularite-mensuelle-tgv-aqst.csv")
 
-if(!file.exists(trains_path)) {
-  trains <- 
-    read_delim(trains_url, delim = ";")
-  
-  save(trains, file = trains_path)
-  
-} else {
-  load(trains_path)
-}
+to_query <- 
+  nodes %>%
+  mutate(station = station %>%
+           str_to_lower() %>%
+           str_replace_all(" ", "-"))
+
 ```
+
+## get coordinates from sncf
+
+
+```{r}
+library(sf)
+# data from sncf
+
+sncf_link <- "https://ressources.data.sncf.com/explore/dataset/liste-des-gares/download/?format=shp&timezone=Europe/Berlin"
+
+station_path <- "data/2-09-stations"
+
+if(!file.exists(station_path)) {
+  
+  temp <- tempfile()
+
+  sncf_link %>% 
+    download.file(destfile = temp)
+  
+  temp %>% unzip(exdir = station_path)
+  rm(temp)
+}
+
+stations <- 
+  read_sf(station_path) %>% 
+  mutate(station = libelle_gar %>% 
+           iconv(from="UTF-8",to="ASCII//TRANSLIT") %>% 
+            str_to_lower())
+```
+
+check them
+
+```{r}
+library(leaflet)
+
+# this is big
+# leaflet() %>% 
+#   addTiles() %>% 
+#   addMarkers(data = stations$geometry)
+```
+
+
+## merge 1st
+
+```{r}
+station_coords <- 
+  to_query %>% left_join(stations, by = "station") %>% 
+  filter(!duplicated(libelle_gar))
+
+leaflet() %>% 
+  addTiles() %>% 
+  addMarkers(data = station_coords$geometry)
+
+to_query$station[!to_query$station %in% stations$libelle_gar]
+
+stations$libelle_gar[stations$libelle_gar %>% str_detect("creusot")]
+
+dict <- c('paris-lyon' = "paris-gare-de-lyon",
+          montpellier = "montpellier-st-roch",
+          'la rochelle-ville' = "la rochelle-ville",
+          lille = "lille-europe",
+          'angers-saint-laud' = "angers-st-laud",
+          'macon-loche' = "macon-loche-tgv",
+          nancy = "nancy-ville",
+          'valence-alixan-tgv' = "valence-alixan-tgv",
+          "saint-etienne-chateaucreux" = "st-etienne-chateaucreux",
+          metz = "metz-ville",
+          "le-mans" = "le mans",
+          "strasbourg" = "strasbourg-ville",
+          "bellegarde-(ain)" ="bellegarde", 
+          "le-creusot-montceau-montchanin" = "le creusot-montceau-montchanin")
+```
+
 
 ```{r}
 train_small %>% 
@@ -109,41 +167,6 @@ g %>%
 ```
 
 ```{r}
-library(osmdata)
-a <- opq("Paris") %>% 
-  add_osm_feature(key = "railway", value = "station") %>%
-  # add_osm_feature(key = "railway", value = "stop_name") %>%
-  # add_osm_feature(key = "official_name", value = "CLICHY LEVALLOIS") %>% 
-  # add_osm_feature(key = "SNCF:stop_name",
-  #                 value = "Paris-Nord") %>%
-  osmdata_sf()
-
-	
-Chambery
-
-cham <- 
-  opq("Chambery") %>% 
-  add_osm_feature(key = "railway", value = "station") %>%
-  # add_osm_feature(key = "railway", value = "stop_name") %>%
-  # add_osm_feature(key = "official_name", value = "CLICHY LEVALLOIS") %>% 
-  # add_osm_feature(key = "SNCF:stop_name",
-  #                 value = "Paris-Nord") %>%
-  osmdata_sf()
-
-cham$osm_points
-a$osm_points
-
-opq("portsmouth usa") %>%
-  add_osm_feature(key = "amenity", value = "restaurant") %>% 
-  osmdata_sf()
-
-opq(c(-5.054, 42.066, 8.438,  51.262)) %>% 
-  add_osm_feature(key = "railway", value = "station") %>% 
-  add_osm_feature(key = "official_name", value = "CLICHY LEVALLOIS") %>%
-  osmdata_sf()
-```
-
-```{r}
 to_query <- 
   nodes %>%
   mutate(station = station %>%
@@ -165,55 +188,6 @@ coord_by_name("Paris-Nord")
 
 to_query$station %>% 
   map(coord_by_name)
-```
-
-```{r}
-library(sf)
-# data from sncf
-
-sncf_link <- "https://ressources.data.sncf.com/explore/dataset/liste-des-gares/download/?format=shp&timezone=Europe/Berlin"
-
-station_path <- "data/2-09-stations"
-
-if(!file.exists(station_path)) {
-  
-  temp <- tempfile()
-
-  sncf_link %>% 
-    download.file(destfile = temp)
-  
-  temp %>% unzip(exdir = station_path)
-  rm(temp)
-}
-
-stations <- 
-  read_sf(station_path) %>% 
-  mutate(libelle_gar = libelle_gar %>% 
-           iconv(from="UTF-8",to="ASCII//TRANSLIT") %>% 
-            str_to_lower())
-
-to_query <-  
-  to_query %>% 
-  mutate(station = station %>% str_to_lower())
-
-to_query$station[!to_query$station %in% stations$libelle_gar]
-
-stations$libelle_gar[stations$libelle_gar %>% str_detect("creusot")]
-
-dict <- c('paris-lyon' = "paris-gare-de-lyon",
-          montpellier = "montpellier-st-roch",
-          'la rochelle-ville' = "la rochelle-ville",
-          lille = "lille-europe",
-          'angers-saint-laud' = "angers-st-laud",
-          'macon-loche' = "macon-loche-tgv",
-          nancy = "nancy-ville",
-          'valence-alixan-tgv' = "valence-alixan-tgv",
-          "saint-etienne-chateaucreux" = "st-etienne-chateaucreux",
-          metz = "metz-ville",
-          "le-mans" = "le mans",
-          "strasbourg" = "strasbourg-ville",
-          "bellegarde-(ain)" ="bellegarde", 
-          "le-creusot-montceau-montchanin" = "le creusot-montceau-montchanin")
 ```
 
 ```{r}
