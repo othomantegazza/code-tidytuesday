@@ -83,15 +83,30 @@ p <-
   theme(text = element_text(family = "sans",
                             colour = "grey40"), 
         plot.title = element_text(colour = "#3752C3"))
+
+p
 ```
 
 Save the plot
 
-```{r}
+```{r, eval = FALSE}
 png(filename = "plots/2-10-jobs-gender.png",
     height = 1500, width = 2000,
     res = 300)
 p %>% print()
 dev.off()
+```
+
+Other, save data as json
+
+```{r}
+to_plot %>% 
+  select(total_earnings_female,
+         total_earnings_male,
+         percent_female, 
+         total_workers,
+         occupation,
+         minor_category) %>% 
+  jsonlite::write_json(path = "data/2-10-jobs-gender.json")
 ```
 

@@ -1,0 +1,94 @@
+---
+title: "Jobs Gender"
+author: "Otho"
+date:  "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(rlang)
+```
+
+
+```{r}
+
+dat_path <- "data/2-12-open-policing.Rdata"
+
+# data for Raleigh, because I have been there
+dat_url <- paste0("https://stacks.stanford.edu/",
+                  "file/druid:tr137st9964/tr137st9964",
+                  "_nc_raleigh_2019_02_25.csv.zip")
+
+if(!file.exists(dat_path)) {
+  # one temporary file zipped
+  # and one with the csv
+  temp <- tempfile()
+  temp2 <- tempfile()
+  download.file(dat_url, destfile = temp)
+  
+  temp2 <- unzip(temp)
+  
+  raleigh <- read_csv(temp2)
+  
+  save(raleigh, file = dat_path)
+} else {
+  load(dat_path)
+}
+```
+
+# explore
+
+I guess that the `time` variable is measured in seconds of the day
+
+```{r}
+raleigh$time %>% range(na.rm = TRUE)
+# Time differences in secs
+# [1]     1 86399
+```
+
+```{r}
+day_sec <- 60*60*24
+
+stop_dens <- 
+  raleigh %>%  
+  # hack: density of circular data
+  # https://stackoverflow.com/questions/36266402
+  bind_rows(raleigh %>% mutate(time = time - day_sec)) %>% 
+  bind_rows(raleigh %>% mutate(time = time + day_sec)) %>% 
+  filter(!is.na(time)) %>%  
+  pull(time) %>% 
+  rlang::as_integer() %>% 
+  density(bw = 10^3,
+          adjust = 1,
+          n = 2^11) %>% 
+  {tibble(x = .$x,
+          y = .$y)}
+
+med_y <-
+  stop_dens %>% 
+  filter(x > 0,
+         x < day_sec) %>% 
+  pull(y) %>% 
+  mean()
+
+fill <- "#3752C3"
+colour <- "grey70"
+
+stop_dens %>% 
+  ggplot(aes(x = x,
+             ymax = y)) +
+  geom_ribbon(ymin = med_y,
+              fill = fill,
+              colour = colour) +
+  coord_polar() +
+  lims(x = c(0, day_sec),
+       y = c(-1e-6, NA)) +
+  theme_void()
+  # geom_density() +
+  # coord_cartesian(xlim = c(0, day_sec), expand = FALSE) +
+  # scale_x_continuous(limits = c(-day_sec, day_sec*2))
+```
+
