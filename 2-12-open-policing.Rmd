@@ -120,7 +120,7 @@ up_gradient <- function(roll, p = p) {
                 fill = fill,
                 alpha = .3,
                 colour = "white",
-                size = .2,
+                size = .4,
                 inherit.aes = F)
   return(p)
 }
@@ -138,5 +138,11 @@ p3 <-
            ymin = -Inf, ymax = Inf,
            fill = "white") 
 p3
+```
+
+```{r}
+svglite::svglite("plots/2-12-open-policing.svg")
+p3
+dev.off()
 ```
 
