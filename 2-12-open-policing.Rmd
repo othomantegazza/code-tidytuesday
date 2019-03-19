@@ -75,16 +75,32 @@ med_y <-
   mean()
 
 fill <- "#3752C3"
-colour <- "grey70"
+colour <- "white"
+ytop <- stop_dens$y %>% max()
 
 stop_dens %>% 
   ggplot(aes(x = x,
              ymax = y)) +
   geom_ribbon(ymin = med_y,
               fill = fill,
-              colour = colour) +
+              colour = colour,
+              alpha = .2) +
+  geom_ribbon(data = . %>%
+                filter(y > med_y + (ytop - med_y)/5),
+              aes(x = x,
+                  ymin = med_y + (ytop - med_y)/5,
+                  ymax = y),
+              fill = fill,
+              alpha = .3,
+              colour = "white",
+              size = .4,
+              inherit.aes = F) +
+  annotate(geom = "rect",
+           xmin = day_sec, xmax = day_sec + 3*10e2,
+           ymin = -Inf, ymax = Inf,
+           fill = "white") +
   coord_polar() +
-  lims(x = c(0, day_sec),
+  lims(x = c(0, day_sec + 3*10e2),
        y = c(-1e-6, NA)) +
   theme_void()
   # geom_density() +
