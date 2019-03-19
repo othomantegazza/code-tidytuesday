@@ -78,27 +78,28 @@ fill <- "#3752C3"
 colour <- "white"
 ytop <- stop_dens$y %>% max()
 
-stop_dens %>% 
+p <- 
+  stop_dens %>% 
   ggplot(aes(x = x,
              ymax = y)) +
   geom_ribbon(ymin = med_y,
               fill = fill,
               colour = colour,
               alpha = .2) +
-  geom_ribbon(data = . %>%
-                filter(y > med_y + (ytop - med_y)/5),
-              aes(x = x,
-                  ymin = med_y + (ytop - med_y)/5,
-                  ymax = y),
-              fill = fill,
-              alpha = .3,
-              colour = "white",
-              size = .4,
-              inherit.aes = F) +
-  annotate(geom = "rect",
-           xmin = day_sec, xmax = day_sec + 3*10e2,
-           ymin = -Inf, ymax = Inf,
-           fill = "white") +
+  # geom_ribbon(data = . %>%
+  #               filter(y > med_y + (ytop - med_y)/5),
+  #             aes(x = x,
+  #                 ymin = med_y + (ytop - med_y)/5,
+  #                 ymax = y),
+  #             fill = fill,
+  #             alpha = .3,
+  #             colour = "white",
+  #             size = .4,
+  #             inherit.aes = F) +
+  # annotate(geom = "rect",
+  #          xmin = day_sec, xmax = day_sec + 3*10e2,
+  #          ymin = -Inf, ymax = Inf,
+  #          fill = "white") +
   coord_polar() +
   lims(x = c(0, day_sec + 3*10e2),
        y = c(-1e-6, NA)) +
@@ -106,5 +107,36 @@ stop_dens %>%
   # geom_density() +
   # coord_cartesian(xlim = c(0, day_sec), expand = FALSE) +
   # scale_x_continuous(limits = c(-day_sec, day_sec*2))
+```
+
+```{r}
+up_gradient <- function(roll, p = p) {
+  p <- p + 
+    geom_ribbon(data = . %>%
+                  filter(y > med_y + (ytop - med_y)*(roll/5)),
+                aes(x = x,
+                    ymin = med_y + (ytop - med_y)*(roll/5),
+                    ymax = y),
+                fill = fill,
+                alpha = .3,
+                colour = "white",
+                size = .2,
+                inherit.aes = F)
+  return(p)
+}
+
+
+p2 <- up_gradient(1, p)
+p2 <- up_gradient(2, p2)
+p2 <- up_gradient(3, p2)
+p2 <- up_gradient(4, p2)
+
+p3 <- 
+  p2 + 
+  annotate(geom = "rect",
+           xmin = day_sec, xmax = day_sec + 3*10e2,
+           ymin = -Inf, ymax = Inf,
+           fill = "white") 
+p3
 ```
 
