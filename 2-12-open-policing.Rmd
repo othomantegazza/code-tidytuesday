@@ -1,5 +1,5 @@
 ---
-title: "Jobs Gender"
+title: "Open Policing - Raleigh"
 author: "Otho"
 date:  "`r Sys.Date()`"
 output: html_document
@@ -103,20 +103,20 @@ p <-
 ```
 
 ```{r}
-# Aim at 10 ridges
-ridge_width <- stop_dens$y %>% range() %>% {(.[2] - .[1])/10}
+# Aim at 12 ridges
+ridge_width <- stop_dens$y %>% range() %>% {(.[2] - .[1])/12}
 
 up_gradient <- function(roll, p = p) {
   p <- p + 
     geom_ribbon(data = . %>%
-                  filter(y > med_y + (ytop - med_y)*(roll/5)),
+                  filter(y > med_y + ridge_width*roll),
                 aes(x = x,
-                    ymin = med_y + (ytop - med_y)*(roll/5),
+                    ymin = med_y + ridge_width*roll,
                     ymax = y),
                 fill = fill_up,
                 alpha = .3,
-                colour = "white",
-                size = .4,
+                # colour = "white",
+                # size = .4,
                 inherit.aes = F)
   return(p)
 }
@@ -125,14 +125,14 @@ up_gradient <- function(roll, p = p) {
 down_gradient <- function(roll, p = p) {
   p <- p + 
     geom_ribbon(data = . %>%
-                  filter(y < med_y - (med_y - ylow)*(roll/5)),
+                  filter(y < med_y - ridge_width*roll),
                 aes(x = x,
-                    ymin = med_y - (med_y - ylow)*(roll/5),
+                    ymin = med_y - ridge_width*roll,
                     ymax = y),
                 fill = fill_down,
                 alpha = .3,
-                colour = "white",
-                size = .4,
+                # colour = "white",
+                # size = .4,
                 inherit.aes = F)
   return(p)
 }
@@ -145,19 +145,45 @@ p2 <- down_gradient(1, p2)
 p2 <- down_gradient(2, p2)
 p2 <- down_gradient(3, p2)
 p2 <- down_gradient(4, p2)
+p2 <- down_gradient(5, p2)
 
+
+# Cover up ribbon residues
 p3 <- 
-  p2 + 
+  p2 +
+  geom_ribbon(data = . %>% 
+                mutate(upper_bound = case_when(y < med_y ~ y,
+                                               TRUE ~ med_y)),
+              aes(ymax = upper_bound,
+                  ymin = ylow),
+              fill = "white",
+              colour = NA) +
+  geom_ribbon(data = . %>% 
+                mutate(lower_bound = case_when(y > med_y ~ y,
+                                               TRUE ~ med_y)),
+              aes(ymax = ytop,
+                  ymin = lower_bound),
+              fill = "white",
+              colour = NA) 
+  
+p3
+
+# white space at x=0
+# and line at mean y
+p4 <- 
+  p3 + 
+  geom_hline(yintercept = med_y,
+             colour =  "#0FE8FF") + #"#83D2FF" ) +
   annotate(geom = "rect",
            xmin = day_sec, xmax = day_sec + 3*10e2,
            ymin = -Inf, ymax = Inf,
            fill = "white") 
-p3
+p4
 ```
 
 ```{r}
 svglite::svglite("plots/2-12-open-policing.svg")
-p3
+p4
 dev.off()
 ```
 
