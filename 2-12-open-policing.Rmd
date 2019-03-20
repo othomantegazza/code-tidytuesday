@@ -12,6 +12,7 @@ Reproduce Nadieh Bremer and Zan Armstrong famouse [Baby Spike visualization](htt
 ```{r}
 library(tidyverse)
 library(rlang)
+library(lubridate)
 ```
 
 
@@ -53,27 +54,57 @@ raleigh$time %>% range(na.rm = TRUE)
 ```{r}
 day_sec <- 60*60*24
 
-stop_dens <- 
-  raleigh %>%  
-  # hack: density of circular data
-  # https://stackoverflow.com/questions/36266402
-  bind_rows(raleigh %>% mutate(time = time - day_sec)) %>% 
-  bind_rows(raleigh %>% mutate(time = time + day_sec)) %>% 
-  filter(!is.na(time)) %>%  
-  pull(time) %>% 
-  rlang::as_integer() %>% 
-  density(bw = 10^3,
-          adjust = 1,
-          n = 2^11) %>% 
-  {tibble(x = .$x,
-          y = .$y)}
 
-med_y <-
-  stop_dens %>% 
-  filter(x > 0,
-         x < day_sec) %>% 
-  pull(y) %>% 
-  mean()
+# bin stops per minute
+by_minute <- 
+  raleigh %>%  
+  mutate(mins = as_double(time) %/% 60,
+         year = year(date)) %>% 
+  group_by(mins, year) %>% 
+  count() %>% 
+  # na.omit() %>%
+  # strange measurements at 0
+  # probably tecnical issue
+  filter(mins > 0) %>% 
+  group_by(mins) %>% 
+  summarise(n = mean(n))
+
+# check
+span <- 1/30
+by_minute %>% 
+  ggplot(aes(x = mins, y = n)) +
+  stat_smooth(method = "loess", span = span) +
+  geom_point(shape = ".") 
+
+# smooth 
+min_smooth <- 
+  by_minute %>% 
+  {loess(formula = "n ~ mins",
+         data = .,
+         span = span)}  %>% 
+  {tibble(mins = 1:length(.$fitted),
+          fitted = .$fitted)} %>% 
+  full_join(by_minute, by = "mins")
+
+# check
+min_smooth %>% 
+  ggplot(aes(x = mins, y = n)) +
+  geom_line(aes(y = fitted)) +
+  geom_point(shape = ".")
+
+# ribbon 
+med_y <- mean(min_smooth$n)
+fill_up <- "#3752C3"
+min_smooth %>% 
+  ggplot(aes(x = mins)) +
+  geom_ribbon(aes(ymax = fitted,
+                  ymin = med_y),
+              fill = fill_up) +
+  geom_point(aes(y = n),
+             colour = "grey70",
+             shape = ".") +
+  theme_minimal()
+
 
 fill_up <- "#3752C3"
 fill_down <- "#B63A82"
