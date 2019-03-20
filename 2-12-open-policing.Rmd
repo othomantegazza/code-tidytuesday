@@ -79,6 +79,12 @@ fill_down <- "#B63A82"
 colour <- "white"
 ytop <- stop_dens$y %>% max()
 ylow <- stop_dens$y %>% min()
+# Aim at 12 ridges
+ridge_width <- stop_dens$y %>% range() %>% {(.[2] - .[1])/12}
+grid_at <- c(med_y - ridge_width*3,
+             med_y,
+             med_y + ridge_width*3)
+annos_color <- "grey70"
 
 p <- 
   stop_dens %>% 
@@ -103,9 +109,6 @@ p <-
 ```
 
 ```{r}
-# Aim at 12 ridges
-ridge_width <- stop_dens$y %>% range() %>% {(.[2] - .[1])/12}
-
 up_gradient <- function(roll, p = p) {
   p <- p + 
     geom_ribbon(data = . %>%
@@ -168,22 +171,68 @@ p3 <-
   
 p3
 
+# add grid
+add_grid <- 
+  function(at, p = p) {
+    if (at > med_y) {
+      p <- 
+        p + 
+        geom_point(data = . %>% 
+                     filter(y < at) %>% 
+                     {slice(., seq(from = 1, to = n(), by = 5))},
+                   y = at,
+                   shape = ".",
+                   colour = annos_color)
+      return(p)
+    } else if (at < med_y){
+      p <- 
+        p + 
+        geom_point(data = . %>% 
+                     filter(y > at) %>% 
+                     {slice(., seq(from = 1, to = n(), by = 10))},
+                   y = at,
+                   shape = ".",
+                   colour = annos_color)
+      return(p)
+    } else { 
+      return(p)}
+  }
+
+p4 <- p3
+for(i in grid_at) p4 <- add_grid(at = i, p = p4)
+p4
+
 # white space at x=0
 # and line at mean y
-p4 <- 
-  p3 + 
+p5 <- 
+  p4 + 
   geom_hline(yintercept = med_y,
              colour =  "#0FE8FF") + #"#83D2FF" ) +
   annotate(geom = "rect",
            xmin = day_sec, xmax = day_sec + 3*10e2,
            ymin = -Inf, ymax = Inf,
            fill = "white") 
-p4
+p5
+
+# add y guide
+p6 <- 
+  p5 + 
+  geom_text(data = tibble(x = 0,
+                          y = grid_at),
+            aes(x = x, y = y,
+                label = y %>% scales::scientific(digits = 1)),
+            size = 3,
+            hjust = 1,
+            vjust = 0,
+            colour = annos_color,
+            inherit.aes = F) 
+
+p6
 ```
 
 ```{r}
 svglite::svglite("plots/2-12-open-policing.svg")
-p4
+p6
 dev.off()
 ```
 
