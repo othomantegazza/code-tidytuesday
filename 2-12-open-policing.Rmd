@@ -13,6 +13,7 @@ Reproduce Nadieh Bremer and Zan Armstrong famouse [Baby Spike visualization](htt
 library(tidyverse)
 library(rlang)
 library(lubridate)
+library(scales)
 ```
 
 
@@ -50,6 +51,8 @@ raleigh$time %>% range(na.rm = TRUE)
 # Time differences in secs
 # [1]     1 86399
 ```
+
+# Use loess.
 
 ```{r}
 day_sec <- 60*60*24
@@ -104,56 +107,69 @@ min_smooth %>%
              colour = "grey70",
              shape = ".") +
   theme_minimal()
+```
+
+# use coordinates
+Only way that I know to plot an arc.
 
 
-fill_up <- "#3752C3"
-fill_down <- "#B63A82"
-colour <- "white"
-ytop <- stop_dens$y %>% max()
-ylow <- stop_dens$y %>% min()
-# Aim at 12 ridges
-ridge_width <- stop_dens$y %>% range() %>% {(.[2] - .[1])/12}
+```{r}
+# to coordinates
+y_from <- c(0, min_smooth$n %>% max)
+y_to <- c(70, 20)
+
+to_plot <- 
+  min_smooth %>% 
+  mutate(mins = rescale(mins, to = c(100, -10), from = range(mins)),
+         n = rescale(n, to = y_to, from = y_from),
+         fitted = rescale(fitted, to = y_to, from = y_from))
+  
+# save params again
+med_y <- to_plot$n %>% mean
+fill_up <- "#E97E00" # "#B63A82"
+fill_down <- "#263A89" # "#3752C3"
+ytop <- to_plot$n %>% max()
+ylow <- to_plot$n %>% min()
+ridge_width <- to_plot$fitted %>% range() %>% {(.[2] - .[1])/12}
 grid_at <- c(med_y - ridge_width*3,
              med_y,
              med_y + ridge_width*3)
 annos_color <- "grey70"
 
 p <- 
-  stop_dens %>% 
-  ggplot(aes(x = x,
-             ymax = y)) +
+to_plot %>% 
+  ggplot(aes(x = mins,
+             ymax = fitted)) +
   geom_ribbon(data = . %>%
-                filter(y > med_y),
+                filter(fitted > med_y),
               ymin = med_y,
               fill = fill_up,
-              colour = colour,
+              # colour = colour,
               alpha = .2) +
   geom_ribbon(data = . %>%
-                filter(y <= med_y),
+                filter(fitted <= med_y),
               ymin = med_y,
               fill = fill_down,
-              colour = colour,
-              alpha = .2) +
-  coord_map(projection = "orthographic") +
-  lims(x = c(0, day_sec + 3*10e2),
-       y = c(-1e-6, NA)) 
-  # theme_void()
+              # colour = colour,
+              alpha = .2)  +
+  coord_map(projection = "azequidistant", orientation = c(90, 0, 225)) +
+  # theme_minimal()
+  theme_void()
+
+
 p
 ```
+
+# add gradient
 
 ```{r}
 up_gradient <- function(roll, p = p) {
   p <- p + 
     geom_ribbon(data = . %>%
-                  filter(y > med_y + ridge_width*roll),
-                aes(x = x,
-                    ymin = med_y + ridge_width*roll,
-                    ymax = y),
+                  filter(fitted > med_y + ridge_width*roll),
+                aes(ymin = med_y + ridge_width*roll),
                 fill = fill_up,
-                alpha = .3,
-                # colour = "white",
-                # size = .4,
-                inherit.aes = F)
+                alpha = .3)
   return(p)
 }
 
@@ -161,15 +177,10 @@ up_gradient <- function(roll, p = p) {
 down_gradient <- function(roll, p = p) {
   p <- p + 
     geom_ribbon(data = . %>%
-                  filter(y < med_y - ridge_width*roll),
-                aes(x = x,
-                    ymin = med_y - ridge_width*roll,
-                    ymax = y),
+                  filter(fitted < med_y - ridge_width*roll),
+                aes(ymin = med_y - ridge_width*roll),
                 fill = fill_down,
-                alpha = .3,
-                # colour = "white",
-                # size = .4,
-                inherit.aes = F)
+                alpha = .3)
   return(p)
 }
 
@@ -177,25 +188,32 @@ p2 <- up_gradient(1, p)
 p2 <- up_gradient(2, p2)
 p2 <- up_gradient(3, p2)
 p2 <- up_gradient(4, p2)
+p2 <- up_gradient(5, p2)
+p2 <- up_gradient(6, p2)
 p2 <- down_gradient(1, p2)
 p2 <- down_gradient(2, p2)
 p2 <- down_gradient(3, p2)
 p2 <- down_gradient(4, p2)
 p2 <- down_gradient(5, p2)
 
+p2
+```
 
+# cover ribbon residues
+
+```{r}
 # Cover up ribbon residues
 p3 <- 
   p2 +
   geom_ribbon(data = . %>% 
-                mutate(upper_bound = case_when(y < med_y ~ y,
+                mutate(upper_bound = case_when(fitted < med_y ~ fitted,
                                                TRUE ~ med_y)),
               aes(ymax = upper_bound,
                   ymin = ylow),
               fill = "white",
               colour = NA) +
   geom_ribbon(data = . %>% 
-                mutate(lower_bound = case_when(y > med_y ~ y,
+                mutate(lower_bound = case_when(fitted > med_y ~ fitted,
                                                TRUE ~ med_y)),
               aes(ymax = ytop,
                   ymin = lower_bound),
@@ -204,39 +222,73 @@ p3 <-
   
 p3
 
+```
+
 # add grid
-add_grid <- 
-  function(at, p = p) {
-    if (at > med_y) {
-      p <- 
-        p + 
-        geom_point(data = . %>% 
-                     filter(y < at) %>% 
-                     {slice(., seq(from = 1, to = n(), by = 5))},
-                   y = at,
-                   shape = ".",
-                   colour = annos_color)
-      return(p)
-    } else if (at < med_y){
-      p <- 
-        p + 
-        geom_point(data = . %>% 
-                     filter(y > at) %>% 
-                     {slice(., seq(from = 1, to = n(), by = 10))},
-                   y = at,
-                   shape = ".",
-                   colour = annos_color)
-      return(p)
-    } else { 
-      return(p)}
-  }
+
+```{r}
+
+add_lines <- function(at, p) {
+  p <- 
+    p +
+    geom_hline(yintercept = at,
+               lty = 2,
+               size = .1,
+               colour = annos_color)
+
+  return(p)
+}
 
 p4 <- p3
-for(i in grid_at) p4 <- add_grid(at = i, p = p4)
+for(i in grid_at) p4 <- add_lines(at = i, p = p4)
 p4
 
-# white space at x=0
-# and line at mean y
+
+```
+
+
+# add points
+
+```{r}
+p5 <- 
+  p4 +
+  geom_point(aes(y = n),
+             colour = "grey70",
+             # shape = ".",
+             size = .2,
+             alpha = .5) 
+```
+
+# add guides
+
+```{r}
+# add y guide
+p6 <- 
+  p5 + 
+  geom_text(data = tibble(x = max(to_plot$mins),
+                          y = grid_at),
+            aes(x = x,
+                y = y,
+                label = y %>%
+                  rescale(to = y_from, from = y_to) %>% 
+                  round(1)),
+            size = 4,
+            hjust = 1,
+            vjust = 0,
+            angle = max(to_plot$mins) - 90,
+            colour = annos_color,
+            inherit.aes = F) 
+
+p6
+```
+
+```{r}
+svglite::svglite("plots/2-12-open-policing-arc.svg")
+p6
+dev.off()
+```
+
+```{r}
 p5 <- 
   p4 + 
   geom_hline(yintercept = med_y,
@@ -247,20 +299,7 @@ p5 <-
            fill = "white") 
 p5
 
-# add y guide
-p6 <- 
-  p5 + 
-  geom_text(data = tibble(x = 0,
-                          y = grid_at),
-            aes(x = x, y = y,
-                label = y %>% scales::scientific(digits = 1)),
-            size = 3,
-            hjust = 1,
-            vjust = 0,
-            colour = annos_color,
-            inherit.aes = F) 
 
-p6
 ```
 
 ```{r}
