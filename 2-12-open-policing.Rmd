@@ -342,10 +342,15 @@ p8
 p9 <- 
   p8 +
   labs(title = "Average Police Stops Per Minute of the Day",
-       subtitle = str_wrap("In Raleigh, NC. Measuered and recorded between
+       subtitle = str_wrap("Recorded in Raleigh, NC., between
                            2002 and 2015. These data are gathered and
                            maintained by the
-                           Stanford Open Policing Project.", 30)) +
+                           Stanford Open Policing Project.", 30),
+       caption = paste0("Data from Stanford Open Policing Project.\n",
+                        "Plot inspired to the design invented by ",
+                        "Nadieh Bremer and Zan Armstrong for the ",
+                        "Baby Spike article in Scientific American.\n",
+                        "Plot done by @othomn in ggplot2.")) +
   theme(plot.title = element_text(family = "sans",
                              size = 12,
                              colour = "grey30", 
@@ -353,7 +358,12 @@ p9 <-
         plot.subtitle = element_text(family = "sans",
                              size = 10,
                              colour = "grey50", 
-                             hjust = 1))
+                             hjust = 1),
+        plot.caption = element_text(family = "sans",
+                                    face = "italic",
+                                    size = 10,
+                                    colour = "grey50", 
+                                    hjust = 0))
 
 p9
 
@@ -364,8 +374,9 @@ p10 <-
            y = max(to_plot$fitted) + 2,
            hjust = 0,
            vjust = 1,
-           label = str_wrap("I can imagine why few cars are
-                             stopped at these hours of the day...", 20),
+           label = str_wrap("I can imagine why fewer cars get
+                            stopped by the police
+                            at these hours of the day...", 20),
            family = "sans",
            size = 3,
            colour = "grey50", 
@@ -380,8 +391,8 @@ p10 <-
            family = "sans",
            size = 3,
            colour = "grey50", 
-           lineheight = .9)
-
+           lineheight = .9) 
+  
 p10
 
 ```
