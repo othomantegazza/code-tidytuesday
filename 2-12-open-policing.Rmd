@@ -118,10 +118,11 @@ Only way that I know to plot an arc.
 y_from <- c(0, min_smooth$n %>% max)
 y_to <- c(70, 20)
 x_to <- c(60, -60)
+x_from <- range(min_smooth$mins)
 
 to_plot <- 
   min_smooth %>% 
-  mutate(mins = rescale(mins, to = x_to, from = range(mins)),
+  mutate(mins = rescale(mins, to = x_to, from = x_from),
          n = rescale(n, to = y_to, from = y_from),
          fitted = rescale(fitted, to = y_to, from = y_from))
   
@@ -137,6 +138,7 @@ ridge_width <- to_plot$fitted %>% range() %>% {(.[2] - .[1])/12}
 #              med_y + ridge_width*3)
 grid_at <- c(20, 40, 60) %>% rescale(to = y_to, from = y_from)
 annos_color <- "grey70"
+text_color <- "#98F0D8"
 
 p <- 
 to_plot %>% 
@@ -261,13 +263,13 @@ p5 <-
              alpha = .5) 
 ```
 
-# add guides
+# add y guide
 
 ```{r}
 # add y guide
 p6 <- 
   p5 + 
-  geom_text(data = tibble(x = max(to_plot$mins),
+  geom_text(data = tibble(x = max(to_plot$mins) + 3,
                           y = grid_at),
             aes(x = x,
                 y = y,
@@ -297,16 +299,44 @@ p7 <-
             arrow = arrow(ends = "first",
                           length = unit(3.4, "mm"),
                           type = "closed"),
-            colour = "#98F0D8",
+            colour = text_color,
             inherit.aes = FALSE)
 
 p7
 ```
 
+# add minutes guide
+
+```{r}
+hrs <- seq(0, 24, by = 4) * 60
+hrs_guides <- 
+  hrs %>% 
+  {tibble(x = rescale(., to = x_to, from = x_from),
+          label = (./60))}
+
+
+p8 <- 
+  p7 +
+  geom_text(data = hrs_guides,
+            mapping = aes(x = x,
+                          y = med_y,
+                          label = paste0(label, "h"),
+                          angle = x),
+            size = 3,
+            hjust = 0,
+            vjust = 1,
+            nudge_y = .5,
+            colour = "#44D4DC", #"#27A6D3",
+            fontface = "bold",
+            inherit.aes = FALSE)
+
+p8
+```
+
 
 ```{r}
 svglite::svglite("plots/2-12-open-policing-arc.svg")
-p7
+p8
 dev.off()
 ```
 
