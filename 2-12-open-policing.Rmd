@@ -117,10 +117,11 @@ Only way that I know to plot an arc.
 # to coordinates
 y_from <- c(0, min_smooth$n %>% max)
 y_to <- c(70, 20)
+x_to <- c(60, -60)
 
 to_plot <- 
   min_smooth %>% 
-  mutate(mins = rescale(mins, to = c(60, -60), from = range(mins)),
+  mutate(mins = rescale(mins, to = x_to, from = range(mins)),
          n = rescale(n, to = y_to, from = y_from),
          fitted = rescale(fitted, to = y_to, from = y_from))
   
@@ -131,9 +132,10 @@ fill_down <- "#263A89" # "#3752C3"
 ytop <- to_plot$n %>% max()
 ylow <- to_plot$n %>% min()
 ridge_width <- to_plot$fitted %>% range() %>% {(.[2] - .[1])/12}
-grid_at <- c(med_y - ridge_width*3,
-             med_y,
-             med_y + ridge_width*3)
+# grid_at <- c(med_y - ridge_width*3,
+#              med_y,
+#              med_y + ridge_width*3)
+grid_at <- c(20, 40, 60) %>% rescale(to = y_to, from = y_from)
 annos_color <- "grey70"
 
 p <- 
@@ -272,10 +274,10 @@ p6 <-
                 label = y %>%
                   rescale(to = y_from, from = y_to) %>% 
                   round(1)),
-            size = 4,
+            size = 5,
             nudge_x = 1,
             hjust = 1,
-            vjust = 0,
+            vjust = .5,
             angle = max(to_plot$mins),
             colour = annos_color,
             inherit.aes = F) 
@@ -283,9 +285,28 @@ p6 <-
 p6
 ```
 
+# add arrow
+
+```{r}
+p7 <- 
+  p6 + 
+  geom_line(data = tibble(x = c(x_to[1] + .5, x_to[2] - 5),
+                          y = med_y),
+            aes(x = x, y = y),
+            size = 1.2,
+            arrow = arrow(ends = "first",
+                          length = unit(3.4, "mm"),
+                          type = "closed"),
+            colour = "#98F0D8",
+            inherit.aes = FALSE)
+
+p7
+```
+
+
 ```{r}
 svglite::svglite("plots/2-12-open-policing-arc.svg")
-p6
+p7
 dev.off()
 ```
 
