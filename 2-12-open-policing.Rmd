@@ -120,7 +120,7 @@ y_to <- c(70, 20)
 
 to_plot <- 
   min_smooth %>% 
-  mutate(mins = rescale(mins, to = c(100, -10), from = range(mins)),
+  mutate(mins = rescale(mins, to = c(60, -60), from = range(mins)),
          n = rescale(n, to = y_to, from = y_from),
          fitted = rescale(fitted, to = y_to, from = y_from))
   
@@ -152,7 +152,7 @@ to_plot %>%
               fill = fill_down,
               # colour = colour,
               alpha = .2)  +
-  coord_map(projection = "azequidistant", orientation = c(90, 0, 225)) +
+  coord_map(projection = "azequidistant", orientation = c(90, -45, 225)) +
   # theme_minimal()
   theme_void()
 
@@ -273,9 +273,10 @@ p6 <-
                   rescale(to = y_from, from = y_to) %>% 
                   round(1)),
             size = 4,
+            nudge_x = 1,
             hjust = 1,
             vjust = 0,
-            angle = max(to_plot$mins) - 90,
+            angle = max(to_plot$mins),
             colour = annos_color,
             inherit.aes = F) 
 
