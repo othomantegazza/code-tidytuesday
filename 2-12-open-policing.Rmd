@@ -80,11 +80,14 @@ by_minute %>%
   geom_point(shape = ".") 
 
 # smooth 
-min_smooth <- 
+smooth_obj <- 
   by_minute %>% 
   {loess(formula = "n ~ mins",
          data = .,
-         span = span)}  %>% 
+         span = span)}
+
+min_smooth <- 
+  smooth_obj %>% 
   {tibble(mins = 1:length(.$fitted),
           fitted = .$fitted)} %>% 
   full_join(by_minute, by = "mins")
@@ -292,7 +295,7 @@ p6
 ```{r}
 p7 <- 
   p6 + 
-  geom_line(data = tibble(x = c(x_to[1] + .5, x_to[2] - 5),
+  geom_line(data = tibble(x = c(x_to[1] + 1.5, x_to[2] - 7),
                           y = med_y),
             aes(x = x, y = y),
             size = 1.2,
@@ -333,10 +336,61 @@ p8 <-
 p8
 ```
 
+# title and annos
+
+```{r}
+p9 <- 
+  p8 +
+  labs(title = "Average Police Stops Per Minute of the Day",
+       subtitle = str_wrap("In Raleigh, NC. Measuered and recorded between
+                           2002 and 2015. These data are gathered and
+                           maintained by the
+                           Stanford Open Policing Project.", 30)) +
+  theme(plot.title = element_text(family = "sans",
+                             size = 12,
+                             colour = "grey30", 
+                             hjust = 1),
+        plot.subtitle = element_text(family = "sans",
+                             size = 10,
+                             colour = "grey50", 
+                             hjust = 1))
+
+p9
+
+p10 <- 
+  p9 +
+  annotate(geom = "text",
+           x = (5.5*60) %>% rescale(to = x_to, from = x_from),
+           y = max(to_plot$fitted) + 2,
+           hjust = 0,
+           vjust = 1,
+           label = str_wrap("I can imagine why few cars are
+                             stopped at these hours of the day...", 20),
+           family = "sans",
+           size = 3,
+           colour = "grey50", 
+           lineheight = .9) + 
+  annotate(geom = "text",
+           x = (18.5*60) %>% rescale(to = x_to, from = x_from),
+           y = max(to_plot$fitted) - 5,
+           hjust = 0,
+           vjust = 1,
+           label = str_wrap("...but not why also at these hours.
+                            Dinner time?", 20),
+           family = "sans",
+           size = 3,
+           colour = "grey50", 
+           lineheight = .9)
+
+p10
+
+```
+
+# Save SVG
 
 ```{r}
 svglite::svglite("plots/2-12-open-policing-arc.svg")
-p8
+p10
 dev.off()
 ```
 
