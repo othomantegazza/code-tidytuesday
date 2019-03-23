@@ -1,0 +1,154 @@
+---
+title: "Open Policing - Raleigh"
+author: "Otho"
+date:  "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(rlang)
+library(lubridate)
+library(scales)
+
+# weekdays in english
+Sys.setlocale("LC_TIME","C")
+```
+
+
+```{r}
+dat_path <- "data/2-12-open-policing.Rdata"
+
+# data for Raleigh, because I have been there
+dat_url <- paste0("https://stacks.stanford.edu/",
+                  "file/druid:tr137st9964/tr137st9964",
+                  "_nc_raleigh_2019_02_25.csv.zip")
+
+if(!file.exists(dat_path)) {
+  # one temporary file zipped
+  # and one with the csv
+  temp <- tempfile()
+  temp2 <- tempfile()
+  download.file(dat_url, destfile = temp)
+  
+  temp2 <- unzip(temp)
+  
+  raleigh <- read_csv(temp2)
+  
+  save(raleigh, file = dat_path)
+} else {
+  load(dat_path)
+}
+```
+
+# explore
+
+I guess that the `time` variable is measured in seconds of the day
+
+```{r}
+raleigh$time %>% range(na.rm = TRUE)
+# Time differences in secs
+# [1]     1 86399
+```
+
+# Use loess.
+
+```{r}
+day_sec <- 60*60*24
+
+
+# bin stops per minute
+by_minute <- 
+  raleigh %>%  
+  mutate(mins = as_double(time) %/% 60,
+         weekday = weekdays(date),
+         year = year(date)) %>% 
+  group_by(mins, year, weekday) %>% 
+  count() %>% 
+  # na.omit() %>%
+  # strange measurements at 0
+  # probably tecnical issue
+  filter(mins > 0) %>% 
+  group_by(mins, weekday) %>% 
+  summarise(n = median(n))
+
+# check
+span <- 1/30
+by_minute %>% 
+  ggplot(aes(x = mins, y = n)) +
+  stat_smooth(method = "loess", span = span) +
+  geom_point(shape = ".") +
+  facet_grid(weekday ~ .)
+
+by_mins_list <- 
+  by_minute %>% 
+  split(.$weekday)
+
+# smooth 
+smooth_obj <- 
+ by_mins_list %>% 
+  map(., ~loess(formula = "n ~ mins",
+         data = .,
+         span = span))
+
+
+# prediction
+preds <- 
+  smooth_obj %>% 
+  map(., ~predict(., se = T))
+  
+# join fitted values and 
+# original data
+min_smooth <- 
+  names(preds) %>% 
+  map(.x = .,
+      .f = ~preds[[.x]] %>% 
+      {tibble(mins = names(.$fit) %>% as.numeric(),
+              fitted = .$fit,
+              se = .$se,
+              weekday = .x)} %>% 
+        full_join(by_mins_list[[.x]])) %>% 
+  reduce(bind_rows) %>% 
+  # reset weekdays order %>% 
+  mutate(weekday = as_factor(weekday, 
+                             levels = c("Sunday"    "Thursday"  "Tuesday"   "Wednesday")))
+
+# check
+min_smooth %>% 
+  ggplot(aes(x = mins, y = n)) +
+  geom_line(aes(y = fitted)) +
+  geom_point(shape = ".") +
+  facet_grid(weekday ~ .)
+
+
+# try ribbon
+med_y <- mean(min_smooth$n)
+
+# cool, a bit by chance
+p <- 
+  min_smooth %>% 
+  ggplot(aes(x = mins)) +
+  geom_hline(yintercept = med_y,
+             colour = "#B63A82") +
+  geom_ribbon(aes(ymin = med_y,
+                  ymax = fitted),
+              fill = "grey80",
+             colour = "#27A6D3") +
+  geom_point(aes(y = n),
+             shape = ".") +
+  ylim(0, NA) +
+  theme_minimal()
+p
+
+p + facet_grid(weekday ~ .)
+
+fill_up <- "#3752C3"
+```
+
+```{r}
+
+```
+
+
