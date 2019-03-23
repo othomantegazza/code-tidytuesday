@@ -273,9 +273,9 @@ p2 <-
               fill = "white") +
   geom_ribbon(aes(ymin = upper_bound,
                   ymax = Inf),
-              fill = "white") +
-  geom_line(aes(y = upper_bound), colour = text_color) +
-  geom_line(aes(y = lower_bound), colour = text_color)
+              fill = "white") #+
+  # geom_line(aes(y = upper_bound), colour = text_color) +
+  # geom_line(aes(y = lower_bound), colour = text_color)
   
 p2
 ```
@@ -284,19 +284,33 @@ p2
 
 ```{r}
 p3 <- 
-  p2 + 
-  geom_line(data = tibble(x = c(mins_range[1] - 40,
-                                mins_range[2] + 100),
-                          y = med_y),
-            aes(x = x, y = y),
-            size = 1.2,
-            arrow = arrow(ends = "last",
-                          length = unit(3.4, "mm"),
-                          type = "closed"),
-            colour = "#DE12D5",
-            inherit.aes = FALSE)
-
+  p2 +
+  geom_ribbon(aes(ymin = -Inf,
+                  ymax = case_when(lower_bound >= med_y ~ med_y,
+                                   TRUE ~ lower_bound)),
+              fill = "white",
+              colour = "#DE1288") +
+  geom_ribbon(aes(ymin = +Inf,
+                  ymax = case_when(upper_bound < med_y ~ med_y,
+                                   TRUE ~ upper_bound)),
+              fill = "white",
+              colour = "#DE1288") +
+  geom_line(aes(y = upper_bound),
+            colour = "grey50") +
+  geom_line(aes(y = lower_bound),
+            colour = "grey50",
+            size = 1.2)
+              
+  
 p3  
+```
+
+# Save SVG
+
+```{r}
+svglite::svglite("plots/2-12-open-policing-snake.svg")
+p3 + theme(aspect.ratio = .4)
+dev.off()
 ```
 
 
@@ -324,6 +338,11 @@ to_plot %>%
 
 p
 ```
+
+```{r}
+
+```
+
 
 # add gradient
 
