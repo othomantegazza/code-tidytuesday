@@ -75,7 +75,8 @@ by_minute <-
   summarise(n = median(n))
 
 # check
-span <- 1/30
+# span <- 1/30
+span <- 1/20
 by_minute %>% 
   ggplot(aes(x = mins, y = n)) +
   stat_smooth(method = "loess", span = span) +
@@ -112,8 +113,14 @@ min_smooth <-
         full_join(by_mins_list[[.x]])) %>% 
   reduce(bind_rows) %>% 
   # reset weekdays order %>% 
-  mutate(weekday = as_factor(weekday, 
-                             levels = c("Sunday"    "Thursday"  "Tuesday"   "Wednesday")))
+  mutate(weekday = factor(weekday, 
+                          levels = c("Sunday", 
+                                     "Monday",
+                                     "Tuesday",
+                                     "Wednesday",
+                                     "Thursday",
+                                     "Friday",
+                                     "Saturday")))
 
 # check
 min_smooth %>% 
@@ -147,8 +154,24 @@ p + facet_grid(weekday ~ .)
 fill_up <- "#3752C3"
 ```
 
-```{r}
+# Try mirror
 
+```{r}
+min_smooth %>% 
+  mutate(fitted = fitted - med_y,
+         verso = case_when(fitted > 0 ~ "up",
+                           TRUE ~ "down"),
+         fitted = abs(fitted)) %>% 
+  ggplot(aes(x = mins)) +
+  geom_hline(yintercept = 0) +
+  geom_ribbon(aes(ymin = 0,
+                  ymax = fitted,
+                  fill = verso),
+              colour = "grey50") +
+  facet_grid(weekday ~ .) +
+  scale_fill_manual(values = c(up = "#4C63C3DD", down = "#FF6C0DDD")) +
+  theme_bw() 
+  
 ```
 
 
