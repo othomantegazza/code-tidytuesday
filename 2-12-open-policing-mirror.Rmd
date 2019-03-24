@@ -208,19 +208,37 @@ p1 <-
             fontface = "italic",
             vjust = 0,
             hjust = 0.2,
-            size = 3,
+            size = 2,
             nudge_y = .005)
 
 p1
 ```
+
+# labels
+
+```{r}
+p2 <-
+  p1 + 
+  labs(fill = "",
+       title = "Average Police Stops Per Minute of the Day",
+       subtitle = str_wrap("Recorded in Raleigh, NC., between
+                           2002 and 2015. These data are gathered and
+                           maintained by the
+                           Stanford Open Policing Project.", 50),
+       caption = paste0("Data from Stanford Open Policing Project.\n",
+                        "Plot done by @othomn in ggplot2."))
+
+p2
+```
+
 
 # style
 
 ```{r}
 marks_x <- seq(0, 24, by = 6)
 
-p2 <- 
-  p1 +
+p3 <- 
+  p2 +
   scale_x_continuous(breaks = marks_x*60, 
                      labels = paste0(marks_x, "h")) +
   scale_y_continuous(breaks = 0, 
@@ -238,7 +256,43 @@ p2 <-
                                                     unit = "mm")),
         panel.spacing = unit(0, "mm"),
         panel.border = element_rect(colour = "black", fill = NA),
-        plot.margin = margin(2,2,2,2, unit = "mm"))
+        plot.margin = margin(t = 6, r = 10 ,2, l = 6, unit = "mm"),
+        plot.title = element_text(family = "sans",
+                                  size = unit(12, "mm"),
+                                  hjust = 1),
+        plot.subtitle = element_text(family = "sans",
+                                     face = "italic",
+                                     size = unit(8, "mm"),
+                                     hjust = 1,
+                                     margin = margin(t = 3,
+                                                     b = 5, unit = "mm")),
+        plot.caption = element_text(family = "sans",
+                                     face = "italic",
+                                     size = unit(6, "mm"),
+                                     hjust = 1,
+                                     margin = margin(t = 3,
+                                                     b = 5, unit = "mm")))
 
-p2
+p3
 ```
+ 
+# Save SVG
+ 
+```{r}
+svglite::svglite("plots/2-12-open-policing-mirror.svg",
+                 width = 4.8, height = 7)
+p3
+dev.off()
+```
+
+# save png
+
+```{r}
+png("plots/2-12-open-policing-mirror.png", 
+    res = 300,
+    width = 1400, height = 1920)
+p3
+dev.off()
+```
+
+  
