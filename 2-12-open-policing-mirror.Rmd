@@ -127,7 +127,13 @@ min_smooth <-
                                      "Wednesday",
                                      "Thursday",
                                      "Friday",
-                                     "Saturday")))
+                                     "Saturday"))) %>% 
+  # label mins and max
+  group_by(weekday) %>% 
+  mutate(min_max = case_when(fitted == max(fitted) ~ TRUE,
+                             fitted == min(fitted) ~ TRUE,
+                             TRUE ~ FALSE)) %>% 
+  ungroup()
 
 # check
 min_smooth %>% 
@@ -164,7 +170,8 @@ fill_up <- "#3752C3"
 # Try mirror
 
 ```{r}
-min_smooth %>% 
+p <- 
+  min_smooth %>% 
   mutate(fitted = fitted - med_y,
          verso = case_when(fitted > 0 ~ "up",
                            TRUE ~ "down"),
@@ -176,9 +183,32 @@ min_smooth %>%
                   fill = verso),
               colour = "grey50") +
   facet_grid(weekday ~ .) +
-  scale_fill_manual(values = c(up = "#4C63C3DD", down = "#FF6C0DDD")) +
-  theme_bw() 
-  
+  scale_fill_manual(values = c(down = "#4C63C3DD", up = "#FF6C0DDD")) +
+  lims(y = c(0, 0.12)) +
+  theme_bw()
+
+p
 ```
 
+#  label local maxima
+
+```{r}
+p1 <- 
+  p + 
+  geom_text(data = . %>% 
+              filter(min_max) %>% 
+              mutate(signed = case_when(verso == "up" ~ fitted,
+                                  TRUE ~ -(fitted))),
+            aes(y = fitted,
+                label = signed %>% 
+                  round(2)),
+            colour = "grey15",
+            fontface = "italic",
+            vjust = 0,
+            hjust = 0.2,
+            size = 3,
+            nudge_y = .005)
+
+p1
+```
 
