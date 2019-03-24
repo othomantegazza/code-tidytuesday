@@ -172,14 +172,14 @@ fill_up <- "#3752C3"
 ```{r}
 p <- 
   min_smooth %>% 
-  mutate(fitted = fitted - med_y,
-         verso = case_when(fitted > 0 ~ "up",
+  mutate(fitted_rel = fitted - med_y,
+         verso = case_when(fitted_rel > 0 ~ "up",
                            TRUE ~ "down"),
-         fitted = abs(fitted)) %>% 
+         fitted_rel = abs(fitted_rel)) %>% 
   ggplot(aes(x = mins)) +
   geom_hline(yintercept = 0) +
   geom_ribbon(aes(ymin = 0,
-                  ymax = fitted,
+                  ymax = fitted_rel,
                   fill = verso),
               colour = "grey50") +
   facet_grid(weekday ~ .) +
@@ -196,12 +196,9 @@ p
 p1 <- 
   p + 
   geom_text(data = . %>% 
-              filter(min_max) %>% 
-              mutate(signed = case_when(verso == "up" ~ fitted,
-                                  TRUE ~ -(fitted))),
-            aes(y = fitted,
-                label = signed %>% 
-                  round(2)),
+              filter(min_max),
+            aes(y = fitted_rel,
+                label = fitted %>% round(2)),
             colour = "grey15",
             fontface = "italic",
             vjust = 0,
