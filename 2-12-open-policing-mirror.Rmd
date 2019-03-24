@@ -177,15 +177,20 @@ p <-
                            TRUE ~ "down"),
          fitted_rel = abs(fitted_rel)) %>% 
   ggplot(aes(x = mins)) +
-  geom_hline(yintercept = 0) +
+  # geom_hline(yintercept = 0) +
   geom_ribbon(aes(ymin = 0,
                   ymax = fitted_rel,
                   fill = verso),
-              colour = "grey50") +
+              colour = "grey5",
+              size = .3) +
   facet_grid(weekday ~ .) +
-  scale_fill_manual(values = c(down = "#4C63C3DD", up = "#FF6C0DDD")) +
-  lims(y = c(0, 0.12)) +
-  theme_bw()
+  scale_fill_manual(values = c(down = "#4C63C3AA",
+                               up = "#FF6C0DAA"),
+                    guide = guide_legend(nrow = 1,
+                                         keyheight = unit(3, "mm"),
+                                         keywidth = unit(7, "mm"))) +
+  coord_cartesian(expand = FALSE) +
+  theme_void()
 
 p
 ```
@@ -209,3 +214,31 @@ p1 <-
 p1
 ```
 
+# style
+
+```{r}
+marks_x <- seq(0, 24, by = 6)
+
+p2 <- 
+  p1 +
+  scale_x_continuous(breaks = marks_x*60, 
+                     labels = paste0(marks_x, "h")) +
+  scale_y_continuous(breaks = 0, 
+                     labels = med_y %>% round(2),
+                     limits = c(0, .12)) +
+  theme(axis.ticks = element_line(),
+        axis.ticks.length = unit(1, "mm"),
+        axis.text.x = element_text(size = unit(8, "mm")),
+        axis.text.y = element_text(size = unit(8, "mm"),
+                                   vjust = 0),
+        legend.position = "top",
+        strip.text.y = element_text(angle = 270,
+                                    face = "italic",
+                                    margin = margin(1,1,1,1,
+                                                    unit = "mm")),
+        panel.spacing = unit(0, "mm"),
+        panel.border = element_rect(colour = "black", fill = NA),
+        plot.margin = margin(2,2,2,2, unit = "mm"))
+
+p2
+```
