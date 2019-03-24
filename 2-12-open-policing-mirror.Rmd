@@ -14,7 +14,7 @@ library(lubridate)
 library(scales)
 
 # weekdays in english
-Sys.setlocale("LC_TIME","C")
+Sys.setlocale("LC_TIME", "en_US.UTF8")
 ```
 
 
@@ -58,21 +58,28 @@ raleigh$time %>% range(na.rm = TRUE)
 ```{r}
 day_sec <- 60*60*24
 
+# how many weeks in the dataset?
+week_span <- raleigh$date %>%
+  {lubridate::interval(start = min(.), end = max(.))} %>% 
+  time_length()/(24*60*60*7) %>% 
+  round()
+
+
 
 # bin stops per minute
 by_minute <- 
   raleigh %>%  
   mutate(mins = as_double(time) %/% 60,
-         weekday = weekdays(date),
-         year = year(date)) %>% 
-  group_by(mins, year, weekday) %>% 
+         weekday = weekdays(date)) %>% 
+  group_by(mins, weekday) %>% 
   count() %>% 
   # na.omit() %>%
   # strange measurements at 0
   # probably tecnical issue
   filter(mins > 0) %>% 
-  group_by(mins, weekday) %>% 
-  summarise(n = median(n))
+  # devide by weeks in dataset
+  mutate(n = n/week_span)
+
 
 # check
 # span <- 1/30
