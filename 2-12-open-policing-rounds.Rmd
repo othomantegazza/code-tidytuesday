@@ -167,135 +167,107 @@ p + facet_grid(weekday ~ .)
 fill_up <- "#3752C3"
 ```
 
-# Try mirror
+# some parameter
+
+```{r}
+grid_dist <- .04
+grid_at <- c(med_y - grid_dist,
+             med_y,
+             med_y + grid_dist)
+color_annos <- "grey60"
+ext <- 50
+offset <- rescale(ext,
+                  from = c(0, 24*60 + 2*ext),
+                  to = c(0, 2*pi))
+hours_guide <- seq(4, 20, by = 4)
+```
+
+
+# Try round
 
 ```{r}
 p <- 
   min_smooth %>% 
-  mutate(fitted_rel = fitted - med_y,
-         verso = case_when(fitted_rel > 0 ~ "up",
-                           TRUE ~ "down"),
-         fitted_rel = abs(fitted_rel)) %>% 
+  mutate(verso = case_when(fitted > med_y ~ "up",
+                           TRUE ~ "down")) %>% 
   ggplot(aes(x = mins)) +
   # geom_hline(yintercept = 0) +
-  geom_ribbon(aes(ymin = 0,
-                  ymax = fitted_rel,
+  geom_ribbon(aes(ymin = med_y,
+                  ymax = fitted,
                   fill = verso),
               colour = "grey5",
               size = .3) +
-  facet_grid(weekday ~ .) +
-  scale_fill_manual(values = c(down = "#4C63C3AA",
-                               up = "#FF6C0DAA"),
+  # facet_grid(. ~ weekday) +
+  facet_wrap(facets = "weekday") +
+  scale_fill_manual(values = c(down = "#4C63C3",
+                               up = "#FF6C0D"),
                     guide = guide_legend(nrow = 1,
                                          keyheight = unit(3, "mm"),
                                          keywidth = unit(7, "mm"))) +
-  coord_cartesian(expand = FALSE) +
-  theme_void()
+  coord_polar(start = offset) +
+  theme_void() +
+  theme(legend.position = "top")
 
 p
 ```
 
-#  label local maxima
+# adjust limits
 
 ```{r}
+
 p1 <- 
   p + 
-  geom_text(data = . %>% 
-              filter(min_max),
-            aes(y = fitted_rel,
-                label = fitted %>% round(2)),
-            colour = "grey15",
-            fontface = "italic",
-            vjust = 0,
-            hjust = 0.2,
-            size = 2,
-            nudge_y = .005)
+  lims(x = c(0, 1440) + c(0, 2*ext),
+       y = c(-.02, max(min_smooth$fitted)))
 
 p1
 ```
 
-# labels
+# add a y guide
 
 ```{r}
-p2 <-
+p2 <- 
   p1 + 
-  labs(fill = "",
-       title = "Average Police Stops Per Minute of the Day",
-       subtitle = str_wrap("Recorded in Raleigh, NC., between
-                           2002 and 2015. These data are gathered and
-                           maintained by the
-                           Stanford Open Policing Project.", 50),
-       caption = paste0("Data from Stanford Open Policing Project.\n",
-                        "Plot done by @othomn in ggplot2."),
-       y = "Stops per minute")
+  geom_hline(yintercept = grid_at,
+             colour = color_annos,
+             size = .1,
+             lty = 2) +
+  annotate(geom = "rect",
+           ymin = 0,
+           ymax = max(min_smooth$fitted),
+           xmin = 24*60,
+           xmax = 24*60 + 2*ext,
+           fill = "white") +
+  geom_text(data = tibble(mins = 24*60 + ext,
+                          fitted = grid_at,
+                          label = grid_at),
+            aes(y = fitted,
+                label = label %>% round(2)),
+            size = 2,
+            colour = color_annos) 
 
 p2
 ```
 
-
-# style
+# add x guide
 
 ```{r}
-marks_x <- seq(0, 24, by = 6)
-
 p3 <- 
   p2 +
-  scale_x_continuous(breaks = marks_x*60, 
-                     labels = paste0(marks_x, "h")) +
-  scale_y_continuous(breaks = 0, 
-                     labels = med_y %>% round(2),
-                     limits = c(0, .12)) +
-  theme(axis.ticks = element_line(),
-        axis.ticks.length = unit(1, "mm"),
-        axis.text.x = element_text(size = unit(8, "mm")),
-        axis.text.y = element_text(size = unit(8, "mm"),
-                                   vjust = 0),
-        # axis.title.y = element_text(size = unit(8, "mm"),
-        #                             hjust = 1),
-        legend.position = "top",
-        strip.text.y = element_text(angle = 270,
-                                    face = "italic",
-                                    margin = margin(1,1,1,1,
-                                                    unit = "mm")),
-        panel.spacing = unit(0, "mm"),
-        panel.border = element_rect(colour = "black", fill = NA),
-        plot.margin = margin(t = 6, r = 10 ,2, l = 6, unit = "mm"),
-        plot.title = element_text(family = "sans",
-                                  size = unit(12, "mm"),
-                                  hjust = 1),
-        plot.subtitle = element_text(family = "sans",
-                                     face = "italic",
-                                     size = unit(8, "mm"),
-                                     hjust = 1,
-                                     margin = margin(t = 3,
-                                                     b = 5, unit = "mm")),
-        plot.caption = element_text(family = "sans",
-                                     face = "italic",
-                                     size = unit(6, "mm"),
-                                     hjust = 1,
-                                     margin = margin(t = 3,
-                                                     b = 5, unit = "mm")))
+  geom_text(data = tibble(mins = hours_guide*60,
+                          hours_guide = hours_guide) %>% 
+              left_join(min_smooth),
+            aes(y = case_when(fitted < med_y ~ med_y + .01,
+                                  fitted >= med_y ~ med_y - .01),
+                label = hours_guide,
+                angle = rescale(mins,
+                                from = c(0 - ext, 1440 + ext),
+                                to = c(360, 0)),
+                vjust = case_when(fitted > med_y ~ 1,
+                                  fitted < med_y ~ 0)),
+            colour = color_annos,
+            size = 2)
 
 p3
 ```
- 
-# Save SVG
- 
-```{r}
-svglite::svglite("plots/2-12-open-policing-mirror.svg",
-                 width = 4.8, height = 7)
-p3
-dev.off()
-```
 
-# save png
-
-```{r}
-png("plots/2-12-open-policing-mirror.png", 
-    res = 300,
-    width = 1400, height = 1920)
-p3
-dev.off()
-```
-
-  
