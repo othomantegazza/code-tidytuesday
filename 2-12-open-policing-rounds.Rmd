@@ -12,6 +12,7 @@ library(tidyverse)
 library(rlang)
 library(lubridate)
 library(scales)
+library(cowplot)
 
 # weekdays in english
 Sys.setlocale("LC_TIME", "en_US.UTF8")
@@ -289,9 +290,56 @@ p_list <-
   map(plot_circles)
 ```
 
-#
+# Arrange
 
 ```{r}
 
+y_small <- -.15
+s_small <- 1/5
+
+p <- 
+  ggdraw() +
+  draw_plot(p_list[[1]], 0, y_small, s_small, 1) +
+  draw_plot(p_list[[2]], 1/6, y_small, s_small, 1) +
+  draw_plot(p_list[[3]], 2/6, y_small, s_small, 1) +
+  draw_plot(p_list[[4]], 1/3, .25, 1/3, 1) +
+  draw_plot(p_list[[5]], 3/6, y_small, s_small, 1) +
+  draw_plot(p_list[[6]], 4/6, y_small, s_small, 1) +
+  draw_plot(p_list[[7]], 5/6, y_small, s_small, 1) +
+  draw_text(text = str_wrap("I can't imagine why police stops 
+                             drop at these hours.
+                             Dinner time?", 20),
+            x = 2/6, y = .7,
+            size = 10, colour = color_annos) +
+  draw_text(text = "Average Police Stops Per Minute of the Day",
+            x = 1, y = .18,
+            size = 18, colour = "grey40",
+            hjust = 1) +
+  draw_text(text =str_wrap("Recorded in Raleigh, NC., between
+                           2002 and 2015. These data are gathered and
+                           maintained by the
+                           Stanford Open Policing Project.", 90),
+            x = 1, y = .12,
+            size = 12, colour = "grey40",
+            lineheight = .9,
+            hjust = 1) +
+  draw_text(text = paste0("Data from Stanford Open Policing Project.\n",
+                        "Plot inspired to the design by\n",
+                        "Nadieh Bremer and Zan Armstrong for the\n",
+                        "Baby Spike article in Scientific American.\n",
+                        "Plot done by @othomn in ggplot2."),
+            x = 1, y = .9,
+            size = 10, colour = "grey40",
+            lineheight = .9,
+            hjust = 1)
+```
+
+# save SVG
+
+```{r}
+svglite::svglite(file = "plots/2-12-open-policing-rounds.svg",
+                 width = 15)
+p
+dev.off()
 ```
 
