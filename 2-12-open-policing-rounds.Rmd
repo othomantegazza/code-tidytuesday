@@ -7,6 +7,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+Reproduce Nadieh Bremer and Zan Armstrong famouse [Baby Spike visualization](https://www.visualcinnamon.com/portfolio/baby-spike)
+
 ```{r}
 library(tidyverse)
 library(rlang)
