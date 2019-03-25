@@ -186,88 +186,94 @@ hours_guide <- seq(4, 20, by = 4)
 # Try round
 
 ```{r}
-p <- 
+min_smooth_list <- 
   min_smooth %>% 
-  mutate(verso = case_when(fitted > med_y ~ "up",
-                           TRUE ~ "down")) %>% 
-  ggplot(aes(x = mins)) +
-  # geom_hline(yintercept = 0) +
-  geom_ribbon(aes(ymin = med_y,
-                  ymax = fitted,
-                  fill = verso),
-              colour = "grey5",
-              size = .3) +
-  # facet_grid(. ~ weekday) +
-  facet_wrap(facets = "weekday") +
-  scale_fill_manual(values = c(down = "#4C63C3",
-                               up = "#FF6C0D"),
-                    guide = guide_legend(nrow = 1,
-                                         keyheight = unit(3, "mm"),
-                                         keywidth = unit(7, "mm"))) +
-  coord_polar(start = offset) +
-  theme_void() +
-  theme(legend.position = "top")
+  split(.$weekday)
 
-p
-```
+plot_circles <- function(weekd) {
+  # Draft plot ----------------------------------
+  to_plot <-  min_smooth_list[[weekd]]
+  
+  p <- 
+  to_plot %>% 
+    mutate(verso = case_when(fitted > med_y ~ "up",
+                             TRUE ~ "down")) %>% 
+    ggplot(aes(x = mins)) +
+    # geom_hline(yintercept = 0) +
+    geom_ribbon(aes(ymin = med_y,
+                    ymax = fitted,
+                    fill = verso),
+                colour = "grey15",
+                size = .3) +
+    # facet_grid(. ~ weekday) +
+    # facet_wrap(facets = "weekday") +
+    scale_fill_manual(values = c(down = "#27A6D3", # "#4C63C3",
+                                 up = "#FF6C0D"),
+                      guide = FALSE) +
+    coord_polar(start = offset) +
+    theme_void() +
+    theme(legend.position = "top")
+  
+  # adjust limits -------------------------
+  p1 <- 
+    p + 
+    lims(x = c(0, 1440) + c(0, 2*ext),
+         y = c(-.02, max(min_smooth$fitted)))
+  
+  # Add a y guide -----------------------------
+  p2 <- 
+    p1 + 
+    geom_hline(yintercept = grid_at,
+               colour = color_annos,
+               size = .1,
+               lty = 2) +
+    annotate(geom = "rect",
+             ymin = 0,
+             ymax = max(min_smooth$fitted),
+             xmin = 24*60,
+             xmax = 24*60 + 2*ext,
+             fill = "white") +
+    geom_text(data = tibble(mins = 24*60 + ext,
+                            fitted = grid_at,
+                            label = grid_at),
+              aes(y = fitted,
+                  label = label %>% round(2)),
+              size = 2,
+              colour = color_annos) 
+  
+  # Add an x guide
+  p3 <- 
+    p2 +
+    geom_text(data = tibble(mins = hours_guide*60,
+                            hours_guide = hours_guide) %>% 
+                left_join(to_plot),
+              aes(y = case_when(fitted < med_y ~ med_y + .01,
+                                fitted >= med_y ~ med_y - .01),
+                  label = hours_guide,
+                  angle = rescale(mins,
+                                  from = c(0 - ext, 1440 + ext),
+                                  to = c(360, 0)),
+                  vjust = case_when(fitted > med_y ~ 1,
+                                    fitted < med_y ~ 0)),
+              colour = color_annos,
+              size = 2)
+  
+  # Add day label -------------------------------
+  p4 <- 
+    p3 +
+    annotate(geom = "text",
+             x = 0, 
+             y = 0,
+             label = weekd,
+             size = 2.6,
+             fontface = "italic",
+             colour = "#DE1288")
 
-# adjust limits
+  
+  return(p4)
+}
 
-```{r}
-
-p1 <- 
-  p + 
-  lims(x = c(0, 1440) + c(0, 2*ext),
-       y = c(-.02, max(min_smooth$fitted)))
-
-p1
-```
-
-# add a y guide
-
-```{r}
-p2 <- 
-  p1 + 
-  geom_hline(yintercept = grid_at,
-             colour = color_annos,
-             size = .1,
-             lty = 2) +
-  annotate(geom = "rect",
-           ymin = 0,
-           ymax = max(min_smooth$fitted),
-           xmin = 24*60,
-           xmax = 24*60 + 2*ext,
-           fill = "white") +
-  geom_text(data = tibble(mins = 24*60 + ext,
-                          fitted = grid_at,
-                          label = grid_at),
-            aes(y = fitted,
-                label = label %>% round(2)),
-            size = 2,
-            colour = color_annos) 
-
-p2
-```
-
-# add x guide
-
-```{r}
-p3 <- 
-  p2 +
-  geom_text(data = tibble(mins = hours_guide*60,
-                          hours_guide = hours_guide) %>% 
-              left_join(min_smooth),
-            aes(y = case_when(fitted < med_y ~ med_y + .01,
-                                  fitted >= med_y ~ med_y - .01),
-                label = hours_guide,
-                angle = rescale(mins,
-                                from = c(0 - ext, 1440 + ext),
-                                to = c(360, 0)),
-                vjust = case_when(fitted > med_y ~ 1,
-                                  fitted < med_y ~ 0)),
-            colour = color_annos,
-            size = 2)
-
-p3
+names(min_smooth_list) %>% 
+  map(plot_circles)
 ```
 
