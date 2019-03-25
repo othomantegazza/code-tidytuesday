@@ -266,14 +266,32 @@ plot_circles <- function(weekd) {
              y = 0,
              label = weekd,
              size = 2.6,
-             fontface = "italic",
-             colour = "#DE1288")
-
+             colour = "#DE1288", # "grey30", 
+             fontface = "italic")
   
-  return(p4)
+  # Add arrow
+  p5 <- 
+    p4 +
+    geom_line(data = tibble(mins = c(0, 24*60 + 10),
+                            fitted = c(med_y, med_y)),
+              aes(y = fitted),
+              size = .8,
+              arrow = arrow(ends = "last",
+                            length = unit(2, "mm"),
+                            type = "closed"),
+              colour = "#DE1288")
+              
+  return(p5)
 }
 
-names(min_smooth_list) %>% 
+p_list <- 
+  names(min_smooth_list) %>% 
   map(plot_circles)
+```
+
+#
+
+```{r}
+
 ```
 
