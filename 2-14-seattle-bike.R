@@ -116,24 +116,25 @@ looper <-
                                TRUE ~ year_week)) %>% 
   # split by week day to add a row after each Saturday
   {split(., .$year_week)} %>% 
-  map(~mutate(.,new_month = month(time_stamp) %>%
-                unique %>% length()) %>% 
-        add_row(time_stamp = as_date(NA_real_),
-                year_week = NA_real_,
-                week_day = NA_real_,
-                new_month = NA_real_, 
-                .before = 1)) %>% 
+  map(~mutate(.,new_month = month(time_stamp) %>% unique %>% length()) %>% 
+        bind_rows(., c(time_stamp = NA_real_,
+                       year_week = NA_real_,
+                       week_day = NA_real_,
+                       new_month = NA_real_))) %>% 
   reduce(bind_rows)  %>% 
   mutate(label = case_when(is.na(time_stamp) ~ TRUE,
                            TRUE ~ FALSE),
          new_month = new_month - 1) %>% 
-  fill(time_stamp, new_month, .direction = "up") %>%
+  fill(time_stamp, new_month, .direction = "down") %>%
   # small fix to filled values
-  mutate(new_month = case_when(label & epiweek(time_stamp) == 1 ~ 1,
-                                TRUE ~ new_month)) %>%
+  mutate(time_stamp = case_when(label ~ time_stamp + days(1),
+                                TRUE ~ time_stamp)) %>% 
   select(-year_week, -week_day) %>% 
-  rename(day_in = "time_stamp") 
-  # small fix to filled values
+  rename(day_in = "time_stamp") %>% 
+  # small first day
+  add_row(day_in = as_date(NA_real_),
+          new_month = 1, label = TRUE, .before = 1) %>% 
+  fill(day_in, .direction = "up")
 
 # 230: day with unusually high counts
 ytop <-
