@@ -4,6 +4,9 @@ library(ggridges)
 library(tibbletime)
 
 
+# weekdays in english
+Sys.setlocale("LC_TIME", "en_US.UTF8")
+
 # bike_traffic <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-04-02/bike_traffic.csv")
 # 
 # save(bike_traffic, file = "data/2-14-seattle-bike.Rdata")
@@ -92,6 +95,35 @@ tst <-
   #                               TRUE ~ bike_count),
   #        smooth_counts = smooth(bike_count)) %>%
   ungroup()
+
+# make a dataframe to loop on
+looper <- 
+  tst %>% pull(date) %>% 
+  unique() %>%
+  # {tibble(year = year(.),
+  #         year_day = yday(.),
+  #         month = month(., label = TRUE),
+  #         week_day = wday(.))} %>%
+  {tibble(date = round_date(., unit = "day"))} %>% 
+  distinct() %>% 
+  mutate(year_week = epiweek(date), # in other cases check isoweek()
+         week_day = wday(date, label = TRUE)) %>% 
+  filter(year(date) == 2017) %>% 
+  mutate(year_week = case_when(year_week == 1 & month(date) == 12 ~ 52,
+                               TRUE ~ year_week)) %>% 
+  # split by week day to add a row after each Saturday
+  {split(., .$year_week)} %>% 
+  map(~bind_rows(., c(date = NA_real_,
+                 year_week = NA_real_,
+                 week_day = NA_real_))) %>% 
+  reduce(bind_rows)  %>% 
+  mutate(label = case_when(is.na(date) ~ TRUE,
+                                 TRUE ~ FALSE)) %>% 
+  fill(date) %>% 
+  mutate(date = case_when(label ~ date + days(1),
+                          TRUE ~ date))
+  
+
 
 p <- 
   tst %>% #pull(crossing) %>%  unique()
