@@ -116,20 +116,24 @@ looper <-
                                TRUE ~ year_week)) %>% 
   # split by week day to add a row after each Saturday
   {split(., .$year_week)} %>% 
-  map(~mutate(.,new_month = month(time_stamp) %>% unique %>% length()) %>% 
-        bind_rows(., c(time_stamp = NA_real_,
-                       year_week = NA_real_,
-                       week_day = NA_real_,
-                       new_month = NA_real_))) %>% 
+  map(~mutate(.,new_month = month(time_stamp) %>%
+                unique %>% length()) %>% 
+        add_row(time_stamp = as_date(NA_real_),
+                year_week = NA_real_,
+                week_day = NA_real_,
+                new_month = NA_real_, 
+                .before = 1)) %>% 
   reduce(bind_rows)  %>% 
   mutate(label = case_when(is.na(time_stamp) ~ TRUE,
                            TRUE ~ FALSE),
          new_month = new_month - 1) %>% 
-  fill(time_stamp, new_month) %>% 
-  mutate(time_stamp = case_when(label ~ time_stamp + days(1),
-                                TRUE ~ time_stamp)) %>% 
+  fill(time_stamp, new_month, .direction = "up") %>%
+  # small fix to filled values
+  mutate(new_month = case_when(label & epiweek(time_stamp) == 1 ~ 1,
+                                TRUE ~ new_month)) %>%
   select(-year_week, -week_day) %>% 
-  rename(day_in = "time_stamp")
+  rename(day_in = "time_stamp") 
+  # small fix to filled values
 
 # 230: day with unusually high counts
 ytop <-
@@ -155,9 +159,11 @@ plot_bikes <- function(day_in, new_month, label)
     
     return(p)
   } else if(new_month) {
-    tibble(x = 1, y = 1, to_write = day_in) %>% 
-    ggplot(aes(x=1, y=1, label = to_write)) +
-      geom_text() +
+    tibble(x = 1, y = c(0,1), to_write = c(day_in, "")) %>% 
+    ggplot(aes(x=x, y=y, label = paste(month(to_write, label = T),
+                                       mday(to_write)))) +
+      geom_text(vjust = 0) +
+      ylim(0, .7) +
       theme_void()
   } else {
     ggplot() + theme_void()
