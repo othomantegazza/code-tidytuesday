@@ -2,6 +2,7 @@ library(tidyverse)
 library(lubridate)
 library(ggridges)
 library(tibbletime)
+library(cowplot)
 
 
 # weekdays in english
@@ -140,12 +141,7 @@ plot_bikes <- function(day_in, new_month, label)
 {
   if(!label) {
     p <- to_plot %>%
-      filter(yday(time_stamp) == yday(day_in)) 
-    
-    print(p$day_hour)
-    
-    p <- 
-      p %>% 
+      filter(yday(time_stamp) == yday(day_in)) %>% 
       ggplot(aes(x = day_hour,
                  fill = crossing,
                  colour = crossing)) +
@@ -158,13 +154,21 @@ plot_bikes <- function(day_in, new_month, label)
       theme_void()
     
     return(p)
+  } else if(new_month) {
+    tibble(x = 1, y = 1, to_write = day_in) %>% 
+    ggplot(aes(x=1, y=1, label = to_write)) +
+      geom_text() +
+      theme_void()
+  } else {
+    ggplot() + theme_void()
   }
 }
 
-looper[1:3, ] %>% 
+p_list <- 
+  looper[1:50, ] %>% 
   pmap(plot_bikes)
 
-
+cowplot::plot_grid(plotlist = p_list, ncol = 8)
 # p <- 
 #   tst %>% #pull(crossing) %>%  unique()
 #   # filter(crossing == "Burke Gilman Trail") %>% 
