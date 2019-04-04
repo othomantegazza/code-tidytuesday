@@ -172,10 +172,19 @@ plot_bikes <- function(day_in, new_month, label)
 }
 
 p_list <- 
-  looper[1:50, ] %>% 
+  looper %>% 
   pmap(plot_bikes)
 
-cowplot::plot_grid(plotlist = p_list, ncol = 8)
+p_panel <- 
+  cowplot::plot_grid(plotlist = p_list,
+                     ncol = 8)
+
+png(filename = "plots/2-14-seattle-bikes.png",
+    height = 7000, width = 1600,
+    res = 300)
+p_panel
+dev.off()
+
 # p <- 
 #   tst %>% #pull(crossing) %>%  unique()
 #   # filter(crossing == "Burke Gilman Trail") %>% 
