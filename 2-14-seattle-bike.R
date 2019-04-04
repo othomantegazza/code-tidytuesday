@@ -77,15 +77,17 @@ bike_traffic %>%
 
 roll_mean <- rollify(window = 3, .f = mean)
 
-tst <- 
+to_plot <- 
   bike_traffic %>% 
-  group_by(crossing, date) %>% 
+  rename(time_stamp = "date") %>% 
+  group_by(crossing, time_stamp) %>% 
   summarise(bike_count = sum(bike_count)) %>% 
   ungroup() %>% 
-  mutate(year = year(date),
-         year_day = yday(date),
-         week_day = wday(date),
-         day_hour = hour(date)) %>% 
+  mutate(year = year(time_stamp),
+         year_day = yday(time_stamp),
+         week_day = wday(time_stamp),
+         day_hour = hour(time_stamp),
+         date_day = round_date(time_stamp, unit = "day")) %>% 
   filter(year == 2017) %>%
   # filter(year_day > 45,year_day < 50) %>% 
   group_by(crossing) %>%
@@ -98,52 +100,90 @@ tst <-
 
 # make a dataframe to loop on
 looper <- 
-  tst %>% pull(date) %>% 
+  to_plot %>% pull(time_stamp) %>% 
   unique() %>%
   # {tibble(year = year(.),
   #         year_day = yday(.),
   #         month = month(., label = TRUE),
   #         week_day = wday(.))} %>%
-  {tibble(date = round_date(., unit = "day"))} %>% 
+  {tibble(time_stamp = round_date(., unit = "day"))} %>% 
   distinct() %>% 
-  mutate(year_week = epiweek(date), # in other cases check isoweek()
-         week_day = wday(date, label = TRUE)) %>% 
-  filter(year(date) == 2017) %>% 
-  mutate(year_week = case_when(year_week == 1 & month(date) == 12 ~ 52,
+  mutate(year_week = epiweek(time_stamp), # in other cases check isoweek()
+         week_day = wday(time_stamp, label = TRUE)) %>% 
+  filter(year(time_stamp) == 2017) %>% 
+  mutate(year_week = case_when(year_week == 1 & month(time_stamp) == 12 ~ 52,
                                TRUE ~ year_week)) %>% 
   # split by week day to add a row after each Saturday
   {split(., .$year_week)} %>% 
-  map(~bind_rows(., c(date = NA_real_,
-                 year_week = NA_real_,
-                 week_day = NA_real_))) %>% 
+  map(~mutate(.,new_month = month(time_stamp) %>% unique %>% length()) %>% 
+        bind_rows(., c(time_stamp = NA_real_,
+                       year_week = NA_real_,
+                       week_day = NA_real_,
+                       new_month = NA_real_))) %>% 
   reduce(bind_rows)  %>% 
-  mutate(label = case_when(is.na(date) ~ TRUE,
-                                 TRUE ~ FALSE)) %>% 
-  fill(date) %>% 
-  mutate(date = case_when(label ~ date + days(1),
-                          TRUE ~ date))
-  
+  mutate(label = case_when(is.na(time_stamp) ~ TRUE,
+                           TRUE ~ FALSE),
+         new_month = new_month - 1) %>% 
+  fill(time_stamp, new_month) %>% 
+  mutate(time_stamp = case_when(label ~ time_stamp + days(1),
+                                TRUE ~ time_stamp)) %>% 
+  select(-year_week, -week_day) %>% 
+  rename(day_in = "time_stamp")
+
+# 230: day with unusually high counts
+ytop <-
+  to_plot %>% 
+  filter(year_day != 230) %>% 
+  pull(s_mean) %>% max(na.rm = TRUE)
+
+plot_bikes <- function(day_in, new_month, label)
+{
+  if(!label) {
+    p <- to_plot %>%
+      filter(yday(time_stamp) == yday(day_in)) 
+    
+    print(p$day_hour)
+    
+    p <- 
+      p %>% 
+      ggplot(aes(x = day_hour,
+                 fill = crossing,
+                 colour = crossing)) +
+      geom_ribbon(aes(ymin = 0,
+                      ymax = s_mean),
+                  alpha = .2) +
+      guides(colour = FALSE,
+             fill = FALSE) +
+      lims(y = c(0, ytop)) +
+      theme_void()
+    
+    return(p)
+  }
+}
+
+looper[1:3, ] %>% 
+  pmap(plot_bikes)
 
 
-p <- 
-  tst %>% #pull(crossing) %>%  unique()
-  # filter(crossing == "Burke Gilman Trail") %>% 
-  # slice(25:48) %>% #View
-  # crazy high count
-  filter(year_day != 230) %>%  #View()
-  # filter(year_day > 45,year_day < 50) %>%
-  ggplot(aes(x = day_hour,
-             fill = crossing,
-             colour = crossing)) +
-  geom_ribbon(aes(ymin = 0, ymax = s_mean),
-              alpha = .2) +
-  # geom_point() +
-  # geom_smooth() +
-  # geom_density(aes(y = ..count..)) +
-  guides(colour = FALSE,
-         fill = FALSE) +
-  facet_wrap(facets = "year_day", ncol = 7) +
-  theme_void()
+# p <- 
+#   tst %>% #pull(crossing) %>%  unique()
+#   # filter(crossing == "Burke Gilman Trail") %>% 
+#   # slice(25:48) %>% #View
+#   # crazy high count
+#   filter(year_day != 230) %>%  #View()
+#   # filter(year_day > 45,year_day < 50) %>%
+#   ggplot(aes(x = day_hour,
+#              fill = crossing,
+#              colour = crossing)) +
+#   geom_ribbon(aes(ymin = 0, ymax = s_mean),
+#               alpha = .2) +
+#   # geom_point() +
+#   # geom_smooth() +
+#   # geom_density(aes(y = ..count..)) +
+#   guides(colour = FALSE,
+#          fill = FALSE) +
+#   facet_wrap(facets = "year_day", ncol = 7) +
+#   theme_minimal()
 
 # p
 
