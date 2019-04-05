@@ -181,13 +181,19 @@ p_list <-
 
 library(gtable)
 
-a <- p_list[[2]]
-b <- p_list[[34]]
+# viewport / grid directly-------------------------------------------------
 
-rbind(a %>% ggplotGrob(), b %>% ggplotGrob())
+library(grid)
 
+m_side <- .15
+m_tb <- .2
 
-# viewport ----------------------------------------------------------------
+# directly in SVG
+
+grid.newpage()
+
+print(p_list[[1]], 
+      vp = viewport(x = m_side, y = 1- m_tb, height = .1, width = .1))
 
 grid.newpage()
 pushViewport(viewport(layout = grid.layout(2, 2)))
@@ -198,14 +204,7 @@ print(a, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(b, vp = vplayout(2, 1))
 print(a, vp = vplayout(2, 2))
 
-# use grid directly? ------------------------------------------------------
-library(grid)
-
-tst <- p_list[[3]]
-tst
-
-grid.ls()
-tst %>% ggplotGrob()
+vpList()
 
 
 # with cowplot ------------------------------------------------------------
@@ -222,8 +221,7 @@ ggdraw() + draw_plot(p_panel %>% plot_to_gtable(), x = .1, y = .1, scale = .8)
 png(filename = "plots/2-14-seattle-bikes.png",
     height = 7000, width = 1600,
     res = 300)
-# p_panel
-ggdraw() + draw_plot(p_panel, x = .1, y = .1, width = .8, height = .8)
+p_panel
 dev.off()
 
 # p <- 
@@ -258,5 +256,5 @@ dev.off()
 svglite::svglite(file = "plots/2-14-seattle-bikes.svg",
                  width = 7,
                  height = 30)
-p
+p_panel
 dev.off()
