@@ -112,7 +112,7 @@ looper <-
   mutate(year_week = epiweek(time_stamp), # in other cases check isoweek()
          week_day = wday(time_stamp, label = TRUE)) %>% 
   filter(year(time_stamp) == 2017) %>% 
-  mutate(year_week = case_when(year_week == 1 & month(time_stamp) == 12 ~ 52,
+  mutate(year_week = case_when(year_week == 1 & month(time_stamp) == 12 ~ 53,
                                TRUE ~ year_week)) %>% 
   # split by week day to add a row after each Saturday
   {split(., .$year_week)} %>% 
