@@ -175,14 +175,55 @@ p_list <-
   looper %>% 
   pmap(plot_bikes)
 
+
+
+# gtable ------------------------------------------------------------------
+
+library(gtable)
+
+a <- p_list[[2]]
+b <- p_list[[34]]
+
+rbind(a %>% ggplotGrob(), b %>% ggplotGrob())
+
+
+# viewport ----------------------------------------------------------------
+
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(2, 2)))
+
+vplayout <- function(x, y)  viewport(layout.pos.row = x, layout.pos.col = y)
+
+print(a, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(b, vp = vplayout(2, 1))
+print(a, vp = vplayout(2, 2))
+
+# use grid directly? ------------------------------------------------------
+library(grid)
+
+tst <- p_list[[3]]
+tst
+
+grid.ls()
+tst %>% ggplotGrob()
+
+
+# with cowplot ------------------------------------------------------------
+
+length(p_list)/2
+
+
 p_panel <- 
-  cowplot::plot_grid(plotlist = p_list,
+  cowplot::plot_grid(plotlist = p_list[1:207],
                      ncol = 8)
+
+ggdraw() + draw_plot(p_panel %>% plot_to_gtable(), x = .1, y = .1, scale = .8)
 
 png(filename = "plots/2-14-seattle-bikes.png",
     height = 7000, width = 1600,
     res = 300)
-p_panel
+# p_panel
+ggdraw() + draw_plot(p_panel, x = .1, y = .1, width = .8, height = .8)
 dev.off()
 
 # p <- 
