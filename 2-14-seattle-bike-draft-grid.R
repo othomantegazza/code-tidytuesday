@@ -25,11 +25,11 @@ block_cols <- 8
  
 
 # outer margin left and right
-m_side <- .15
+m_side <- .14
 # outer margin up and down
-m_tb <- .2
+m_tb <- .16
 # inner margin left and right
-m_small_side <- .05
+m_small_side <- .04
 # inner margin top and bottom
 m_small_tb <- .05
 
@@ -39,7 +39,9 @@ p_width <- (.5 - m_side - m_small_side)/8
 # must 13 plots in half table height
 p_height <- (.5 - m_tb - m_small_tb)/13
 
-# directly in SVG
+
+# background color
+bg_col <- "#F1F1F0" #"#F2F2EF"#"#F6F6EC"
 
 # in a data frame?
 p_tibble <- 
@@ -84,5 +86,39 @@ svglite::svglite(file = "plots/2-14-seattle-bikes-draft-grid.svg",
                  height = 33.1,
                  width = 23.4 )
 grid.newpage()
+grid.rect(gp = gpar(fill = bg_col))
+grid.text("365 Days on the Bicycle in Seattle",
+          x = m_side,
+          y = 1 - m_tb/2,
+          gp = gpar(col = "grey20",
+                    fontsize = 60,
+                    fontface = "italic",
+                    fontfamily = "Times New Roman"),
+          hjust = 0,
+          vjust = 0)
+grid.text(str_wrap("Bicycle traffic crossing 7 detection points in Seattle in 2017.
+                   Also an exercise on making heavily facetted plots with ggplot2 and
+                   grid by Otho Mantegazza"),
+          x = m_side,
+          y = 1 - m_tb*.72,
+          gp = gpar(col = "grey20",
+                    fontsize = 30,
+                    fontface = "italic",
+                    fontfamily = "Times New Roman"),
+          hjust = 0,
+          vjust = 0)
+grid.lines(x = unit(c(m_side*1.5, 1 - m_side*1.5), "npc"),
+           y = unit(c(.5, .5), "npc"))
 p_tibble %>% pmap(plot_to_vp)
+dev.off()
+
+png(filename = "plots/2-14-seattle-bikes-draft-grid.png", 
+    height = 33.1,
+    width = 23.4,
+    units = "in",
+    res = 300)
+grid.newpage()
+grid.rect(gp = gpar(fill = bg_col))
+p_tibble %>% pmap(plot_to_vp)
+
 dev.off()
