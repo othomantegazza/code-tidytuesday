@@ -156,14 +156,17 @@ plot_bikes <- function(day_in, new_month, label)
       guides(colour = FALSE,
              fill = FALSE) +
       lims(y = c(0, ytop)) +
-      theme_void()
+      theme_void() +
+      theme(plot.margin = margin(0, 10, 0, 10))
     
     return(p)
   } else if(new_month) {
     tibble(x = 1, y = c(0,1), to_write = c(day_in, "")) %>% 
     ggplot(aes(x=x, y=y, label = paste(month(to_write, label = T),
                                        mday(to_write)))) +
-      geom_text(vjust = 0) +
+      geom_text(vjust = 0,
+                size = 6,
+                fontface = "italic") +
       ylim(0, .7) +
       theme_void()
   } else {

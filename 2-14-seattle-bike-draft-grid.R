@@ -1,9 +1,28 @@
+library(tidyverse)
+library(lubridate)
 library(grid)
+
+
+# weekdays in english
+Sys.setlocale("LC_TIME", "en_US.UTF8")
+
+length(p_list)
+# 418
 
 length(p_list)%/%(8*4)
 # 13
 length(p_list)%/%4
 # 104
+
+# rows per block
+block_rows <- 14
+block_cols <- 8
+# 112 cells per block
+
+112*4
+# 448 for 418 cells
+# 30 cells too much
+ 
 
 # outer margin left and right
 m_side <- .15
@@ -24,11 +43,22 @@ p_height <- (.5 - m_tb - m_small_tb)/13
 
 # in a data frame?
 p_tibble <- 
-  tibble(p = p_list[1:104],
-         x = seq(from = m_side, to = .5 - m_small_side, length.out = 9)[1:8] %>% 
-           rep(13),
-         y = seq(from = 1 - m_tb, to = .5 + m_small_tb, length.out = 13) %>% 
-           rep(each = 8),
+  tibble(p = p_list,
+         x = seq(from = m_side, to = .5 - m_small_side, length.out = 9)[1:block_cols] %>% 
+           rep(block_rows) %>%
+           # second block, right top
+           c(seq(from = .5 + m_small_side, to = 1 - m_side, length.out = 9)[1:block_cols] %>% 
+               rep(block_rows)) %>% 
+           # # third and fourth blocks (bottom)
+           {c(.,.)} %>% .[1:length(p_list)],
+         y = seq(from = 1 - m_tb, to = .5 + m_small_tb, length.out = block_rows) %>% 
+           rep(each = block_cols) %>% 
+           # second block, right top
+           {c(., .)} %>% 
+           c(seq(from = .5 - m_small_tb, to = m_tb, length.out = block_rows) %>% 
+               rep(each = block_cols) %>% 
+               {c(., .)}) %>% 
+           .[1:length(p_list)],
          width = p_width,
          height = p_height)
 
@@ -50,7 +80,9 @@ plot_to_vp <- function(p, x, y, width, height) {
 
 
 
-svglite::svglite(file = "plots/2-14-seattle-bikes-draft-grid.svg")
+svglite::svglite(file = "plots/2-14-seattle-bikes-draft-grid.svg",
+                 height = 33.1,
+                 width = 23.4 )
 grid.newpage()
 p_tibble %>% pmap(plot_to_vp)
 dev.off()
