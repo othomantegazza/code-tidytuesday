@@ -80,14 +80,36 @@ plot_to_vp <- function(p, x, y, width, height) {
 
 # much faster on SVG ------------------------------------------------------
 
+# function to add weeknames
+w_names <- 
+  tibble(x = seq(from = m_side, to = .5 - m_small_side, length.out = 9)[1:block_cols] %>% 
+           c(seq(from = .5 + m_small_side, to = 1 - m_side, length.out = 9)[1:block_cols]),
+         label = c("", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat") %>% 
+           rep(2))
+
+add_weeknames <- function(x, label) {
+  grid.text(label = label,
+            x = x,
+            y = 1 - m_tb*.95,
+            vjust = 0,
+            gp = gpar(col = "grey20",
+                      fontsize = 18,
+                      fontface = "italic",
+                      fontfamily = "Times New Roman"))
+  return(NULL)
+}
+  
+w_names %>% pmap(add_weeknames)
 
 
 svglite::svglite(file = "plots/2-14-seattle-bikes-draft-grid.svg",
                  height = 33.1,
                  width = 23.4 )
 grid.newpage()
+# background
 grid.rect(gp = gpar(fill = bg_col))
-grid.text("365 Days on the Bicycle in Seattle",
+# Title
+grid.text("365 Days Cycling in Seattle",
           x = m_side,
           y = 1 - m_tb/2,
           gp = gpar(col = "grey20",
@@ -96,20 +118,38 @@ grid.text("365 Days on the Bicycle in Seattle",
                     fontfamily = "Times New Roman"),
           hjust = 0,
           vjust = 0)
-grid.text(str_wrap("Bicycle traffic crossing 7 detection points in Seattle in 2017.
-                   Also an exercise on making heavily facetted plots with ggplot2 and
-                   grid by Otho Mantegazza"),
-          x = m_side,
+# subtitle
+grid.text(str_wrap("Bicycle traffic crossing 7 detection points in Seattle in 2017.") %>% 
+            paste(str_wrap(" Also an exercise on making heavily facetted plots with ggplot2 and
+                   grid by Otho Mantegazza.",
+                   width = 100), sep = "\n"),
+          x = m_side + .02, 
           y = 1 - m_tb*.72,
           gp = gpar(col = "grey20",
-                    fontsize = 30,
+                    fontsize = 27,
                     fontface = "italic",
-                    fontfamily = "Times New Roman"),
+                    fontfamily = "Times New Roman",
+                    lineheight = .87),
           hjust = 0,
           vjust = 0)
+# mid line
 grid.lines(x = unit(c(m_side*1.5, 1 - m_side*1.5), "npc"),
            y = unit(c(.5, .5), "npc"))
+# week names
+w_names %>% pmap(add_weeknames)
+# plots
 p_tibble %>% pmap(plot_to_vp)
+# caption
+grid.text(label = "Data from the Seattle Department of Transportation\nplot by @othomn",
+          x = 1 - m_side, 
+          y = m_tb*.5,
+          gp = gpar(col = "grey20",
+                    fontsize = 27,
+                    fontface = "italic",
+                    fontfamily = "Times New Roman",
+                    lineheight = .87),
+          hjust = 1,
+          vjust = 0)
 dev.off()
 
 png(filename = "plots/2-14-seattle-bikes-draft-grid.png", 
@@ -118,7 +158,48 @@ png(filename = "plots/2-14-seattle-bikes-draft-grid.png",
     units = "in",
     res = 300)
 grid.newpage()
+# background
 grid.rect(gp = gpar(fill = bg_col))
+# Title
+grid.text("365 Days Cycling in Seattle",
+          x = m_side,
+          y = 1 - m_tb/2,
+          gp = gpar(col = "grey20",
+                    fontsize = 60,
+                    fontface = "italic",
+                    fontfamily = "Times New Roman"),
+          hjust = 0,
+          vjust = 0)
+# subtitle
+grid.text(str_wrap("Bicycle traffic crossing 7 detection points in Seattle in 2017.") %>% 
+            paste(str_wrap(" Also an exercise on making heavily facetted plots with ggplot2 and
+                   grid by Otho Mantegazza.",
+                           width = 100), sep = "\n"),
+          x = m_side + .02, 
+          y = 1 - m_tb*.72,
+          gp = gpar(col = "grey20",
+                    fontsize = 27,
+                    fontface = "italic",
+                    fontfamily = "Times New Roman",
+                    lineheight = .87),
+          hjust = 0,
+          vjust = 0)
+# mid line
+grid.lines(x = unit(c(m_side*1.5, 1 - m_side*1.5), "npc"),
+           y = unit(c(.5, .5), "npc"))
+# week names
+w_names %>% pmap(add_weeknames)
+# plots
 p_tibble %>% pmap(plot_to_vp)
-
+# caption
+grid.text(label = "Data from the Seattle Department of Transportation\nplot by @othomn",
+          x = 1 - m_side, 
+          y = m_tb*.5,
+          gp = gpar(col = "grey20",
+                    fontsize = 27,
+                    fontface = "italic",
+                    fontfamily = "Times New Roman",
+                    lineheight = .87),
+          hjust = 1,
+          vjust = 0)
 dev.off()
