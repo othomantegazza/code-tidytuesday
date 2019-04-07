@@ -1,25 +1,54 @@
+---
+title: "Open Policing - Raleigh"
+author: "Otho"
+date:  "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Setup
+
+```{r}
 library(tidyverse)
 library(lubridate)
-library(ggridges)
 library(tibbletime)
-library(cowplot)
 
 
 # weekdays in english
 Sys.setlocale("LC_TIME", "en_US.UTF8")
+```
 
-# bike_traffic <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-04-02/bike_traffic.csv")
-# 
-# save(bike_traffic, file = "data/2-14-seattle-bike.Rdata")
+# get data
 
-load("data/2-14-seattle-bike.Rdata")
+```{r}
+bike_url <- paste0("https://raw.githubusercontent.com/rfordatascience/",
+                   "tidytuesday/master/data/2019/2019-04-02/bike_traffic.csv")
+bike_path <- "data/2-14-seattle-bike.Rdata"
 
+if(!file.exists(bike_path)) {
+  bike_traffic <- readr::read_csv()
+   
+  save(bike_traffic, file = "data/2-14-seattle-bike.Rdata")
+} else {
+  load("data/2-14-seattle-bike.Rdata")
+}
+```  
+
+# wrangle data
+
+Fix time
+
+```{r}
 bike_traffic <- 
   bike_traffic %>% 
   mutate(date = mdy_hms(date))
+```
 
+Explore
+
+```{r, eval = FALSE}
 # explore -----------------------------------------------------------------
-
 bike_traffic %>% 
   pull(crossing) %>% 
   unique()
@@ -37,36 +66,6 @@ bike_traffic %>%
   facet_grid(crossing ~ .)
 
 
-
-# parameters --------------------------------------------------------------
-
-color_points <- "#3752C3"
-
-
-# ridges ------------------------------------------------------------------
-
-# meh
-bike_traffic %>% 
-  mutate(year_day = yday(.data$date),
-         year = year(.data$date)) %>% 
-  group_by(year, year_day, crossing) %>% 
-  summarise(bike_count = sum(bike_count, na.rm = TRUE)) %>% 
-  filter(year > 2013,
-         year < 2019) %>% #arrange(desc(bike_count)) %>%  top_n(n = 10)
-  ggplot(aes(x = bike_count,
-             y = year %>% as.character() %>% as.factor())) +
-  geom_density_ridges(rel_min_height = .02,
-                      scale = .9,
-                      quantile_lines = TRUE,
-                      colour = color_points,
-                      fill = "grey70",
-                      # fill = "#263A89",
-                      alpha = .5) +
-  scale_x_sqrt() +
-  # lims(x = c(0, 4000)) +
-  facet_wrap(facets = "crossing", scales = "free_x", nrow = 1) +
-  theme_bw()
-
 bike_traffic %>% 
   mutate(week_day = wday(.data$date),
          week = week(.data$date), 
@@ -74,8 +73,19 @@ bike_traffic %>%
   # group_by(year, year_day, crossing) %>% 
   filter(year > 2013,
          year < 2019) #arrange(desc(bike_count)) %>%  top_n(n = 10)
+```
+
+After exploring the data, I decided to go for a poster with 4 heavily faceted panel, for two reasons:
+
+- I thought that it was interesting to show bike counts for each crossing across every day of a year. So one could see the differences between working days and weekends and between the warm and cold season.
+- I wanted to practice poster-like layouts and heavily faceted plots, 
+
+First, I had to decide what to show on a single plots
+
+Use rolling mean.
 
 
+```{r}
 roll_mean <- rollify(window = 3, .f = mean)
 
 to_plot <- 
@@ -261,3 +271,4 @@ svglite::svglite(file = "plots/2-14-seattle-bikes.svg",
                  height = 30)
 p_panel
 dev.off()
+```
