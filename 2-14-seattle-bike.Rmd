@@ -245,7 +245,7 @@ y_thirdblock <-
 
 
 
-# in a data frame?
+# all goes in a dataframe
 p_tibble <- 
   tibble(p = p_list,
          x = c(x_firstblock, x_secondblock) %>% 
@@ -258,7 +258,6 @@ p_tibble <-
          width = p_width,
          height = p_height)
 
-
 # define a function to plot each plot on its position
 # in the grid
 plot_to_vp <- function(p, x, y, width, height) {
@@ -266,6 +265,30 @@ plot_to_vp <- function(p, x, y, width, height) {
         vp = viewport(x = x, y = y, width = width, height = height))
   return(NULL)
 }
+
+```
+
+Define a function to plot weekdays on top:
+
+```{r}
+# function to add weeknames
+w_names <-
+  tibble(x = c(x_firstblock[1:7], x_secondblock[1:7]),
+         label = c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat") %>%
+           rep(2))
+
+add_weeknames <- function(x, label) {
+  grid.text(label = label,
+            x = x,
+            y = 1 - m_tb*.93,
+            vjust = 0,
+            gp = gpar(col = "grey20",
+                      fontsize = 18,
+                      fontface = "italic",
+                      fontfamily = "Times New Roman"))
+  return(NULL)
+}
+
 
 
 # Very slow output on the screen, don't know why  ------------------------
@@ -276,27 +299,6 @@ plot_to_vp <- function(p, x, y, width, height) {
 
 
 # much faster on SVG ------------------------------------------------------
-
-# function to add weeknames
-# w_names <- 
-#   tibble(x = seq(from = m_side, to = .5 - m_small_side, length.out = 9)[1:block_cols] %>% 
-#            c(seq(from = .5 + m_small_side, to = 1 - m_side, length.out = 9)[1:block_cols]),
-#          label = c("", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat") %>% 
-#            rep(2))
-# 
-# add_weeknames <- function(x, label) {
-#   grid.text(label = label,
-#             x = x,
-#             y = 1 - m_tb*.95,
-#             vjust = 0,
-#             gp = gpar(col = "grey20",
-#                       fontsize = 18,
-#                       fontface = "italic",
-#                       fontfamily = "Times New Roman"))
-#   return(NULL)
-# }
-#   
-# w_names %>% pmap(add_weeknames)
 
 
 svglite::svglite(file = "plots/2-14-seattle-bikes-draft-grid-2.svg",
