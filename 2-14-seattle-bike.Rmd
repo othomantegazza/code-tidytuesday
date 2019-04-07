@@ -80,48 +80,56 @@ After exploring the data, I decided to go for a poster with 4 heavily faceted pa
 - I thought that it was interesting to show bike counts for each crossing across every day of a year. So one could see the differences between working days and weekends and between the warm and cold season.
 - I wanted to practice poster-like layouts and heavily faceted plots, 
 
+I decided to use 2017 because measurements seem most complete during this year.
+
 First, I had to decide what to show on a single plots
 
 Use rolling mean.
 
 
 ```{r}
+# smooth mean on a window of three measurements
 roll_mean <- rollify(window = 3, .f = mean)
 
 to_plot <- 
   bike_traffic %>% 
+  # no need, but I wanted to use something other than "date"
+  # which is generic and it is a function
   rename(time_stamp = "date") %>% 
+  # each crossing measures bikes in different direction separately
+  # sum all the values to get counts by crossing an by hours
   group_by(crossing, time_stamp) %>% 
   summarise(bike_count = sum(bike_count)) %>% 
   ungroup() %>% 
+  # Not necessary, but some of this column might be useful later
   mutate(year = year(time_stamp),
          year_day = yday(time_stamp),
          week_day = wday(time_stamp),
          day_hour = hour(time_stamp),
          date_day = round_date(time_stamp, unit = "day")) %>% 
+  # seems like measurements are most complete in this year
   filter(year == 2017) %>%
   # filter(year_day > 45,year_day < 50) %>% 
   group_by(crossing) %>%
-  arrange(year_day) %>% 
+  arrange(year_day, day_hour) %>% 
   mutate(s_mean = roll_mean(bike_count)) %>% 
-  # mutate(bike_count = case_when(is.na(bike_count) ~ 0,
-  #                               TRUE ~ bike_count),
-  #        smooth_counts = smooth(bike_count)) %>%
   ungroup()
 
-# make a dataframe to loop on
+# I want to control the position of every plot individually
+# So first I want to produce a dataframe with all the parameters
+# then I'll loop on this dataframe with pmap()
 looper <- 
   to_plot %>% pull(time_stamp) %>% 
   unique() %>%
-  # {tibble(year = year(.),
-  #         year_day = yday(.),
-  #         month = month(., label = TRUE),
-  #         week_day = wday(.))} %>%
+  # Each day
   {tibble(time_stamp = round_date(., unit = "day"))} %>% 
   distinct() %>% 
   mutate(year_week = epiweek(time_stamp), # in other cases check isoweek()
          week_day = wday(time_stamp, label = TRUE)) %>% 
-  filter(year(time_stamp) == 2017) %>% 
+  # I don't know why I get another day in 2018
+  # some approximation with the day
+  filter(year(time_stamp) == 2017) %>%
+  # fix weeks
   mutate(year_week = case_when(year_week == 1 & month(time_stamp) == 12 ~ 53,
                                TRUE ~ year_week)) %>% 
   # split by week day to add a row after each Saturday
@@ -189,6 +197,7 @@ p_list <-
   pmap(plot_bikes)
 
 
+save(p_list, file = "data/2-14-seattle-bike-PLOTS.Rdata")
 
 # gtable ------------------------------------------------------------------
 
