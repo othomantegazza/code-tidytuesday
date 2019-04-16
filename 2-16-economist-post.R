@@ -76,6 +76,10 @@ x_n <- x_ids  %>% length()
 width <- (1 - left_margin - right_margin) / x_n
 height <- (1 - 2*u_margin) / y_n
 
+p_font <- "Helvetica"  #"Times New Roman"
+p_fontface <- "plain"
+p_fontsize <- 22
+
 # loop plots --------------------------------------------------------------
 
 plot_circle <- function(percent_women, xdown = -1) {
@@ -117,16 +121,29 @@ dat_plots %>% pull(plots) %>% .[[2]]
 # Utility functions -------------------------------------------------------
 
 add_fields <- function(x, label) {
-  grid.text(label = label,
+  grid.text(label = label %>% str_wrap(width = 10),
             x = x,
-            y = 1 - u_margin*.7,
+            y = 1 - u_margin*.85,
             vjust = 0,
             gp = gpar(col = "grey20",
-                      fontsize = 18,
-                      fontface = "italic",
-                      fontfamily = "Times New Roman"))
+                      fontsize = p_fontsize,
+                      fontface = p_fontface,
+                      fontfamily = p_font))
   return(NULL)
 }
+
+add_countries <- function(y, label) {
+  grid.text(label = label,
+            x = left_margin - .1,
+            y = y,
+            vjust = 0,
+            gp = gpar(col = "grey20",
+                      fontsize = p_fontsize,
+                      fontface = p_fontface,
+                      fontfamily = p_font))
+  return(NULL)
+}
+
 
 # plot on grid ------------------------------------------------------------
 
@@ -147,6 +164,10 @@ tibble(x = seq(left_margin, 1 - right_margin, length.out = x_n + 1)[1:x_n],
        label = x_ids) %>% 
   pmap(add_fields)
 
+# countries
+tibble(y =  seq(1 - u_margin, u_margin, length.out = y_n),
+       label = y_ids) %>% 
+  pmap(add_countries)
 
 # plots in grid
 dat_plots %>% 
