@@ -35,10 +35,38 @@ if(!file.exists(dat_path)) {
   load(dat_path)
 }
 
+dat <- 
+  dat %>% 
+mutate(percent_women = as.numeric(percent_women)) %>%
+  arrange(country, field) 
+
+# define grid parameters ----------------------------------------------------
+
+bg <- "white"
+
+left_margin <- .3
+right_margin <- .1
+u_margin <- .2
+
+length(p_list)
+# 60
+
+y_ids <- dat %>% pull(country) %>% unique() 
+y_n <- y_ids  %>% length()
+# 12
+
+x_ids <- dat %>% pull(field) %>% unique()
+x_n <- x_ids  %>% length()
+# 5
+
+# a grid 12 x 5
+
+width <- (1 - left_margin - right_margin) / x_n
+height <- (1 - 2*u_margin) / y_n
 
 # loop plots --------------------------------------------------------------
 
-plot_circle <- function(percent_women) {
+plot_circle <- function(percent_women, xdown = -1) {
   p <- 
     tibble(gender = c("female", "male") %>% factor(levels = c("male", "female")),
            value = c(percent_women, 1 - percent_women)) %>%  
@@ -46,49 +74,47 @@ plot_circle <- function(percent_women) {
     geom_bar(aes(x = 1,
                  y = value,
                  fill = gender),
-             stat = "identity") + 
+             stat = "identity",
+             colour = bg,
+             size = 2) + 
     geom_text(data = . %>% 
                 filter(gender == "female"),
-              aes(x = -.5, y = 0,
+              aes(x = xdown, y = 0,
                   label = paste0(".", value*100),
                   colour = value),
               size = 10,
-              fontface = "bold") +
+              fontface = "italic") +
     coord_polar(theta = "y") +
     scale_fill_viridis_d(begin = .1, end = .9, guide = FALSE) +
     scale_colour_viridis_c(guide = FALSE, limits = c(0, 1)) +
-    lims(x = c(-.5, 1.5)) +
-    theme_void()
+    lims(x = c(xdown, 1.45)) +
+    theme_void() +
+    theme(plot.margin = margin(0,0,0,0, unit = "in"))
   
   return(p)
 }
 
 dat_plots <- 
   dat %>% 
-  mutate(percent_women = as.numeric(percent_women)) %>%
-  arrange(country, field) %>% 
-  mutate(plots = percent_women %>% map(plot_circle))
+  mutate(plots = percent_women %>% map(~plot_circle(., xdown = -.9)))
 
-dat_plots %>% pull(plots) %>% .[[1]]
+dat_plots %>% pull(plots) %>% .[[2]]
 
-# define grid -------------------------------------------------------------
 
-s_margin <- .1
-u_margin <- .2
 
-length(p_list)
-# 60
+# Utility functions -------------------------------------------------------
 
-y_n <- dat_plots %>% pull(country) %>% unique() %>% length()
-# 12
-
-x_n <- dat_plots %>% pull(field) %>% unique() %>% length()
-# 5
-
-# a grid 12 x 5
-
-width <- (1 - 2 * s_margin) / x_n
-height <- (1 - 2*u_margin) / y_n
+add_fields <- function(x, label) {
+  grid.text(label = label,
+            x = x,
+            y = 1 - u_margin*.7,
+            vjust = 0,
+            gp = gpar(col = "grey20",
+                      fontsize = 18,
+                      fontface = "italic",
+                      fontfamily = "Times New Roman"))
+  return(NULL)
+}
 
 # plot on grid ------------------------------------------------------------
 
@@ -104,8 +130,15 @@ grid.newpage()
 svglite::svglite(file = "plots/2-16-economist-post.svg",
                  height = 32,
                  width = 15)
+# field
+tibble(x = seq(left_margin, 1 - right_margin, length.out = x_n + 1)[1:x_n],
+       label = x_ids) %>% 
+  pmap(add_fields)
+
+
+# plots in grid
 dat_plots %>% 
-  mutate(x = seq(s_margin, 1 - s_margin, length.out = x_n + 1)[1:x_n] %>% rep(y_n),
+  mutate(x = seq(left_margin, 1 - right_margin, length.out = x_n + 1)[1:x_n] %>% rep(y_n),
          y = seq(1 - u_margin, u_margin, length.out = y_n) %>% rep(each = x_n)) %>% 
   transmute(p = .data$plots,
             x = .data$x,
@@ -114,3 +147,4 @@ dat_plots %>%
             height = height) %>% 
   pmap(plot_to_vp)
 dev.off()
+
