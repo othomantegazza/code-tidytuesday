@@ -55,6 +55,7 @@ dat <-
 # define grid parameters ----------------------------------------------------
 
 bg <- "white"
+text_color <- "grey20"
 
 left_margin <- .3
 right_margin <- .1
@@ -125,7 +126,7 @@ add_fields <- function(x, label) {
             x = x,
             y = 1 - u_margin*.85,
             vjust = 0,
-            gp = gpar(col = "grey20",
+            gp = gpar(col = grey20,
                       fontsize = p_fontsize,
                       fontface = p_fontface,
                       fontfamily = p_font))
@@ -134,10 +135,11 @@ add_fields <- function(x, label) {
 
 add_countries <- function(y, label) {
   grid.text(label = label,
-            x = left_margin - .1,
+            x = left_margin - .07,
             y = y,
             vjust = 0,
-            gp = gpar(col = "grey20",
+            hjust = 1,
+            gp = gpar(col = text_color,
                       fontsize = p_fontsize,
                       fontface = p_fontface,
                       fontfamily = p_font))
@@ -152,9 +154,6 @@ plot_to_vp <- function(p, x, y, width, height) {
         vp = viewport(x = x, y = y, width = width, height = height))
   return(NULL)
 }
-
-grid.newpage()
-
 
 svglite::svglite(file = "plots/2-16-economist-post.svg",
                  height = 32,
