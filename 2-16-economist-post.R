@@ -1,4 +1,9 @@
 library(tidyverse)
+library(rlang)
+library(grid)
+
+# Get and clean data ------------------------------------------------------
+
 
 dat_url <- paste0("https://raw.githubusercontent.com/",
               "rfordatascience/tidytuesday/master/data/",
@@ -31,28 +36,45 @@ if(!file.exists(dat_path)) {
 }
 
 
-scale_custom <- scale_colour_viridis_c(limits = c(0,1),
-                                       guide = FALSE)
+# loop plots --------------------------------------------------------------
 
-# plot_circle <- function(percent_women)
-dat %>% 
+plot_circle <- function(percent_women) {
+  p <- 
+    tibble(gender = c("female", "male") %>% factor(levels = c("male", "female")),
+           value = c(percent_women, 1 - percent_women)) %>%  
+    ggplot() +
+    geom_bar(aes(x = 1,
+                 y = value,
+                 fill = gender),
+             stat = "identity") + 
+    geom_text(data = . %>% 
+                filter(gender == "female"),
+              aes(x = -.5, y = 0,
+                  label = value,
+                  colour = value),
+              size = 10) +
+    coord_polar(theta = "y") +
+    scale_fill_viridis_d(begin = .1, end = .9, guide = FALSE) +
+    scale_colour_viridis_c(guide = FALSE, limits = c(0, 1)) +
+    lims(x = c(-.5, 1.5)) +
+    theme_void()
+  
+  return(p)
+}
+
+p_list <- 
+  dat %>% 
   mutate(percent_women = as.numeric(percent_women)) %>% 
-  mutate(percent_men = 1 - percent_women) %>% 
-  slice(1) %>% 
-  gather(gender, value, percent_women:percent_men) %>% 
-  ggplot() +
-  geom_bar(aes(x = 1,
-               y = value,
-               fill = gender),
-           stat = "identity") + 
-  geom_text(data = . %>% 
-              filter(gender == "percent_women"),
-            aes(x = -.5, y = 0,
-                label = value,
-                colour = value),
-            size = 10) +
-  coord_polar(theta = "y") +
-  lims(x = c(-.5, 1.5)) +
-  scale_fill_viridis_d(begin = .1, end = .9, guide = FALSE) +
-  scale_custom +
-  theme_void()
+  pull(percent_women) %>% 
+  map(plot_circle)
+
+p_list[[40]]
+
+
+# define grid -------------------------------------------------------------
+
+s_margin <- .1
+u_margin <- .2
+
+
+length(p_list)
