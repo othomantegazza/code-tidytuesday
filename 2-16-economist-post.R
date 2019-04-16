@@ -35,9 +35,21 @@ if(!file.exists(dat_path)) {
   load(dat_path)
 }
 
+
+# order country and fields ------------------------------------------------
+
 dat <- 
   dat %>% 
-mutate(percent_women = as.numeric(percent_women)) %>%
+  mutate(percent_women = as.numeric(percent_women),
+         # order countries
+         country = factor(country, levels = c("Portugal", "Brazil", "Australia",
+                                               "Canada", "France", "EU28",
+                                               "Denmark", "Mexico", "United States",
+                                               "United Kingdom", "Chile", "Japan")),
+         # order fields
+         field = factor(field, levels = c("Women inventores", "Computer science, maths",
+                                          "Engineering", "Physical sciences",
+                                          "Health sciences"))) %>%
   arrange(country, field) 
 
 # define grid parameters ----------------------------------------------------
@@ -48,14 +60,14 @@ left_margin <- .3
 right_margin <- .1
 u_margin <- .2
 
-length(p_list)
+nrow(dat)
 # 60
 
-y_ids <- dat %>% pull(country) %>% unique() 
+y_ids <- dat %>% pull(country) %>% levels() 
 y_n <- y_ids  %>% length()
 # 12
 
-x_ids <- dat %>% pull(field) %>% unique()
+x_ids <- dat %>% pull(field) %>% levels()
 x_n <- x_ids  %>% length()
 # 5
 
