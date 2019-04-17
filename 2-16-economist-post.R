@@ -250,3 +250,10 @@ svglite::svglite(file = "plots/2-16-economist-post.svg",
 plot_all()
 dev.off()
 
+png(filename = "plots/2-16-economist-post.png", 
+    height = 32,
+    width = 15,
+    units = "in",
+    res = 300)
+plot_all()
+dev.off()
