@@ -1,6 +1,7 @@
 library(tidyverse)
 library(rlang)
 library(grid)
+library(wesanderson)
 
 # Get and clean data ------------------------------------------------------
 
@@ -55,7 +56,7 @@ dat <-
 # define grid parameters ----------------------------------------------------
 
 bg <- "white"
-text_color <- "grey20"
+text_color <- "grey30"
 
 left_margin <- .3
 right_margin <- .1
@@ -81,29 +82,38 @@ p_font <- "Helvetica"  #"Times New Roman"
 p_fontface <- "plain"
 p_fontsize <- 22
 
+pal <- 
+  wes_palette("Darjeeling1", n = 5) %>%
+  as.character() %>% 
+  c("grey90") %>% 
+  set_names(x_ids %>% c("grey"))
+
 # loop plots --------------------------------------------------------------
 
-plot_circle <- function(percent_women, xdown = -1) {
+plot_circle <- function(percent_women,
+                        field,
+                        xdown = -1) {
   p <- 
-    tibble(gender = c("female", "male") %>% factor(levels = c("male", "female")),
-           value = c(percent_women, 1 - percent_women)) %>%  
+    tibble(gender = c( "male", "female") %>% factor(levels = c("male", "female")),
+           field = c("grey", field %>% as.character) %>% as_factor(),
+           value = c(1 - percent_women, percent_women)) %>%  
     ggplot() +
     geom_bar(aes(x = 1,
                  y = value,
-                 fill = gender),
+                 fill = field),
              stat = "identity",
              colour = bg,
              size = 2) + 
     geom_text(data = . %>% 
                 filter(gender == "female"),
               aes(x = xdown, y = 0,
-                  label = paste0(".", value*100),
-                  colour = value),
+                  label = paste0(".", value*100)),
+              colour = text_color,
               size = 10,
               fontface = "italic") +
     coord_polar(theta = "y") +
-    scale_fill_viridis_d(begin = .1, end = .9, guide = FALSE) +
-    scale_colour_viridis_c(guide = FALSE, limits = c(0, 1)) +
+    # scale_fill_viridis_d(begin = .1, end = .9, guide = FALSE) +
+    scale_fill_manual(values = pal, guide = FALSE) +
     lims(x = c(xdown, 1.45)) +
     theme_void() +
     theme(plot.margin = margin(0,0,0,0, unit = "in"))
@@ -111,11 +121,23 @@ plot_circle <- function(percent_women, xdown = -1) {
   return(p)
 }
 
+# dat_plots <- 
+#   dat %>% 
+#   mutate(plots = percent_women %>% map(~plot_circle(., xdown = -.9)))
+# dat_plots %>% pull(plots) %>% .[[2]]
+
+p_list <- 
+  dat %>%
+  select(field, percent_women) %>% 
+  mutate(xdown = -.9) %>% 
+  pmap(plot_circle) 
+
+p_list[[1]]
+
 dat_plots <- 
   dat %>% 
-  mutate(plots = percent_women %>% map(~plot_circle(., xdown = -.9)))
+  mutate(plots = p_list)
 
-dat_plots %>% pull(plots) %>% .[[2]]
 
 
 
@@ -126,7 +148,7 @@ add_fields <- function(x, label) {
             x = x,
             y = 1 - u_margin*.85,
             vjust = 0,
-            gp = gpar(col = grey20,
+            gp = gpar(col = text_color,
                       fontsize = p_fontsize,
                       fontface = p_fontface,
                       fontfamily = p_font))
