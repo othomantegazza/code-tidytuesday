@@ -151,7 +151,8 @@ add_fields <- function(x, label) {
             gp = gpar(col = text_color,
                       fontsize = p_fontsize,
                       fontface = p_fontface,
-                      fontfamily = p_font))
+                      fontfamily = p_font, 
+                      lineheight = .9))
   return(NULL)
 }
 
@@ -177,28 +178,75 @@ plot_to_vp <- function(p, x, y, width, height) {
   return(NULL)
 }
 
+
+plot_all <- function() {
+  
+  # title 
+  grid.text("Still a man's world",
+            x = .5,
+            y = 1 - u_margin/3,
+            gp = gpar(col = text_color,
+                      fontsize = 60,
+                      fontface = p_fontface,
+                      fontfamily = p_font),
+            hjust = .5,
+            vjust = 0)
+  
+  # subtitle
+  grid.text(str_wrap("Percentage of women author of papers
+          (indexed in scopus from 2011 to 2015)", width = 45),
+            x = .5,
+            y = 1 - u_margin/2,
+            gp = gpar(col = text_color,
+                      fontsize = 40,
+                      fontface = p_fontface,
+                      fontfamily = p_font,
+                      lineheight = .9),
+            hjust = .5,
+            vjust = .5)
+  
+  # caption
+  grid.text(str_wrap('Source: "Gender in the Global Research Landscape",
+                     by Elsevier; The Economist | Plot by Otho Mantegazza
+                     (@othomn) | A take on the blog post by Sarah Leo "Mistakes,
+                     we have drawn a few".', width = 60),
+            x = .5,
+            y = u_margin/1.8,
+            gp = gpar(col = text_color,
+                      fontsize = 30,
+                      fontface = p_fontface,
+                      fontfamily = p_font,
+                      lineheight = .9),
+            hjust = .5,
+            vjust = .5)
+  
+  
+  
+  # field
+  tibble(x = seq(left_margin, 1 - right_margin, length.out = x_n + 1)[1:x_n],
+         label = x_ids) %>% 
+    pmap(add_fields)
+  
+  # countries
+  tibble(y =  seq(1 - u_margin, u_margin, length.out = y_n),
+         label = y_ids) %>% 
+    pmap(add_countries)
+  
+  # plots in grid
+  dat_plots %>% 
+    mutate(x = seq(left_margin, 1 - right_margin, length.out = x_n + 1)[1:x_n] %>% rep(y_n),
+           y = seq(1 - u_margin, u_margin, length.out = y_n) %>% rep(each = x_n)) %>% 
+    transmute(p = .data$plots,
+              x = .data$x,
+              y = .data$y,
+              width = width,
+              height = height) %>% 
+    pmap(plot_to_vp)
+}
+
 svglite::svglite(file = "plots/2-16-economist-post.svg",
                  height = 32,
                  width = 15)
-# field
-tibble(x = seq(left_margin, 1 - right_margin, length.out = x_n + 1)[1:x_n],
-       label = x_ids) %>% 
-  pmap(add_fields)
-
-# countries
-tibble(y =  seq(1 - u_margin, u_margin, length.out = y_n),
-       label = y_ids) %>% 
-  pmap(add_countries)
-
-# plots in grid
-dat_plots %>% 
-  mutate(x = seq(left_margin, 1 - right_margin, length.out = x_n + 1)[1:x_n] %>% rep(y_n),
-         y = seq(1 - u_margin, u_margin, length.out = y_n) %>% rep(each = x_n)) %>% 
-  transmute(p = .data$plots,
-            x = .data$x,
-            y = .data$y,
-            width = width,
-            height = height) %>% 
-  pmap(plot_to_vp)
+plot_all()
 dev.off()
 
