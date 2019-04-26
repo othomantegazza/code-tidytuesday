@@ -1,4 +1,6 @@
 library(tidyverse)
+library(igraph)
+library(grid)
 
 # get data ----------------------------------------------------------------
 
@@ -77,6 +79,7 @@ g <- graph_from_data_frame(d = edges, vertices = vs)
 
 library(ggraph)
 
+text_color <- "grey20"
 
 g %>% as_long_data_frame()
 
@@ -89,36 +92,55 @@ p <-
   # ggraph(layout = "lgl") +
   geom_edge_link(aes(alpha = count),
                  colour = "#4C63C3") +
-  geom_node_point(aes(size = count), colour = "#B63A82") +
+  geom_node_point(aes(size = count),
+                  colour = "#B63A82") +
   geom_node_text(aes(label = name),
                  nudge_x = 1,
                  nudge_y = 1,
                  vjust = 0,
-                 hjust = 0) +
+                 hjust = 0,
+                 colour = text_color) +
   # geom_text(aes(label = count)) +
-  expand_limits(x = c(0, 50)) +
+  expand_limits(x = c(0, 70),
+                y = c(60, 80)) +
   theme_void()
 
-p %>% ggplotGrob()
+p #%>% ggplotGrob()
 
-p +
-  guides(alpha = guide_legend(nrow = 1),
-         size = guide_legend(nrow = 1)) +
-  theme(legend.position = c(.7, .3))
+p2 <- 
+  p +
+  scale_edge_alpha(guide = guide_legend(nrow = 1)) +
+  guides(alpha = guide_edge_colorbar(nrow = 1),
+         size = guide_legend(nrow = 1, title = NULL)) +
+  theme(legend.position = c(.4, .07))
 
 # Save --------------------------------------------------------------------
 
 png(filename = "plots/2-17-anime.png", 
-    height = 7,
-    width = 10,
+    height = 10,
+    width = 8,
     units = "in",
     res = 300)
-p
+grid.newpage()
+print(p2, vp = viewport())
+# title 
+grid.text("Anime Genres",
+          x = .65,
+          y = .9,
+          gp = gpar(col = text_color,
+                    fontsize = 20),
+          hjust = 0,
+          vjust = 0)
+grid.text("Source: myanimelist.net\nPlot by @othomn",
+          x = .65,
+          y = .81,
+          gp = gpar(col = text_color,
+                    fontsize = 10),
+          hjust = 0,
+          vjust = 0)
 dev.off()
 
-# others ------------------------------------------------------------------
-
-
+ # others ------------------------------------------------------------------
 
 g %>% 
   ggraph(layout = "linear", circular = TRUE) +
