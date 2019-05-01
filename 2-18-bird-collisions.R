@@ -8,52 +8,19 @@ data_url <- paste0("https://raw.githubusercontent.com/rfordatascience/tidytuesda
                                    "master/data/2019/2019-04-30/bird_collisions.csv")
 data_url2 <- paste0("https://raw.githubusercontent.com/rfordatascience/tidytuesday/",
                     "master/data/2019/2019-04-30/mp_light.csv")
-# raw_strikes_url <- paste0("https://github.com/rfordatascience/",
-#                           "tidytuesday/blob/master/data/2019/",
-#                           "2019-04-30/raw/Chicago_collision_data.csv?raw=true")
-# raw_lights_url <- paste0("https://raw.githubusercontent.com/",
-#                          "rfordatascience/tidytuesday/master/",
-#                          "data/2019/2019-04-30/raw/Light_levels_dryad.csv")
+
 data_file <- "data/2-18-bird-collisions.Rdata"
 
 
 if(!file.exists(data_file)) {s
   birds <- readr::read_csv(data_url)
   lights <- readr::read_csv(data_url2)
-  # birds_raw <- readr::read_csv(raw_strikes_url)
-  # lights_raw <- readr::read_csv(raw_lights_url)
   
   save(birds, lights, file = data_file)
   
 } else {
   load(data_file)
 }
-
-# explore -----------------------------------------------------------------
-
-birds$family %>% unique()
-
-
-birds %>% 
-  mutate(year = year(date)) %>% 
-  group_by(year, family, locality) %>% 
-  count() %>% 
-  ggplot(aes(x = year, 
-             y = n,
-             colour = family,
-             group = family)) +
-  geom_point() +
-  geom_smooth(se = FALSE) +
-  scale_y_log10() +
-  facet_grid(. ~ locality)
-
-lights %>% 
-  filter(year(date) == 2015) %>% 
-  ggplot(aes(x = date,
-           y = light_score)) +
-  geom_point() +
-  geom_line()
-
 
 # with light score? -------------------------------------------------------
 
@@ -64,55 +31,7 @@ dat <-
   filter(complete.cases(.)) %>% 
   mutate(species = paste(genus, species))
 
-# no pattern?
-dat %>% 
-  group_by(date, species, flight_call, light_score) %>%
-  count() %>% 
-  group_by(species, flight_call, light_score) %>% 
-  summarise(mean_strikes = mean(n)) %>% 
-  ggplot(aes(x = light_score,
-             y = mean_strikes,
-             group = light_score)) +
-  # geom_point() +
-  geom_boxplot() +
-  scale_y_log10() +
-  facet_grid(. ~ flight_call)
-
-dat %>% 
-  group_by(date, species, flight_call, light_score) %>%
-  count() %>% 
-  group_by(species, flight_call, light_score) %>% 
-  summarise(mean_strikes = mean(n)) %>% 
-  ggplot(aes(x = light_score,
-             y = mean_strikes,
-             group = species)) +
-  geom_point() +
-  # geom_boxplot() +
-  geom_line() +
-  scale_y_log10() +
-  facet_grid(. ~ flight_call)
-
-dat %>% 
-  filter(flight_call != "Rare") %>% 
-  group_by(date, species, flight_call, light_score) %>%
-  count() %>% 
-  group_by(species, flight_call, light_score) %>% 
-  summarise(mean_strikes = mean(n)) %>% 
-  # group_by(flight_call, light_score) %>% 
-  # summarise(mean_strikes = mean(mean_strikes)) %>% 
-  ggplot(aes(x = light_score,
-             y = mean_strikes,
-             colour = flight_call)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  facet_wrap(facets = "species")
-
-birds %>% 
-  select(genus, species) %>% 
-  distinct()
-
-
-# plot all - lm -----------------------------------------------------------
+# exploratory plot --------------------------------------------------------
 
 p <- 
   dat %>% 
@@ -126,7 +45,7 @@ p <-
   facet_wrap(facets = "species", scales = "free_y")
 
 
-png(filename = "plots/2-18-bird-collisions.png",
+png(filename = "plots/2-18-bird-collisions-exploratory.png",
     height = 20,
     width = 40,
     res = 300,
@@ -173,7 +92,8 @@ dev.off()
 
 dat$species %>% unique()
 
-
+# poisson model for each species,
+# extract log likelihood
 get_loglik <- function(dat_spec) {
   # print(dat_spec)
   if(nrow(dat_spec) < 2) return(NA_real_)
@@ -197,3 +117,25 @@ loglik_df <-
   {tibble(species = names(.),
           loglik = flatten_dbl(.))} %>% 
   arrange(loglik)
+
+
+# plot top 4 --------------------------------------------------------------
+
+top4 <- 
+  loglik_df %>% 
+  top_n(4, wt = -loglik) %>% 
+  pull(species)
+
+dat %>% 
+  filter(species %in% top4) %>% 
+  group_by(species, date, light_score, flight_call) %>%
+  count() %>% # pull(light_score) %>% table()
+  ggplot(aes(x = light_score,
+             y = n,
+             group = light_score)) +
+  ggbeeswarm::geom_quasirandom(groupOnX = T,
+                               alpha = .4,
+                               size = .5)  +
+  facet_wrap(facets = "species") +
+  # scale_y_continuous(trans = "log")
+  theme_bw()
