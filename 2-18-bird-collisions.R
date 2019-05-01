@@ -101,10 +101,11 @@ get_loglik <- function(dat_spec) {
     dat_spec %>% 
     group_by(date, light_score) %>%
     count() %>% 
-    ungroup() %>% 
-    mutate(light_score = light_score %>% as.character() %>% as.factor())
+    ungroup() #%>% 
+    # mutate(light_score = light_score %>% as.character() %>% as.factor())
   
-  fit <- glm(n ~ light_score - 1, data = to_fit, family = "poisson") #%>% summary()
+  # fit <- glm(n ~ light_score - 1, data = to_fit, family = "poisson") #%>% summary()
+  fit <- glm(n ~ light_score, data = to_fit, family = "poisson") #%>% summary()
   
   glance(fit) %>% pull(logLik) %>% as.numeric()
   
@@ -126,16 +127,44 @@ top4 <-
   top_n(4, wt = -loglik) %>% 
   pull(species)
 
-dat %>% 
+p_top4 <- 
+  dat %>% 
   filter(species %in% top4) %>% 
   group_by(species, date, light_score, flight_call) %>%
   count() %>% # pull(light_score) %>% table()
   ggplot(aes(x = light_score,
              y = n,
+             # fill = "#3752C3",
              group = light_score)) +
   ggbeeswarm::geom_quasirandom(groupOnX = T,
-                               alpha = .4,
-                               size = .5)  +
+                               alpha = .7,
+                               size = .3,
+                               fill = "#3752C3",
+                               shape = 21)  +
   facet_wrap(facets = "species") +
-  # scale_y_continuous(trans = "log")
-  theme_bw()
+  # scale_y_continuous(trans = "log") +
+  # scale_fill_viridis_c() +
+  theme_bw() +
+  theme(text = element_text(color = "grey5"),
+        strip.text = element_text(face = "italic")) +
+  labs(x = "Windows Light Score",
+       y = "Number of Strikes per Night",
+       title = "Do window lights attract birds in collisions with buildings?",
+       subtitle = str_wrap("Top 4 species that might be sensitive to building's window lights,
+                    data from Winger et al., (2019).", width = 110),
+       caption = paste("plot by @othomn",
+                       str_wrap("Source: Winger BM, Weeks BC, Farnsworth A, Jones AW, Hennen M,
+                                Willard DE (2019) Nocturnal flight-calling behaviour predicts
+                                vulnerability to artificial light in migratory birds. Proceedings
+                                of the Royal Society B 286(1900):
+                                20190364. https://doi.org/10.1098/rspb.2019.0364",
+                                width = 120),
+                       sep = "\n"))
+
+png(filename = "plots/2-18-bird-collisions.png",
+    height = 7.5,
+    width = 7,
+    res = 300,
+    units = "in")
+p_top4
+dev.off()
