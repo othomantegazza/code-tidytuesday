@@ -168,3 +168,47 @@ png(filename = "plots/2-18-bird-collisions.png",
     units = "in")
 p_top4
 dev.off()
+
+
+# lineplot all species ----------------------------------------------------
+
+p_lines <- 
+  dat %>% 
+  mutate(species = species %>% factor(levels = loglik_df$species)) %>% 
+  group_by(species, date, light_score, flight_call) %>%
+  count() %>% # pull(light_score) %>% table()
+  group_by(species, light_score, flight_call) %>%
+  summarise(n_mean = mean(n)) %>% 
+  ggplot(aes(x = light_score,
+             y = n_mean,
+             colour = flight_call)) +
+  geom_point(shape = 21) +
+  geom_line(size = 4)  +
+  facet_wrap(facets = "species", ncol = 12) +
+  # scale_y_continuous(trans = "log") +
+  # scale_fill_viridis_c() +
+  theme_bw() +
+  theme(text = element_text(color = "grey5"),
+        strip.text = element_text(face = "italic")) +
+  labs(x = "Windows Light Score",
+       y = "Number of Strikes per Night",
+       title = "Do window lights attract birds in collisions with buildings?",
+       subtitle = str_wrap("Top 4 species that might be sensitive to building's window lights,
+                    data from Winger et al., (2019).", width = 110),
+       caption = paste("plot by @othomn",
+                       str_wrap("Source: Winger BM, Weeks BC, Farnsworth A, Jones AW, Hennen M,
+                                Willard DE (2019) Nocturnal flight-calling behaviour predicts
+                                vulnerability to artificial light in migratory birds. Proceedings
+                                of the Royal Society B 286(1900):
+                                20190364. https://doi.org/10.1098/rspb.2019.0364",
+                                width = 120),
+                       sep = "\n"))
+
+
+png(filename = "plots/2-18-bird-collisions-all.png",
+    height = 15,
+    width = 15,
+    res = 300,
+    units = "in")
+p_lines
+dev.off()
