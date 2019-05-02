@@ -92,17 +92,30 @@ dev.off()
 
 dat$species %>% unique()
 
+dat_imputed <- 
+  dat %>% 
+  group_by(date, species) %>% 
+  count() %>% 
+  spread(key = species, value = n) %>% 
+  ungroup() %>% 
+  mutate_at(.vars = vars(contains(" ")),
+            funs(case_when(is.na(.) ~ as.integer(0), TRUE ~ .))) %>% 
+  gather(-date, key = species, value = n) %>% 
+  left_join(lights)
+
 # poisson model for each species,
 # extract log likelihood
 get_loglik <- function(dat_spec) {
   # print(dat_spec)
   if(nrow(dat_spec) < 2) return(NA_real_)
-  to_fit <- 
-    dat_spec %>% 
-    group_by(date, light_score) %>%
-    count() %>% 
-    ungroup() #%>% 
+  # to_fit <- 
+  #   dat_spec %>% 
+  #   group_by(date, light_score) %>%
+  #   count() %>% 
+  #   ungroup() #%>% 
     # mutate(light_score = light_score %>% as.character() %>% as.factor())
+  
+  to_fit <- dat_spec %>% ungroup()
   
   # fit <- glm(n ~ light_score - 1, data = to_fit, family = "poisson") #%>% summary()
   fit <- glm(n ~ light_score, data = to_fit, family = "poisson") #%>% summary()
@@ -111,8 +124,9 @@ get_loglik <- function(dat_spec) {
   
 }
 
+
 loglik_df <- 
-  dat %>% 
+  dat_imputed %>% 
   split(.$species) %>% 
   map(get_loglik) %>% 
   {tibble(species = names(.),
