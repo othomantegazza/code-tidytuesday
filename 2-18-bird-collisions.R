@@ -196,7 +196,7 @@ p_lines <-
   ggplot(aes(x = light_score,
              y = n_mean,
              colour = flight_call)) +
-  geom_point(shape = 21) +
+  geom_point(size = 3) +
   geom_line(size = 4)  +
   facet_wrap(facets = "species", ncol = 12) +
   # scale_y_continuous(trans = "log") +
@@ -207,8 +207,13 @@ p_lines <-
   labs(x = "Windows Light Score",
        y = "Number of Strikes per Night",
        title = "Do window lights attract birds in collisions with buildings?",
-       subtitle = str_wrap("Top 4 species that might be sensitive to building's window lights,
-                    data from Winger et al., (2019).", width = 110),
+       subtitle = str_wrap("Migratory bird species ranked from the most likely to strike a building,
+                            when the windows of that building are lighted. After the first two rows,
+                            observations are really sparse, so it is hard to draw conclusions on the
+                            species below. It might be that the flight caller species are more likely
+                            to be influenced and vulnerable to window lights, but most of the species
+                            observed are flight callers, so it's not that easy to draw conclusions on that.
+                    Source and Data from Winger et al., (2019).", width = 110),
        caption = paste("plot by @othomn",
                        str_wrap("Source: Winger BM, Weeks BC, Farnsworth A, Jones AW, Hennen M,
                                 Willard DE (2019) Nocturnal flight-calling behaviour predicts
@@ -220,7 +225,7 @@ p_lines <-
 
 
 png(filename = "plots/2-18-bird-collisions-all.png",
-    height = 15,
+    height = 11.5,
     width = 15,
     res = 300,
     units = "in")
