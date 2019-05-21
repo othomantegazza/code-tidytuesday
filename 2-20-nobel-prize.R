@@ -57,3 +57,12 @@ png(filename = "plots/2-20-nobel-prize.png",
     width = 2400)
 p %>% print()
 dev.off()
+
+nobel %>% 
+  mutate(age =  prize_year - year(birth_date)) %>% 
+  ggplot(aes(x = category,
+             y = age,
+             fill = gender)) +
+  geom_boxplot()
+  
+         
