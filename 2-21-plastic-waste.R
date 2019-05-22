@@ -1,6 +1,7 @@
 library(tidyverse)
 library(lubridate)
 library(countrycode)
+library(ggforce)
 
 # Get data ----------------------------------------------------------------
 
@@ -86,6 +87,36 @@ p <-
              fill = continent,
              colour = continent)) +
   geom_histogram(bins = 25, alpha = .5) +
+  # geom_mark_rect(data = tibble(x = .07,
+  #                              y = 40,
+  #                              label = "Ciao",
+  #                              description = "Ciao ciao ciao"),
+  #                aes(x = x,
+  #                    y = y,
+  #                    label = label,
+  #                    description = description),
+  #                colour = "white", position = "right",
+  #                inherit.aes = F) +
+  annotate(geom = "text", x = .12, y = 41, 
+                label = str_wrap("High income countries can invest in
+                                 plastic waste manegement?",
+                                 width = 20),
+           hjust = 0, vjust = 0,
+           size = 3, lineheight = 1,
+           color = "grey10") +
+  annotate(geom = "segment", x = .12,
+           y = 40, yend = 37, xend = .09,
+           color = "grey10") +
+  annotate(geom = "text", x = .76, y = 18, 
+           label = str_wrap("Low income countries?",
+                            width = 20),
+           hjust = 1, vjust = 0,
+           size = 3, lineheight = 1,
+           color = "grey10") +
+  annotate(geom = "segment", x = .76,
+           y = 17.5, yend = 16, xend = .78,
+           color = "grey10") +
+  geom_hline(yintercept = 0, colour = "grey50") +
   theme_minimal() +
   theme(text = element_text(family = "sans",
                             colour = "grey20"),
@@ -96,12 +127,12 @@ p <-
        fill = "Continent", colour = "Continent",
        title = "Does Plastic Waste Management Mirrors Inequality?",
        subtitle = "Ratio of mismanaged plastic waste per country in 2010.",
-       caption = "Source: | Plot by @othomn")
+       caption = "Source: Our World in Data | Plot by @othomn")
 
 png("plots/2-21-plastic-waste.png",
     res = 300,
-    height = 1600,
-    width = 2400)
+    height = 1700,
+    width = 2200)
 p %>% print()
 dev.off()
 
