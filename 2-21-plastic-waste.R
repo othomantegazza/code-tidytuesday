@@ -80,10 +80,29 @@ waste_cont <-
                                     TRUE ~ continent)) %>% 
   drop_na(continent)
 
-waste_cont %>% 
+p <- 
+  waste_cont %>% 
   ggplot(aes(x = ratio_lost,
              fill = continent,
              colour = continent)) +
-  geom_histogram(bins = 20, alpha = .5) +
-  theme_minimal()
+  geom_histogram(bins = 25, alpha = .5) +
+  theme_minimal() +
+  theme(text = element_text(family = "sans",
+                            colour = "grey20"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()) +
+  labs(x = "[Mismanaged/Total] waste in Kg per capita",
+       y = "Number of Countries",
+       fill = "Continent", colour = "Continent",
+       title = "Does Plastic Waste Management Mirrors Inequality?",
+       subtitle = "Ratio of mismanaged plastic waste per country in 2010.",
+       caption = "Source: | Plot by @othomn")
+
+png("plots/2-21-plastic-waste.png",
+    res = 300,
+    height = 1600,
+    width = 2400)
+p %>% print()
+dev.off()
+
 
