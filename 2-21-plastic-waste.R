@@ -1,6 +1,6 @@
 library(tidyverse)
 library(lubridate)
-
+library(countrycode)
 
 # Get data ----------------------------------------------------------------
 
@@ -31,9 +31,11 @@ if(!file.exists(data_path)) {
 waste <-
   full_join(waste_ok %>%
               select(entity,
+                     code,
                      plastic = per_capita_plastic_waste_kilograms_per_person_per_day),
             waste_lost %>% 
               select(entity,
+                     code,
                      lost = per_capita_mismanaged_plastic_waste_kilograms_per_person_per_day)) %>% 
   # select(entity, code, year,
   #        ok = per_capita_plastic_waste_kilograms_per_person_per_day,
@@ -66,3 +68,22 @@ waste %>%
 waste %>%
   filter(ratio_lost <.1 ) %>% 
   pull(entity)
+
+
+# with continent ----------------------------------------------------------
+
+waste_cont <- 
+  waste %>% mutate(continent = countrycode(sourcevar = entity,
+                                         origin = "country.name",
+                                         destination = "continent"),
+                 continent = case_when(entity == "Micronesia (country)" ~ "Oceania",
+                                    TRUE ~ continent)) %>% 
+  drop_na(continent)
+
+waste_cont %>% 
+  ggplot(aes(x = ratio_lost,
+             fill = continent,
+             colour = continent)) +
+  geom_histogram(bins = 20, alpha = .5) +
+  theme_minimal()
+
