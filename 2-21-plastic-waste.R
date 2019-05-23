@@ -252,3 +252,30 @@ png("plots/2-21-plastic-waste-cluster.png",
     width = 3000)
 p_clust %>% print()
 dev.off()
+
+waste_clust %>% 
+  mutate(label = case_when(cluster == 1 ~ cl_1,
+                           cluster == 2 ~ cl_2,
+                           cluster == 3 ~ cl_3)) %>%
+  # mutate(plastic = log(plastic),
+  #           lost = log(lost)) %>% 
+  ggplot(aes(x = gdp_per_capita,
+             y = lost,
+             colour = cluster)) +
+  geom_point() +
+  scale_y_log10() +
+  scale_x_log10()
+
+waste_clust %>% 
+  mutate(label = case_when(cluster == 1 ~ cl_1,
+                           cluster == 2 ~ cl_2,
+                           cluster == 3 ~ cl_3)) %>%
+  # mutate(plastic = log(plastic),
+  #           lost = log(lost)) %>% 
+  ggplot(aes(x = gdp_per_capita,
+             y = plastic,
+             colour = cluster)) +
+  geom_point() +
+  scale_y_log10() +
+  scale_x_log10()
+
