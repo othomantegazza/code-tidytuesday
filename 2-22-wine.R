@@ -91,7 +91,7 @@ train_test <- function(n, dat) {
 }
 
 ploy_res_ita <- 
-  1:50 %>% 
+  1:20%>% 
   map_df(~train_test(., dat = wine_ita),
          .id = "poly_degree")
 
@@ -103,7 +103,7 @@ wine %>%
   summary()
 
 
-# plot them ---------------------------------------------------------------
+# plot italian wines ---------------------------------------------------------------
 
 # 
 # add_count(variety) %>%
@@ -127,18 +127,35 @@ wine %>%
   theme_bw()
 
 annos_tb <- 
-  tibble(points = c(79.9, 96),
-         price = c(40, 10),
-         xend = c(80.5, 95),
-         yend = c(27, 23))
+  tibble(points = c(79.9, 96, 97),
+         price = c(40, 10, 38),
+         xend = c(80.5, 95, 96.2),
+         yend = c(27, 23, 27),
+         colourz = c("black", "red", "red"))
 
 
-wine_ita %>% 
+best_95 <- 
+  wine_ita %>% 
+  filter(points == 95, 
+         price == 25) %>% 
+  pull(title)
+
+best_96 <- 
+  wine_ita %>% 
+  filter(points == 96, 
+         price == 27) %>% 
+  pull(title)
+
+
+
+p <- 
+  wine_ita %>% 
   ggplot(aes(x = points, 
              y = price,
              group = points)) +
   ggbeeswarm::geom_quasirandom(alpha = .5,
-                               colour = wine_purple) +
+                               colour = wine_purple,
+                               size = .8) +
   geom_hline(yintercept = 25) +
   geom_curve(data = annos_tb,
              aes(xend = xend,
@@ -147,18 +164,41 @@ wine_ita %>%
              arrow = arrow(length = unit(3, "mm"),
                            ends = "last",
                            type = "open")) +
+  # annotate 25 line
   annotate(geom = "text",
            x = 79.8, y = 40,
            label = "25$",
-           vjust = .5, hjust = 1) +
+           vjust = .5, hjust = 1,
+           family = "Courier") +
+  # annotate best choice at 95 points
+  annotate(geom = "text",
+           x = 96.2, y = 10,
+           label = best_95 %>% str_wrap(15),
+           vjust = .5, hjust = 0,
+           family = "Courier",
+           fontface = "bold",
+           size = 3,
+           lineheight = 1,
+           colour = wine_purple) +
+  annotate(geom = "text",
+           x = 96.5, y = 40,
+           label = best_96 %>% str_wrap(15),
+           vjust = 0, hjust = 0,
+           family = "Courier",
+           fontface = "bold",
+           size = 3,
+           lineheight = 1,
+           colour = wine_purple) +
   ylim(0, 100) +
   labs(x = "Review scores by Vivino [range 80 - 100]",
        y = "Price [USD]",
-       caption = "Data by Vivino | Plot by @othomn",
-       title = "Prices of Italian wine by score\n",
-       subtitle = "According to Vivino; only Italian wines priced less than 100 $ are shown\n") +
+       caption = "Data at Kaggle | Plot by @othomn",
+       title = "Price of Italian Wine by Score\n",
+       subtitle = "According to Wine-Enthusiast. Only Italian wines priced less than 100 $ are shown.\n") +
   theme_minimal() +
-  theme(axis.title = element_text(hjust = 1, size = 10,
+  theme(text = element_text(family = "Courier"),
+        title = element_text(face = "bold"),
+        axis.title = element_text(hjust = 1, size = 10,
                                   colour = "grey10"),
         plot.caption = element_text(colour = wine_purple, 
                                     # colour = "grey10",
@@ -169,37 +209,9 @@ wine_ita %>%
         plot.margin = margin(5,4,4,2, unit = "mm"))
 
 
-by_var <- 
-  wine_ita %>% 
-  group_by(variety) %>% 
-  summarise(n = n(),
-            mean_points = mean(points),
-            mean_price = mean(price))
-  
-
-by_var %>% 
-  ggplot(aes(x = n,
-             y = mean_points)) +
-  geom_point() +
-  scale_x_log10()
-
-
-by_var %>% 
-  ggplot(aes(x = n,
-             y = mean_price)) +
-  geom_point() +
-  scale_x_log10()
-
-wine_ita %>% 
-  filter(points > 92,
-         price <= 25) %>%
-  count(winery) %>% arrange(desc(n))
-  ggplot(aes(x = region_1, 
-             y = price,
-             group = points)) +
-  ggbeeswarm::geom_quasirandom(alpha = .5,
-                               colour = "#AA2255") +
-  coord_flip() +
-  # scale_y_log10()
-  theme_minimal() 
-  
+png(filename = "plots/2-22-wine.png",
+    res = 300,
+    height = 1600,
+    width = 2600)
+p %>% print()
+dev.off()
