@@ -89,6 +89,7 @@ p <-
   coord_flip() +
   theme_minimal() +
   scale_alpha_continuous(range = c(.5, 1)) +
+  # scale_radius() +
   guides(size = guide_legend(nrow = 1),
          alpha = FALSE) +
   labs(x = "Country",
@@ -156,22 +157,22 @@ png(filename = "plots/2-23-ramen.png",
 p 
 grid.lines(x = unit(c(.355, .355), "npc"),
            y = unit(c(.18, .95), "npc"))
-grid.text(label = str_wrap("Ramen Rating by Country"),
+grid.text(label = str_wrap("Ramen Ratings by Country"),
           vjust = 1,
           hjust = 1,
-          x = .34,
+          x = .32,
           y = .95, 
           gp = gpar(fontfamily = "courier",
                     fontface = "bold",
                     fontsize = 14,
                     col = purple))
-grid.text(label = str_wrap("All ramens rated by TheRamenRater:
+grid.text(label = str_wrap('All ramens have been rated by "The Ramen Rater":
                            a one man initiative and top authority in the field.
-                           Respect! :)",
+                           Respect! ;)',
                            width = 30),
           vjust = 1,
           hjust = 1,
-          x = .34,
+          x = .32,
           y = .85, 
           gp = gpar(fontfamily = "courier",
                     fontsize = 10,
