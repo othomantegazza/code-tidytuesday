@@ -80,14 +80,16 @@ p <-
   mutate(country = reorder(country, stars, FUN = "median")) %>% 
   ggplot(aes(x = country,
              y = stars)) +
-  geom_count(alpha = .9, colour = purple) +
-  stat_summary(aes(x = as.numeric(country) + .35),
+  geom_count(aes(alpha = ..n..), colour = purple) +
+  stat_summary(aes(x = as.numeric(country) + .3),
                fun.y = median,
                fun.ymax = third_q,
                fun.ymin = first_q) +
   coord_flip() +
-  theme_minimal() + 
-  guides(size = guide_legend(nrow = 1)) +
+  theme_minimal() +
+  scale_alpha_continuous(range = c(.5, 1)) +
+  guides(size = guide_legend(nrow = 1),
+         alpha = FALSE) +
   labs(x = "Country",
        y = "Star Rating",
        size = "Count",
@@ -105,33 +107,35 @@ p <-
         plot.margin = margin(5,4,4,2, unit = "mm"),
         legend.position = "left",
         legend.justification = "center", 
-        legend.margin = margin(0, 5, 0, 30, unit = "mm"))
+        legend.margin = margin(0, 10, 0, 40, unit = "mm"))
 
 png(filename = "plots/2-23-ramen.png",
     width = 3500,
     height = 1600,
     res = 300)
 p 
-grid.lines(x = unit(c(.31, .31), "npc"),
+grid.lines(x = unit(c(.355, .355), "npc"),
            y = unit(c(.18, .95), "npc"))
 grid.text(label = str_wrap("Ramen Rating by Country"),
           vjust = 1,
           hjust = 1,
-          x = .29,
+          x = .34,
           y = .95, 
           gp = gpar(fontfamily = "courier",
                     fontface = "bold",
                     fontsize = 14,
                     col = purple))
-grid.text(label = str_wrap("Ramen Rating by Country"),
+grid.text(label = str_wrap("All ramens rated by TheRamenRater:
+                           a one man initiative and top authority in the field.
+                           Respect! :)",
+                           width = 30),
           vjust = 1,
           hjust = 1,
-          x = .29,
-          y = .95, 
+          x = .34,
+          y = .85, 
           gp = gpar(fontfamily = "courier",
-                    fontface = "bold",
-                    fontsize = 14,
-                    col = purple))
+                    fontsize = 10,
+                    lineheight = .84))
 dev.off()
 
 
