@@ -1,6 +1,7 @@
 library(tidyverse)
 library(ggwordcloud)
 library(grid)
+library(ggforce)
 
 purple <- "#AA2255"
 purple2 <- "#BB2255"
@@ -109,6 +110,45 @@ p <-
         legend.justification = "center", 
         legend.margin = margin(0, 10, 0, 40, unit = "mm"))
 
+
+dat_p_legend <- 
+  tibble(y = c(.25, .5, .75),
+         label = c("1st quartile", "median", "3rd quartile"),
+         xend = .85,
+         curvature = c(.2, 0, -.2)) %>% 
+  mutate(yend = y + c(-.05, 0, .05),
+         y2 = y + c(-.02, 0, .02)) 
+
+geom_curve_2 <- function(x, xend, y, y2, yend, label, curvature) {
+  dat <- tibble(xend = xend, y2 = y2, yend = yend, curvature = curvature)
+  geom_curve(data = dat,
+             aes(x = .96, 
+                 xend = xend, 
+                 y = y2, 
+                 yend = yend),
+             curvature = curvature,
+             colour = purple,
+             arrow = arrow(length = unit(3, "mm"),
+                           ends = "last",
+                           type = "open")) 
+}
+
+p_legend <- 
+  dat_p_legend %>% 
+  ggplot() +
+  geom_text(aes(x = .8, y = y,
+                label = label,
+                hjust = 1- y),
+            family = "courier") +
+  geom_pointrange(x = 1, y = .5,
+                 ymin = .25, ymax = .75) +
+  pmap(.l = dat_p_legend, .f = geom_curve_2) +
+  lims(x = c(0, 2),
+       y = c(0, 1)) +
+  coord_flip() +
+  theme_void()
+  
+
 png(filename = "plots/2-23-ramen.png",
     width = 3500,
     height = 1600,
@@ -136,10 +176,10 @@ grid.text(label = str_wrap("All ramens rated by TheRamenRater:
           gp = gpar(fontfamily = "courier",
                     fontsize = 10,
                     lineheight = .84))
+print(p_legend, vp = viewport(x = .2, y = .33, width = .3))
 dev.off()
 
 
-    
 # model -------------------------------------------------------------------
 
 # words -------------------------------------------------------------------
