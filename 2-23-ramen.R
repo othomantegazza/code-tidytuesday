@@ -154,7 +154,7 @@ png(filename = "plots/2-23-ramen.png",
     width = 3500,
     height = 1600,
     res = 300)
-p 
+p %>% print()
 grid.lines(x = unit(c(.355, .355), "npc"),
            y = unit(c(.18, .95), "npc"))
 grid.text(label = str_wrap("Ramen Ratings by Country"),
@@ -179,28 +179,3 @@ grid.text(label = str_wrap('All ramens have been rated by "The Ramen Rater":
                     lineheight = .84))
 print(p_legend, vp = viewport(x = .2, y = .33, width = .3))
 dev.off()
-
-
-# model -------------------------------------------------------------------
-
-# words -------------------------------------------------------------------
-ramen_w <- 
-  ramen %>% 
-  mutate(variety = variety %>% str_split(" ")) %>%
-  split(.$country) %>% 
-  map_df(~pull(., variety) %>%
-           reduce(., c) %>%
-           {tibble(variety = .)} %>% 
-           count(variety),
-         .id = "country")
-
-ramen_w %>% 
-  filter(country == "Malaysia") %>% 
-  ggplot(aes(label = variety, size = n)) +
-  geom_text_wordcloud()
-
-
-ramen_w %>% 
-  filter(country == "United States") %>% 
-  ggplot(aes(label = variety, size = n)) +
-  geom_text_wordcloud()
