@@ -5,6 +5,7 @@ library(sf)
 
 purple <- "#AA2255"
 purple2 <- "#BB2255"
+bg_col <- "#EAEA9F" #"#F6F6DF"
 
 # Get data ----------------------------------------------------------------
 
@@ -35,7 +36,7 @@ meteors %>%
 
 
 meteors %>% 
-  filter(fall == "Fell") %>% View()
+  filter(fall == "Fell") %>% # View()
   count(year) %>% 
   filter(year > 1950,
          year < 2014) %>% 
@@ -55,7 +56,7 @@ meteors %>%
   coord_map(projection = "gall", lat0 = 0)
 
 meteors %>% 
-  filter(long > 200) %>% View()
+  filter(long > 200) # %>% View()
 
 # size by year -----------------------------------------------------------
 
@@ -73,39 +74,102 @@ meteors %>%
 
 # size of fell meteorites by location -------------------------------------
 
-meteors %>% 
+p <- 
+  meteors %>% 
   filter(long < 200,
          fall == "Fell",
-         mass >= 250000) %>% 
-  ggplot() +
-  geom_path(data = map_data("world"),
-            aes(x = long, y = lat,
-                group = group),
-            colour = "grey70") +
+         mass >= 250000) %>% # View()
+  ggplot(aes(x = long,
+             y = lat)) +
+  # geom_path(data = map_data("world"),
+  #           aes(x = long, y = lat,
+  #               group = group),
+  #           colour = "grey70") +
+  borders(fill = "white", colour = bg_col) +
   # geom_sf(data = wrld_simpl %>%
   #           sf::st_as_sf()) +
-  geom_point(aes(x = long,
-                 y = lat,
-                 size = mass),
-             colour = purple) +
+  ggrepel::geom_text_repel(aes(label = paste(name,
+                                             scales::scientific(mass, digits = 0),
+                                             sep = "\n")),
+                           force = 8,
+                           lineheight = .8, 
+                           colour = purple,
+                           size = 3,
+                           fontface = "bold") +
+  geom_point(aes(size = mass),
+             colour = "#4C63C3",
+             alpha = .7) +
+  guides(size = FALSE,
+         colour = FALSE) +
+  scale_colour_viridis_c(option = "A") +
   theme_void() +
-  coord_map(projection = "mollweide")#, lat0 = 0) 
+  theme(panel.background =  element_rect(fill = bg_col, colour = bg_col),
+        title = element_text(hjust = .5)) +
+  coord_map(projection = "mollweide", orientation = c(90, 0, 0))#, lat0 = 0) 
+
+grid.newpage()
+grid.rect(gp = gpar(fill = bg_col))
+print(p, vp = viewport())
+
+
+png("plots/2-24-meteorites.png",
+    width = 2500,
+    height = 1800,
+    res = 300)
+set.seed(46)
+grid.newpage()
+grid.rect(gp = gpar(fill = bg_col))
+print(p, vp = viewport(y = .45))
+grid.text(label = str_wrap("Biggest meteorites that have been observed hitting Earth until 2012.",
+                           width = 50),
+          vjust = .5,
+          hjust = .5,
+          x = .5,
+          y = .9, 
+          gp = gpar(fontfamily = "courier",
+                    fontface = "bold",
+                    fontsize = 14,
+                    col = "#7A82A6",
+                    lineheight = 1))
+grid.text(label = str_wrap("With name and mass in grams.",
+                           width = 50),
+          vjust = .5,
+          hjust = .5,
+          x = .5,
+          y = .84, 
+          gp = gpar(fontfamily = "courier",
+                    fontface = "bold",
+                    fontsize = 7,
+                    col = purple))
+grid.text(label = str_wrap("Data from NASA | plot by @othomn",
+                           width = 50),
+          vjust = .5,
+          hjust = .5,
+          x = .78,
+          y = .06, 
+          gp = gpar(fontfamily = "courier",
+                    fontface = "bold",
+                    fontsize = 8,
+                    col = "#7A82A6"))
+dev.off()
+
 
 meteors %>% 
   filter(long < 200,
          fall == "Fell",
          mass >= 250000) %>% 
-  ggplot() +
+  st_as_sf(coords = c("long", "lat"),
+           crs = "+proj=longlat +datum=WGS84 +no_defs") %>% 
+ggplot() +
   # geom_path(data = map_data("world"),
   #           aes(x = long, y = lat,
   #               group = group),
   #           colour = "grey70") +
   geom_sf(data = wrld_simpl %>%
-            sf::st_as_sf(crs = "+proj=moll +datum=WGS84 +no_defs")) +
-  geom_point(aes(x = long,
-                 y = lat,
-                 size = mass),
-             colour = purple) +
+            sf::st_as_sf(crs = "+proj=longlat +datum=WGS84 +no_defs")) +
+  geom_sf(aes(size = mass),
+          colour = purple) +
+  geom_sf_text(aes(label = name)) +
   theme_void() +
   coord_sf(crs = "+proj=moll +datum=WGS84 +no_defs")
 
