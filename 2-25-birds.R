@@ -2,12 +2,17 @@ library(tidyverse)
 library(ggforce)
 # library(emojifont)
 library(showtext)
+library(grid)
 
 font_families()
-
 font_add(family = 'FontAwesome', regular = 'data/Font Awesome 5 Free-Solid-900.otf')
+font_add_google("B612 Mono", family = "courier")
 
-
+purple <- "#AA2255"
+purple2 <- "#BB2255"
+blue <-  "#4C63C3"
+bg_col <- "#F0F0CB"
+bg_col <- "#EAEA9F"
 
 # get data ----------------------------------------------------------------
 
@@ -42,7 +47,8 @@ birds %>%
   geom_histogram()
 
 
-# Plot --------------------------------------------------------------------
+# prepare data for plot ---------------------------------------------------
+
 
 med_20 <- 
   birds %>% 
@@ -65,11 +71,8 @@ to_plot <-
   full_join(med_20, med_10) %>% 
   filter(!{count_20 < .007 & count_10 < .007})
 
-bird_img <- paste0("https://upload.wikimedia.org/wikipedia/commons/",
-                   "thumb/c/c7/Font_Awesome_5_solid_dove.svg/",
-                   "512px-Font_Awesome_5_solid_dove.svg.png")
+# Plot --------------------------------------------------------------------
 
-bird_fa <- "plots/dove-solid.svg"
 
 showtext_auto()
 font_families()
@@ -84,24 +87,110 @@ p <-
                 y = count_20,
                 yend = count_10,
                 size = ..index..,
-                alpha = ..index..)) +
+                alpha = ..index..),
+            colour = blue) +
   # geom_point(colour = "red") +
   # geom_text(label = fontawesome("fa-github"), family = "fontawesome-webfont") +
-  geom_text(label = -as.hexmode("f4ba"), family = "FontAwesome") +
-  geom_fontawesome() +
+  geom_text(label = "\uf4ba", family = "FontAwesome",
+            colour = purple,
+            size = 6) +
+  # geom_fontawesome() +
   coord_flip() +
   scale_y_log10() +
-  scale_size_continuous(range = c(.1, 1.5)) +
+  scale_size_continuous(range = c(.1, .6)) +
+  scale_alpha_continuous(range = c(.6, 1)) +
   guides(size = FALSE,
-         alpha = FALSE)
+         alpha = FALSE) +
+  theme_minimal() +
+  labs(y = "Counts per hour",
+       x = "") +
+  theme(text = element_text(family = "courier"),
+        title = element_text(face = "bold"),
+        axis.title = element_text(hjust = 1, size = 9,
+                                  colour = "grey10"),
+        axis.text = element_text(hjust = 1, size = 10,
+                                 colour = "grey10",
+                                 family = "courier"),
+        plot.caption = element_text(colour = purple, 
+                                    # colour = "grey10",
+                                    size = 8),
+        plot.title = element_text(lineheight = .2),
+        plot.subtitle = element_text(colour = purple,
+                                     lineheight = .3),
+        plot.margin = margin(14,4,4,2, unit = "mm"),
+        panel.background =  element_rect(fill = bg_col, colour = bg_col),
+        panel.grid = element_line(colour = "white", size = .15))
 
-p
+# p
+
+
+# legend ------------------------------------------------------------------
+
+dat_p_legend <- 
+  tibble(y = c(.25, .75),
+         label = c("Median\n1998 - 2007", "Median\n2008 - 2017"),
+         xend = .85,
+         curvature = c(.2, -.2)) %>% 
+  mutate(yend = y + c(-.05, .05),
+         y2 = y + c(-.02, .02)) 
+
+geom_curve_2 <- function(x, xend, y, y2, yend, label, curvature) {
+  dat <- tibble(xend = xend, y2 = y2, yend = yend, curvature = curvature)
+  geom_curve(data = dat,
+             aes(x = .96, 
+                 xend = xend, 
+                 y = y2, 
+                 yend = yend),
+             curvature = curvature,
+             colour = "grey50",
+             arrow = arrow(length = unit(3, "mm"),
+                           ends = "last",
+                           type = "open"),
+             size = .1) 
+}
+
+p_legend <- 
+  dat_p_legend %>% 
+  ggplot() +
+  geom_text(aes(x = .75, y = yend,
+                label = label,
+                hjust = .5),
+            family = "courier",
+            size = 2,
+            lineheight = .9) +
+  geom_link(aes(x = 1, y = .25,
+            xend = 1, yend = .75,
+            alpha = ..index..,
+            size = ..index..),
+            colour = blue) +
+  pmap(.l = dat_p_legend, .f = geom_curve_2) +
+  geom_text(aes(x = 1.01, y = .75),
+            label = "\uf4ba", family = "FontAwesome",
+            colour = purple,
+            size = 16) +
+  lims(x = c(.6, 1.2),
+       y = c(0, 1)) +
+  guides(size = FALSE,
+         alpha = FALSE) +
+  coord_flip() +
+  theme_void()
+
+
+p_legend
+
+# save plot ---------------------------------------------------------------
+
+
 
 png(filename = "plots/2-25-birds.png",
-    res = 300,
-    height = 3000,
-    width = 1000)
-p %>% print()
+    res = 500,
+    height = 1900,
+    width = 800)
+grid.newpage()
+grid.rect(gp = gpar(fill = bg_col))
+p %>% print(vp = viewport())
+p_legend %>% print(vp = viewport(x = .5, y = .9, clip = "on",
+                                 width = .6, height = .1))
 dev.off()
 
 svg(filename = "plots/2-25-birds.svg",
