@@ -1,6 +1,5 @@
 library(tidyverse)
 library(ggforce)
-# library(emojifont)
 library(showtext)
 library(grid)
 
@@ -11,7 +10,6 @@ font_add_google("B612 Mono", family = "courier")
 purple <- "#AA2255"
 purple2 <- "#BB2255"
 blue <-  "#4C63C3"
-bg_col <- "#F0F0CB"
 bg_col <- "#EAEA9F"
 
 # get data ----------------------------------------------------------------
@@ -81,20 +79,15 @@ p <-
   to_plot %>% 
   ggplot(aes(x = reorder(species, count_20), 
              y = count_10)) +
-  # ggimage::geom_image(image = bird_fa, size = .015) +
-  # geom_text(label = "dove")
   geom_link(aes(xend = reorder(species, count_10),
                 y = count_20,
                 yend = count_10,
                 size = ..index..,
                 alpha = ..index..),
             colour = blue) +
-  # geom_point(colour = "red") +
-  # geom_text(label = fontawesome("fa-github"), family = "fontawesome-webfont") +
   geom_text(label = "\uf4ba", family = "FontAwesome",
             colour = purple,
             size = 6) +
-  # geom_fontawesome() +
   coord_flip() +
   scale_y_log10() +
   scale_size_continuous(range = c(.1, .6)) +
@@ -121,8 +114,6 @@ p <-
         plot.margin = margin(14,2,2,2, unit = "mm"),
         panel.background =  element_rect(fill = bg_col, colour = bg_col),
         panel.grid = element_line(colour = "white", size = .15))
-
-# p
 
 
 # legend ------------------------------------------------------------------
@@ -182,8 +173,6 @@ p_legend
 
 # save plot ---------------------------------------------------------------
 
-
-
 png(filename = "plots/2-25-birds.png",
     res = 500,
     height = 1946,
@@ -207,11 +196,8 @@ grid.text(label = str_wrap("Christmas Bird Counts in the Hamilton Area of Ontari
                     lineheight = .2))
 dev.off()
 
-svg(filename = "plots/2-25-birds.svg",
-    width = 6)
-p %>% print()
-dev.off()
 
+# else --------------------------------------------------------------------
 
 birds %>% 
   filter(species %>% str_detect("winged Scoter")) %>% View()
