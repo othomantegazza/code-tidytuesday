@@ -103,7 +103,8 @@ p <-
          alpha = FALSE) +
   theme_minimal() +
   labs(y = "Counts per hour",
-       x = "") +
+       x = "",
+       caption = "Data by Bird Studies Canada and Sharleen W. | Plot by @othomn") +
   theme(text = element_text(family = "courier"),
         title = element_text(face = "bold"),
         axis.title = element_text(hjust = 1, size = 9,
@@ -117,7 +118,7 @@ p <-
         plot.title = element_text(lineheight = .2),
         plot.subtitle = element_text(colour = purple,
                                      lineheight = .3),
-        plot.margin = margin(14,4,4,2, unit = "mm"),
+        plot.margin = margin(14,2,2,2, unit = "mm"),
         panel.background =  element_rect(fill = bg_col, colour = bg_col),
         panel.grid = element_line(colour = "white", size = .15))
 
@@ -143,31 +144,32 @@ geom_curve_2 <- function(x, xend, y, y2, yend, label, curvature) {
                  yend = yend),
              curvature = curvature,
              colour = "grey50",
-             arrow = arrow(length = unit(3, "mm"),
+             arrow = arrow(length = unit(.3, "mm"),
                            ends = "last",
                            type = "open"),
-             size = .1) 
+             size = .18) 
 }
 
 p_legend <- 
   dat_p_legend %>% 
   ggplot() +
-  geom_text(aes(x = .75, y = yend,
+  geom_text(aes(x = .78, y = yend,
                 label = label,
                 hjust = .5),
             family = "courier",
-            size = 2,
-            lineheight = .9) +
+            size = 4,
+            lineheight = .18) +
   geom_link(aes(x = 1, y = .25,
             xend = 1, yend = .75,
             alpha = ..index..,
             size = ..index..),
             colour = blue) +
   pmap(.l = dat_p_legend, .f = geom_curve_2) +
-  geom_text(aes(x = 1.01, y = .75),
+  geom_text(aes(x = 1.015, y = .75),
             label = "\uf4ba", family = "FontAwesome",
             colour = purple,
-            size = 16) +
+            size = 10) +
+  scale_size_continuous(range = c(.2, 1)) +
   lims(x = c(.6, 1.2),
        y = c(0, 1)) +
   guides(size = FALSE,
@@ -184,13 +186,25 @@ p_legend
 
 png(filename = "plots/2-25-birds.png",
     res = 500,
-    height = 1900,
+    height = 1946,
     width = 800)
 grid.newpage()
 grid.rect(gp = gpar(fill = bg_col))
 p %>% print(vp = viewport())
-p_legend %>% print(vp = viewport(x = .5, y = .9, clip = "on",
-                                 width = .6, height = .1))
+p_legend %>% print(vp = viewport(x = .6, y = .9,
+                                 width = .5, height = .1))
+
+grid.text(label = str_wrap("Christmas Bird Counts in the Hamilton Area of Ontario",
+                           width = 40),
+          vjust = .5,
+          hjust = .5,
+          x = .5,
+          y = .97, 
+          gp = gpar(fontfamily = "courier",
+                    fontface = "bold",
+                    fontsize = 18,
+                    col = "#7A82A6",
+                    lineheight = .2))
 dev.off()
 
 svg(filename = "plots/2-25-birds.svg",
