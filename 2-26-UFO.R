@@ -4,7 +4,10 @@ library(lubridate)
 library(grid)
 library(ggrepel)
 library(ggforce)
+library(showtext)
 
+
+# colors
 purple <- "#AA2255"
 purple2 <- "#BB2255"
 blue <-  "#4C63C3"
@@ -13,9 +16,12 @@ mid2 <- "#E2CD92"
 grey <- "grey30"
 bg_col <- "#F0F0CB" # "#EAEA9F"
 
-cp <- colorRamp(colors = c(bg_col, purple2))
+cpal <- colorRamp(colors = c(bg_col, purple), bias =  10e20)
+cpal_rgb <- function(n) {rgb(cpal(n), maxColorValue = 255)}
 
-rgb(cp(.1), maxColorValue = 255)
+# fonts
+font_families()
+font_add_google("B612 Mono", family = "courier")
 
 # read data ---------------------------------------------------------------
 
@@ -69,9 +75,9 @@ ufo %>%
 # plot --------------------------------------------------------------------
 
 towns_in <- 
-  tibble(city = c("New York", "Los Angeles", "Seattle", "Phoenix"),
-         nudge_x = c(4, -4, -4, -2),
-         nudge_y = c(-2, -2, -2, -2),
+  tibble(city = c("New York", "Los Angeles", "Seattle", "Phoenix", "Chicago"),
+         nudge_x = c(3, -3, -3, -2, 1.5),
+         nudge_y = c(-2, -2, -2, -2, 1.7),
          vjust = case_when(nudge_y > 0 ~ 0, TRUE ~ 1),
          hjust = case_when(nudge_x > 0 ~ 0, TRUE ~ 1)) %>% 
   left_join(us_towns, by = "city")
@@ -80,13 +86,13 @@ p <-
   ufo %>%
   ggplot(aes(x = longitude,
              y = latitude)) +
-  geom_hex(colour = bg_col, size = .6, bins = c(100, 150)) +
+  geom_hex(colour = bg_col, size = .4, bins = c(100, 150)) +
   geom_link(data = towns_in,
                aes(xend = longitude + nudge_x,
                    yend = latitude + nudge_y,
-            colour = case_when(..index.. > .12 & ..index.. < .93 ~ "grey",
-                                # ~ "grey",
-                               TRUE ~ "none")),
+                   colour = case_when(..index.. > .16 & ..index.. < .93 ~ "grey",
+                                      # ~ "grey",
+                                      TRUE ~ "none")),
             size = .4) +
   geom_text(data = towns_in,
             aes(label = city,
@@ -95,16 +101,28 @@ p <-
                 hjust = hjust,
                 vjust = vjust),
             colour = grey,
-            size = 2.6) +
+            size = 2.6,
+            family = "courier",
+            fontface = "bold") +
   lims(x = c(-128, -50),
        y = c(25, 49)) +
-  scale_fill_gradient(low = mid2,
-                      # trans = "log",
-                      high = purple) +
+  # scale_fill_gradient(low = rgb(cp(.05), maxColorValue = 255),
+  #                     # trans = "log",
+  #                     high = rgb(cp(1), maxColorValue = 255)) +
+  scale_fill_gradientn(limits = c(0, NA),
+                       colours = map_chr(seq(.08, 1, length.out = 256), cpal_rgb),
+                       breaks = c(0, 400, 800, 1200),
+                       guide = guide_legend(nrow = 1,
+                                            label.position = "bottom", title.position = "top",
+                                            keywidth = unit(6, units = "mm"),
+                                            keyheight = unit(1.2, units = "mm"))) +
   scale_colour_manual(values = c(grey = grey, none = "#FFFFFF00")) +
   guides(colour = FALSE) +
-  theme_void() +
-  theme(aspect.ratio = .4) 
+  labs(fill = "Counts") +
+  theme_void(base_size = 9, base_family = "courier") +
+  theme(aspect.ratio = .4,
+        legend.position = c(.95, .7),
+        plot.margin = margin(3, 14, 6, 0, unit = "mm")) 
  
 # grid.rect(gp = gpar(fill = bg_col))
 # print(p, vp = viewport())
@@ -115,4 +133,25 @@ png(filename = "plots/2-26-ufo.png",
     res = 400)
 grid.rect(gp = gpar(fill = bg_col))
 print(p, vp = viewport())
+grid.text(label = "UFO \u2764 NY",
+          x = .8, y = .3, 
+          gp = gpar(fontfamily = "courier",
+                    col = purple,
+                    fontface = "bold",
+                    fontsize = 30))
+grid.text(label = "(and Los Angeles, Seattle, Chicago and Phoenix)",
+          x = .8, y = .2, 
+          gp = gpar(fontfamily = "courier",
+                    col = grey,
+                    fontface = "bold",
+                    fontsize = 6))
+grid.text(label = "Data by NUFORC and Sigmond Axel (and Miserlou) | Plot by @othomn",
+          x = .99, y = .03, 
+          hjust = 1,
+          gp = gpar(fontfamily = "courier",
+                    col = purple,
+                    # fontface = "bold",
+                    fontsize = 6))
+
 dev.off()
+
