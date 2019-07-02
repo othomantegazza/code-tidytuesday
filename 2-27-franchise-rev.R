@@ -1,6 +1,6 @@
 library(tidyverse)
 library(packcircles) ## easily package circles
-
+library(ggforce)
 
 # get data ----------------------------------------------------------------
 
@@ -41,13 +41,14 @@ fr %>%
 # Inspired by:
 # https://chichacha.netlify.com/2018/12/22/bubble-packed-chart-with-r-using-packcircles-package/
 
-
+# total revenue by franchise
 tot_rev <- 
   fr %>%
   group_by(franchise) %>% 
   summarise(tot_revenue = sum(revenue)) %>% 
   arrange(desc(tot_revenue))
 
+# pack circles
 set.seed(93) # use motogp riders to select seeds ;)
 packs <- 
   tot_rev %>% 
@@ -56,6 +57,9 @@ packs <-
   circleRepelLayout() %>% 
   .$layout
 
+
+# and check if you can save circles in a tibble
+# with extra variables
 packs_df <- 
   bind_cols(tot_rev, packs) %>% 
   select(x, y, radius, franchise) %>% 
@@ -64,6 +68,7 @@ packs_df <-
   mutate(id = 1:n())
 
 
+# plot with circlelayout
 packs_df %>% 
   circleLayoutVertices(npoints = 200) %>% 
   ggplot(aes(x = x, y = y)) +
@@ -71,6 +76,16 @@ packs_df %>%
   coord_equal() +
   theme_void()
  
+# plot with ggforce
+# easier
+packs_df %>% 
+  ggplot() +
+  geom_circle(aes(x0 = x,
+                  y0 = y, 
+                  r = radius),
+              fill = "#CD0A39",
+              colour = "#CD0A39") +
+  coord_equal()
 
 # inner circles -----------------------------------------------------------
 
@@ -92,38 +107,28 @@ colorz <-
   c("#D9F6FF","#E97E00","#E0E0D2","#5867A6","#100089","#1E2D6C","#CD0A62","#CB7BA5") %>% 
   set_names(nm = fr %>% pull(revenue_category) %>% unique())
 
-# 3. plot first rank first
-
+# 3. try plot first rank 
+#  with ggforce geom_circle
 
 pack1 <- 
   packs_df %>% 
-  left_join(fr_ranked %>% filter(rank == 1), by = "franchise") 
-
-to_plot <-  
-  packs_df %>% 
-  circleLayoutVertices(npoints = 200) %>% 
-  left_join(pack1 %>% select(-x, -y), by = "id")
+  left_join(fr_ranked %>% filter(rank == 1), by = "franchise")
 
 p <- 
-  to_plot %>% 
+  pack1 %>% 
   ggplot() +
-  # geom_point() +
-  geom_polygon(aes(x = x, y = y, group=id, fill = revenue_category)) +
-  geom_polygon(data = tst,
-               aes(x = x, y = y, group=id, fill = revenue_category)) +
+  geom_circle(aes(x0 = x,
+                  y0 = y, 
+                  r = radius,
+                  fill = revenue_category,
+                  colour = revenue_category),
+              size = .1) +
   scale_fill_manual(values = colorz) +
+  scale_colour_manual(values = colorz) +
   coord_equal() +
   theme_void()
 
-
-png(filename = "plots/2-27-franchise-rev.png",
-    height = 1300,
-    width = 2000,
-    res = 400)
-p
-dev.off()
-
-# 4. make a list of ranks
+# 4. make a list of ranks and loop over it
 
 get_rank_circles <- function(rank_in = 2) {
   packs_n <- 
@@ -131,30 +136,21 @@ get_rank_circles <- function(rank_in = 2) {
     left_join(fr_ranked %>% filter(rank == rank_in), by = "franchise") %>% 
     # scale radius on proportion to cumulative revenue
     mutate(radius = radius*cumul_ratio)
-  
-  to_plot <-  
-    packs_n %>% 
-    circleLayoutVertices(npoints = 200) %>% 
-    left_join(packs_n %>% select(-x, -y), by = "id")
 }
 
 circles_dfs <- map(2:max(fr_ranked$rank), get_rank_circles)
 
-p <- 
-  to_plot %>% 
-  ggplot() +
-  # geom_point() +
-  geom_polygon(aes(x = x, y = y, group=id, fill = revenue_category)) +
-  scale_fill_manual(values = colorz) +
-  coord_equal() +
-  theme_void()
-
 
 for(i in circles_dfs) {
-  p <- 
-    p + geom_polygon(data = i,
-               aes(x = x, y = y,
-                   group=id, fill = revenue_category))
+  p <-
+    p +
+    geom_circle(data = i,
+                aes(x0 = x,
+                    y0 = y, 
+                    r = radius,
+                    fill = revenue_category,
+                    colour = revenue_category),
+                size = .1)
 } 
 
 png(filename = "plots/2-27-franchise-rev.png",
