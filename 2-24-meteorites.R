@@ -7,6 +7,8 @@ purple <- "#AA2255"
 purple2 <- "#BB2255"
 bg_col <- "#EAEA9F" #"#F6F6DF"
 
+data(wrld_simpl)
+
 # Get data ----------------------------------------------------------------
 
 data_url <- paste0("https://raw.githubusercontent.com/rfordatascience/tidytuesday/",
