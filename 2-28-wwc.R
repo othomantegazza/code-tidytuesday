@@ -52,3 +52,16 @@ wwc %>%
              y = team,
              shape = win_status)) +
   geom_point()
+
+
+wwc %>% 
+  group_by(year, team) %>% 
+  arrange(year, yearly_game_id) %>% 
+  mutate(match_n = 1:n()) %>% # filter(team == "USA") %>% View()
+  filter(team %in% top_teams,
+         round != "Third Place Playoff") %>% 
+  ggplot(aes(x = match_n,
+             y = team,
+             shape = win_status)) +
+  geom_point() +
+  facet_grid(. ~ year)
