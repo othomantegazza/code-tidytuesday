@@ -1,7 +1,8 @@
 library(tidyverse)
 library(jsonlite)
 library(lubridate)
-
+library(ggforce)
+library(scico)
 
 # get data ----------------------------------------------------------------
 
@@ -116,5 +117,11 @@ pass_to_plot %>%
              x = .seconds,
              yend = pass_end_location_x,
              xend = .seconds)) +
-  geom_segment() +
-  theme_minimal()
+  geom_hline(yintercept = c(0, max_x),
+             colour = "grey80") +
+  geom_link0(aes(colour = ..y..),
+            size = 2) +
+  scale_color_scico(palette = "vik") +
+  # coord_polar() +
+  expand_limits(y = c(-150, NA)) +
+  theme_void()  
