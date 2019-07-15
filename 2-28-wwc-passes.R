@@ -112,16 +112,46 @@ pass_to_plot %>%
   geom_segment()
 
 # depth vs time
-pass_to_plot %>%
+p_pass <- 
+  pass_to_plot %>%
   ggplot(aes(y = location_x,
              x = .seconds,
              yend = pass_end_location_x,
-             xend = .seconds)) +
+             xend = .seconds,
+             colour = as.character(possession_team_id))) +
   geom_hline(yintercept = c(0, max_x),
              colour = "grey80") +
-  geom_link0(aes(colour = ..y..),
-            size = 2) +
-  scale_color_scico(palette = "vik") +
+  geom_segment(size = .7) +
+  # scale_color_scico(palette = "imola") +
+  scale_color_manual(values = c("#5867A6", "#E97E00")) +
+  guides(colour = FALSE) +
   # coord_polar() +
-  expand_limits(y = c(-150, NA)) +
+  # expand_limits(y = c(-150, NA)) +
   theme_void()  
+
+
+
+# Other events ------------------------------------------------------------
+
+pass_tidy$type_name %>% unique()
+# [1] "Starting XI"       "Half Start"        "Pass"              "Ball Receipt*"     "Duel"             
+# [6] "Pressure"          "Dispossessed"      "Interception"      "Dribble"           "Ball Recovery"    
+# [11] "Clearance"         "Block"             "Dribbled Past"     "Foul Committed"    "Foul Won"         
+# [16] "Miscontrol"        "Goal Keeper"       "Shield"            "Shot"              "Injury Stoppage"  
+# [21] "Player Off"        "Player On"         "Referee Ball-Drop" "Half End"          "Substitution"     
+# [26] "50/50"             "Tactical Shift"
+
+selected_events <- c("Duel", "Pressure", "Dispossessed",  "Interception", "Dribble",  "Ball Recovery",
+                     "Clearance", "Block", "Dribbled Past", "Foul Committed", "Foul Won", 
+                     "Injury Stoppage", "Player Off", "Player On", "Referee Ball-Drop",  "Substitution")
+
+
+# plot event --------------------------------------------------------------
+
+pass_tidy %>% 
+  filter(type_name == "Duel") %>%
+  ggplot(aes(x = .seconds,
+             y = 1, 
+             colour = team_name)) +
+  geom_point()
+
