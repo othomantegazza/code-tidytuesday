@@ -75,7 +75,7 @@ p <-
   r4ds %>% 
   mutate(weekmean = roll_weekmean(daily_active_members) %>% 
            # recenter rolled mean
-           .[c(4:n(), 1:3)]) %>% 
+           .[c(4:n(), 1:3)]) %>%
   ggplot(aes(x = date,
              y = daily_active_members)) +
   geom_density(stat = "identity", colour = NA,
@@ -150,3 +150,8 @@ grid.newpage()
 grid.rect(gp = gpar(fill = bg_col))
 print(p, vp = viewport())
 dev.off()
+
+
+# save json for d3 --------------------------------------------------------
+
+
