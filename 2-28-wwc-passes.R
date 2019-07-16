@@ -91,7 +91,7 @@ pass_to_plot <-
   pass_pass %>% 
   select(.seconds, location_x, location_y,
          pass_end_location_x, pass_end_location_y,
-         possession_team_id)
+         possession_team_id, index)
 
 
 # xy on field
@@ -115,13 +115,13 @@ pass_to_plot %>%
 p_pass <- 
   pass_to_plot %>%
   ggplot(aes(y = location_x,
-             x = .seconds,
+             x = index,
              yend = pass_end_location_x,
-             xend = .seconds,
+             xend = index,
              colour = as.character(possession_team_id))) +
   geom_hline(yintercept = c(0, max_x),
              colour = "grey80") +
-  geom_segment(size = .7) +
+  geom_segment(size = .5) +
   # scale_color_scico(palette = "imola") +
   scale_color_manual(values = c("#5867A6", "#E97E00")) +
   guides(colour = FALSE) +
@@ -150,8 +150,45 @@ selected_events <- c("Duel", "Pressure", "Dispossessed",  "Interception", "Dribb
 
 pass_tidy %>% 
   filter(type_name == "Duel") %>%
-  ggplot(aes(x = .seconds,
+  ggplot(aes(x = index,
              y = 1, 
              colour = team_name)) +
-  geom_point()
+  geom_point(size = .1) +
+  scale_color_manual(values = c("#5867A6", "#E97E00")) +
+  theme_void() +
+  guides(colour = FALSE)
 
+p_pass
+
+
+# pass heigth -------------------------------------------------------------
+
+
+pass_tidy %>% pull(pass_height_name) %>% unique()
+# "Ground Pass" "High Pass"   "Low Pass"  
+
+pass_height <- 
+  pass_tidy %>% 
+  drop_na(pass_height_name) %>% # View()
+  mutate(pass_outcome_name = case_when(is.na(pass_outcome_name) ~ "Complete",
+                                       TRUE ~ pass_outcome_name)) %>% 
+  # filter(type_name == "Pass") %>% 
+  ggplot(aes(x = 0,
+             y = 0,
+             xend = pass_length,
+             yend = 0,
+             # colour = possession_team_name,
+             colour = pass_outcome_name)) +
+  geom_curve(data = . %>% filter(pass_height_id == 1),
+             alpha = .3,
+             curvature = -.2) +
+  # geom_curve(data = . %>% filter(pass_height_id == 2),
+  #            alpha = .3,
+  #            curvature = -.5) +
+  # geom_curve(data = . %>% filter(pass_height_id == 3),
+  #            alpha = .3,
+  #            curvature = -1) +
+  lims(y = c(0, .25)) +
+  theme_minimal()
+
+pass_height
