@@ -73,8 +73,9 @@ text_height <- 240
 
 p <- 
   r4ds %>% 
-  mutate(weekmean = roll_weekmean(daily_active_members),
-         monthmean = roll_monthmean(daily_active_members)) %>% 
+  mutate(weekmean = roll_weekmean(daily_active_members) %>% 
+           # recenter rolled mean
+           .[c(4:n(), 1:3)]) %>% 
   ggplot(aes(x = date,
              y = daily_active_members)) +
   geom_density(stat = "identity", colour = NA,
@@ -105,6 +106,24 @@ p <-
            arrow = arrow(length = unit(1.2, "mm"), type = "closed"),
            size = .1,
            colour = blue) +
+  annotate(geom = "text",
+           label = str_wrap("Mean of 7 days window.", width = 10),
+           y = 130,
+           x = as.Date("2019-07-22"), 
+           family = "courier",
+           colour = purple,
+           size = 3,
+           hjust = 0,
+           lineheight = 1) +
+  annotate(geom = "curve",
+           x = as.Date("2019-08-10"),
+           y = 104,
+           xend = as.Date("2019-07-10"),
+           yend = 70,
+           curvature = -.45,
+           arrow = arrow(length = unit(1.2, "mm"), type = "closed"),
+           size = .1,
+           colour = purple) +
   labs(x = "",
        y = "Daily active members",
        title = "Activity of the R4DS Learning Community on Slack",
