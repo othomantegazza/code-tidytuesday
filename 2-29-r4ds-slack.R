@@ -2,6 +2,13 @@ library(tidyverse)
 library(tibbletime)
 library(grid)
 
+
+# colors
+purple <- "#AA2255"
+purple2 <- "#BB2255"
+bg_col <- "#EAEA9F"
+blue <- "#263A89"
+
 # load data ---------------------------------------------------------------
 
 
@@ -56,21 +63,71 @@ r4ds %>%
 
 # Active members ----------------------------------------------------------
 
+# new years resolution?
 
 roll_weekmean <- rollify(mean, window = 7)
 
 roll_monthmean <- rollify(mean, window = 30)
 
-r4ds %>% 
+text_height <- 240
+
+p <- 
+  r4ds %>% 
   mutate(weekmean = roll_weekmean(daily_active_members),
          monthmean = roll_monthmean(daily_active_members)) %>% 
   ggplot(aes(x = date,
              y = daily_active_members)) +
-  # geom_line() +
-  geom_density(stat = "identity", colour = NA, fill = "grey80") +
-  # map(seq(0, 200, by = 5), ~geom_hline(yintercept = ., colour = "white")) +
-  # geom_ribbon(aes(ymin = weekmean - 3, ymax = weekmean + 3)) +
-  geom_line(aes(y = weekmean)) +
-  # geom_line(aes(y = monthmean), colour = "purple") +
-  # stat_smooth() +
-  theme_minimal()
+  geom_density(stat = "identity", colour = NA,
+               fill = "white") +
+  geom_line(colour = "#E4E484") + #"#99D0E3") + # "#27A6D3") +
+  geom_line(aes(y = weekmean), colour = purple) +
+  annotate(geom = "text",
+           label = "New Year's Resolutions? ;)",
+           y = text_height,
+           x = as.Date("2018-07-15"), 
+           family = "courier",
+           colour = blue) +
+  annotate(geom = "curve",
+           x = as.Date("2018-04-01"),
+           y = text_height,
+           xend = as.Date("2018-01-15"),
+           yend = 160,
+           curvature = .25,
+           arrow = arrow(length = unit(1.2, "mm"), type = "closed"),
+           size = .1,
+           colour = blue) +
+  annotate(geom = "curve",
+           x = as.Date("2018-10-27"),
+           y = text_height,
+           xend = as.Date("2019-01-20"),
+           yend = 155,
+           curvature = -.26,
+           arrow = arrow(length = unit(1.2, "mm"), type = "closed"),
+           size = .1,
+           colour = blue) +
+  labs(x = "",
+       y = "Daily active members",
+       title = "Activity of the R4DS Learning Community on Slack",
+       caption = "Source: R4DS UseR Presentation | Plot by @othomn") +
+  theme_minimal(base_family = "courier") +
+  scale_x_date(limits = as.Date(c("2017-08-20", "2019-09-05")),
+               expand = c(0,0)) +
+  theme(panel.grid = element_blank(),
+        plot.margin = margin(10, 20, 5, 30),
+        axis.title = element_text(colour = "grey30"),
+        plot.title = element_text(colour = blue,
+                                  face = "bold",
+                                  margin = margin(t = 10, b = 10)),
+        plot.caption = element_text(colour = purple))
+
+
+# save plot ---------------------------------------------------------------
+
+png(filename = "plots/2-29-r4ds-slack.png",
+    height = 1000,
+    width = 3200,
+    res = 300)
+grid.newpage()
+grid.rect(gp = gpar(fill = bg_col))
+print(p, vp = viewport())
+dev.off()
