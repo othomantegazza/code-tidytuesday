@@ -152,6 +152,15 @@ print(p, vp = viewport())
 dev.off()
 
 
-# save json for d3 --------------------------------------------------------
+
+# save to json for d3 -----------------------------------------------------
+library(jsonlite)
+
+
+r4ds %>% 
+  select(date, daily_active_members) %>% 
+  write_json("d3/json_data/2-29-r4ds-slack.js")
+  
+
 
 
