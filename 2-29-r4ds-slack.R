@@ -1,7 +1,10 @@
 library(tidyverse)
 library(tibbletime)
 library(grid)
+library(lubridate)
 
+# months in english
+Sys.setlocale("LC_TIME", "en_US.UTF8")
 
 # colors
 purple <- "#AA2255"
@@ -156,11 +159,23 @@ dev.off()
 # save to json for d3 -----------------------------------------------------
 library(jsonlite)
 
-
+a <- 
 r4ds %>% 
-  select(date, daily_active_members) %>% 
-  write_json("d3/json_data/2-29-r4ds-slack.js")
+  select(date, daily_active_members) %>%
+  toJSON() %>%
+  {paste("var r4ds = ", .)} %>% 
+  cat(file = "d3/json_data/2-29-r4ds-slack.js")
   
+# easier: monthly visitors
+r4ds %>% 
+  mutate(month_year = paste(month(date, label = T), year(date)),
+         month_year = as_factor(month_year)) %>% 
+  group_by(month_year) %>% 
+  summarise(active_members = sum(daily_active_members)) %>%
+  toJSON() %>% 
+  {cat("var r4ds = ", ., file = "d3/json_data/2-29-r4ds-slack-months.js")}
+
+
 
 
 
