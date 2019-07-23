@@ -1,12 +1,15 @@
 library(tidyverse) # A collection of packages for Data Science
 library(lubridate) # use dates
 
+# IN YOUR WORKING DIRECTORY, MAKE A FOLDER NAMED "data" 
+# TO STORE YOUR DATA
+
 # read data ---------------------------------------------------------------
 
 # and save them locally as .Rdata
 
-data_url <- paste0("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/",
-                   "data/2019/2019-07-23/bird_impacts.csv")
+data_url <- paste0("https://raw.githubusercontent.com/rfordatascience/tidytuesday/",
+                   "master/data/2019/2019-07-23/wildlife_impacts.csv")
 
 data_path <- "data/2-30-bird-strikes.Rdata"
 
@@ -29,6 +32,8 @@ if(!file.exists(data_path)) {
   load(data_path)
 }
 
+
+birds %>% drop_na(incident_date)
 
 # explore -----------------------------------------------------------------
 
@@ -119,3 +124,4 @@ png(filename = "plots/2-30-bird-strikes.png",
 p %>% print()
 dev.off()
   
+
