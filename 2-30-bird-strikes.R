@@ -115,7 +115,6 @@ p <-
 # check plot
 p
 
-
 # save plot ---------------------------------------------------------------
 png(filename = "plots/2-30-bird-strikes.png",
     res = 300,
