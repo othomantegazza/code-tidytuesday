@@ -66,7 +66,7 @@ pix_colors <-
 
 # range of axis
 range_x <- c(0, dim(img)[1])
-range_y = c(dim(img)[2], 0)
+range_y <-  c(dim(img)[2], 0)
 
 p <- 
   hex_pix_mini %>% 
