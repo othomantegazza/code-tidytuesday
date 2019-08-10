@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+
+        <title>Turn a painting into a Voronoi grid</title>
+
+        <!-- Load d3.js - saved locally -->
+        <!-- <script src="https://d3js.org/d3.v4.js"></script> -->
+         <script src="../d3.v5.min.js"></script>
+       
+        <!-- jQuery, saved locally -->
+	      <!-- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+        <script src="../1.11.1-jquery.min.js"></script>
+
+        <!-- Create a div where the graph will take place -->
+        
+        <style>
+                body {
+                  font-family: 'Open Sans', sans-serif;
+                  font-size: 12px;
+                  font-weight: 400;
+                  color: #525252;
+                  text-align: center;
+                }
+                
+                html, body { 
+                    width:auto; 
+                    height:auto; 
+                }
+                
+                .axis path,
+                .axis line {
+                    fill: none;
+                    stroke: #B3B3B3;
+                    shape-rendering: crispEdges;
+                }
+                .axis text {
+                    font-size: 10px;
+                    fill: #6B6B6B;
+                }
+        
+                .popover {
+                    pointer-events: none;
+                }
+        
+                .legendTitle {
+                    fill: #1A1A1A;
+                    color: #1A1A1A;
+                    text-anchor: middle;
+                    font-size: 10px;
+                }
+        
+                .legendText {
+                    fill: #949494;
+                    text-anchor: start;
+                    font-size: 9px;
+                }
+        
+                @media (min-width: 500px) {
+                  .col-sm-3, .col-sm-9 {
+                    float: left;
+                  }
+                  .col-sm-9 {
+                    width: 75%;
+                  }
+                  .col-sm-3 {
+                    width: 25%;
+                  }
+                }
+              </style>
+
+    </head>
+    <body>
+        <h2>Here is a scatterplot</h2>
+         <div id="my_dataviz"></div>
+
+        <!-- This are the data, already cleaned in R -->    
+         <script src="data.js"></script> 
+
+         <!-- This is the d3 chart -->
+        <script src="script.js"></script>
+    </body>
+</html>
