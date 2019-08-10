@@ -2,6 +2,9 @@ library(tidyverse) # A collection of packages for Data Science
 library(lubridate) # use dates
 library(gganimate)
 
+# months in english
+Sys.setlocale("LC_TIME", "en_US.UTF8")
+
 # IN YOUR WORKING DIRECTORY, MAKE A FOLDER NAMED "data" 
 # TO STORE YOUR DATA
 
@@ -94,7 +97,110 @@ p <- birds %>%
   ease_aes('cubic-in-out')
   
 
-animate(p, nframes = 300, fps = 15)
+pani <- animate(p, nframes = 300, fps = 15)
+
+anim_save("plots/2-30-birds-strikes-animate.gif", animation = pani)
+
+
+# second animation --------------------------------------------------------
+
+p2 <- birds %>% 
+  # most of time measurements are missing
+  drop_na(incident_month, time) %>% 
+  arrange(hours) %>% 
+  mutate(incident_month = incident_month %>% month(label = TRUE),
+         at_hours = paste(hours, "h") %>% as_factor()) %>% 
+  count(incident_month, at_hours) %>% 
+  ggplot(aes(x = incident_month)) +
+  geom_segment(aes(xend = incident_month,
+                   yend = n - 10,
+                   y = 0),
+               linetype = 2) +
+  geom_point(aes(y = n), shape = 1, size = 10) +
+  geom_point(aes(y = n, colour = n, size = n)) +
+  transition_states(at_hours) +
+  ease_aes('cubic-in-out') +
+  guides(size = FALSE,
+         colour = FALSE) +
+  labs(x = "",
+       y = "Number of Accidents",
+       title = "At {closest_state}") +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, 500), expand = c(0, 0)) +
+  theme(aspect.ratio = .7,
+        panel.background = element_rect(colour = "black"),
+        panel.grid = element_blank())
+
+
+animate(p2, nframes = 300, fps = 15)
+
+
+
+# with smooth -------------------------------------------------------------
+
+p3 <-
+  birds %>% 
+  # most of time measurements are missing
+  drop_na(incident_month, time) %>% 
+  arrange(hours) %>% 
+  mutate(incident_month = incident_month %>% month(label = TRUE),
+         at_hours = paste(hours, "h") %>% as_factor()) %>% 
+  count(incident_month, at_hours) %>%
+  rbind(tibble(incident_month = "Feb",
+               at_hours = "2 h",
+               n = 0)) %>% 
+  ggplot(aes(x = incident_month,
+             y = n)) +
+  geom_point(colour = "#CD0A39") +
+  geom_smooth(aes(x = as.numeric(incident_month)),
+              span = .8,
+              level = .8,
+              fill = "grey70",
+              colour = "grey70",
+              alpha = 1) +
+  geom_point(aes(size = n),
+             colour = "#CD0A39") +
+  # facet_wrap(facets = "at_hours") +
+  transition_states(at_hours) +
+  ease_aes('cubic-in-out') +
+  guides(size = FALSE,
+         colour = FALSE) +
+  labs(x = "",
+       y = "Number of Accidents",
+       title = "At {closest_state}") +
+  theme_minimal() +
+  scale_y_continuous(limits = c(-200, 500), expand = c(0, 0)) +
+  theme(aspect.ratio = .7,
+        panel.background = element_rect(colour = "black"),
+        panel.grid = element_blank())
+
+p3
+
+# other exploratory plots -------------------------------------------------
+
+
+
+# with lines?
+p_lines <- birds %>% 
+  # most of time measurements are missing
+  drop_na(incident_month, time) %>% 
+  arrange(hours) %>% 
+  mutate(incident_month = incident_month %>% month(label = TRUE),
+         at_hours = paste(hours, "h") %>% as_factor()) %>% 
+  count(incident_month, at_hours) %>% 
+  ggplot(aes(x = incident_month, 
+             y = n,
+             group = at_hours)) +
+  geom_line(colour = "#100089", alpha = .6) +
+  geom_point() +
+  theme_minimal() +
+  ggtitle("At {closest_state}") +
+  # animations
+  transition_states(at_hours) +
+  ease_aes('cubic-in-out')
+
+
+animate(p_lines, nframes = 300, fps = 15)
 
 
 # which species -----------------------------------------------------------

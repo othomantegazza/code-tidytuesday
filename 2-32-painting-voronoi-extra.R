@@ -13,7 +13,8 @@ img_to_voronoi <- function(img,
                            n_pix = 2500,
                            border_size = .2,
                            pick_by = NULL,
-                           bg_color = "#E8EDEF") {
+                           bg_color = "#E8EDEF",
+                           delaunay = FALSE) {
   
   pick_by <- enquo(pick_by)
 
@@ -61,8 +62,10 @@ img_to_voronoi <- function(img,
     # geom_point(aes(colour = hexvalue)) +
     ggvoronoi::geom_voronoi(aes(fill = hexval),
                             size = border_size,
-                            colour = bg_color
-    ) +
+                            colour = bg_color) +
+    {if(delaunay) ggforce::geom_delaunay_segment(colour = "grey80",
+                                                 size = .2,
+                                                 linetype = 2)} +
     scale_y_reverse(limits = range_y) +
     scale_fill_manual(values = pix_colors, guide = FALSE) +
     coord_fixed() +
@@ -136,7 +139,8 @@ p <- img_to_voronoi(img = img,
                     n_pix = 2500,
                     pick_by = value,
                     border_size = 0,
-                    bg_color = "#6A5A77")
+                    bg_color = "#6A5A77",
+                    delaunay = T)
 
 p
 

@@ -131,3 +131,12 @@ grid.text(label = "Painting by Bob Ross | Plot by @othomn",
                                           col = bg_color))
 dev.off()
 
+
+# save json for d3 --------------------------------------------------------
+
+library(jsonlite)
+
+hex_pix_mini %>% 
+  toJSON() %>%
+  {paste("var hexpix = ", .)} %>% 
+  cat(file = "d3/json_data/2-32-painting-voronoi.js")
