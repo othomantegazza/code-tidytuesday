@@ -1,6 +1,7 @@
-///////// Otho Mantegazza - 9-8-19 /////////////////////////////////
-////////////////////////////////////////////////////////////////////
+///////// Otho Mantegazza - 9-8-19 
 
+// Some lines of code are taken from:
+// https://gist.github.com/nbremer/c0ffc07b23b1c556a66b
 
 // set the dimensions and margins of the graph --------------------
 
