@@ -54,12 +54,15 @@ var circleGroup = svg.append("g")
                         .attr("class", "circleWrapper"); 
                         
 circleGroup.selectAll()
-             .data(hexpix)
-             .enter().append("circle")
-             .attr("cx", d => x(d.x))
-             .attr("cy", d => y(d.y))
-             .attr("r", "3px")
-		     .style("fill", d => d.hexval);
+              .data(hexpix)
+              .enter().append("circle")
+                .attr("cx", d => x(d.x))
+                .attr("cy", d => y(d.y))
+                .attr("r", "3px")
+                .style("fill", d => d.hexval)
+              /* .transition().duration(10000)
+                .attr("r", "10px")
+                .style("opacity", ".5") */;
 
 
 // Draw the Voronoi grid ---------------------------------------------
@@ -72,18 +75,39 @@ var voronoiTess = d3.voronoi()
                       .y(d => y(d.y))
                       .extent([[0, 0], [width, height]]);
 
+var scale = .1
+
 voronoiGroup.selectAll()
               .data(voronoiTess(hexpix).polygons())
               .enter().append("path")
-              .attr("d", function(d, i) { return "M" + d.join("L") + "Z"; })
-              .attr("class", function(d, i) { return "pos" + [d.data.x] + [d.data.y]; })
+                .attr("d", function(d, i) { return "M" + d.join("L") + "Z"; })
+                .attr("class", function(d, i) { return "pos" + [d.data.x] + [d.data.y]; })
               .datum(function(d, i) { return d.data; })
-              .style("stroke", "#FFF") 
-              .style("stroke-width", .5)
-              .style("opacity", .5)
-              .style("fill", d => d.hexval)
-              .on("mouseover", enlarge);
+                .style("stroke", "#FFF") 
+                .style("stroke-width", .5)
+                //.style("opacity", .5)
+                .style("fill", d => d.hexval)
+                .attr("transform", function(d) { var xin = x(d.x)
+                                                  yin = y(d.y);
 
+                                               return "translate(" + xin + "," + yin + ")"
+                                                       + "scale(" + scale + ")"
+                                                       + "translate(" + -xin + "," + -yin + ")";
+                                              })
+              .transition().duration(7000)
+              .attr("transform", function(d) { var xin = x(d.x)
+                                                yin = y(d.y);
+
+                                             return "translate(" + xin + "," + yin + ")"
+                                                     + "scale(" + 1 + ")"
+                                                     + "translate(" + -xin + "," + -yin + ")";
+                                            });
+
+
+
+
+/* 
+.on("mouseover", enlarge) */
 
 /* .on("mouseover", function(d) { return d.style("opacity", 1); }) */
 
@@ -100,3 +124,28 @@ function enlarge(tile) {
   
   element.style("opacity", 1)
 }
+
+/* d3.select("#changeDensity").on("click", function() {
+  console.log("ciao")
+  voronoiGroup.datum(function(d, i) { return d.data; })
+    .transition()
+    .duration(3000)
+    .attr("transform", function(d) {
+      return "translate(" + d.x + "," + d.y + ")"
+        + "scale(" + 0.1 + ")"
+        + "translate(" + -d.x + "," + -d.y + ")";
+  });
+}); */
+
+/* var cntrds = d3.selectAll("#voronoiWrapper path")
+  .each(function (d, i) {
+     var centroid = path.centroid(d);
+     alert('Centroid at: ' + centroid[0] + ', ' + centroid[1]);
+  }); */
+
+/* var projection = d3.geoMercator()
+var path = d3.geoPath()
+                .projection(projection)
+
+var state = d3.select(".pos149545")._groups[0];
+var centroid = path.centroid(state); */
