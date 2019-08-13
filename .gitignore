@@ -51,6 +51,9 @@ d3/d3.v5.min.js
 # d3 json data
 d3/json_data/*
 
+# index.html files for d3 plots
+!d3/*/*.html
+
 # Python ------------------------------------------------------------------------
 
 python/*
