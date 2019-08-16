@@ -45,9 +45,10 @@ emps_toplot <-
   emps %>% 
   mutate(reign_start = case_when(name == "Augustus" ~ as_date("0000-01-01"),
                                  TRUE ~ reign_start)) %>% 
-  mutate(year = year(reign_start)) %>% 
+  mutate(year = year(reign_start),
+         month = month(reign_start)) %>% 
   filter(year <= 100) %>% 
-  select(year, name)
+  select(year, month, name)
 
 # parameters - colors -----------------------------------------------------
 
@@ -123,9 +124,10 @@ make_gpar <- function(name) {
 get_transition_year <- rollify(.f = function(i) i[1] != i[2], window = 2)
 # is_last_year <- rollify(.f = function(i) i, window = 2)
 
+
 # map data to rectangles ---------------------------------------------------
 
-shapes_df <-
+shapes_basic <-
   tibble(year = 0:99,
          # x = {seq(from = margin_left,
          #         to = 1 - margin_right,
@@ -139,39 +141,63 @@ shapes_df <-
   left_join(emps_toplot, by = "year") %>% 
   fill(name, .direction = "down") %>% 
   mutate(gp = map(name, make_gpar)) %>%
-  mutate(transition = get_transition_year(name),
-         last_year = c(transition[2:n()], transition[1]))
+  mutate(transition = get_transition_year(name)) %>% 
+  fill(transition, .direction = "up") %>% 
+  mutate(last_year = c(transition[2:n()], transition[1]))
   # select(-name, -year)
 
 
 # add transition years ----------------------------------------------------
 
+# (more than one succession)
+myears <- 
+  shapes_basic %>% 
+  count(year, sort = T) %>% 
+  filter(n > 1) %>% 
+  pull(year)
+
 # half bar for start
 shapes_transition <- 
-  shapes_df %>%
-  filter(transition) %>% 
+  shapes_basic %>%
+  filter(transition) %>%
+  filter(!year %in% myears) %>% 
   mutate(y = y - 1/2*bar_height - bar_gap,
          height = 1/2*bar_height - bar_gap)
 
 # half bar for end reign
 shapes_last_year <- 
-  shapes_df %>% 
+  shapes_basic %>% 
   filter(last_year) %>% 
+  filter(!year %in% myears) %>%
   mutate(year = year + 1,
          height = 1/2*bar_height - bar_gap) %>% 
   select(-x) %>% 
-  left_join(shapes_df %>% select(year, x))
+  left_join(shapes_basic %>% select(year, x)) %>% 
+  distinct(name, .keep_all = T)
 
 # merge together
 
-shapes_df <- 
-  shapes_df %>% 
+shapes_double <- 
+  shapes_basic %>% 
   filter(!transition) %>% 
   rbind(shapes_transition) %>% 
   rbind(shapes_last_year) %>% 
-  arrange(year) %>% 
-  # prepare for plots
-  select(-name, -year, -transition, -last_year)
+  arrange(year) 
+
+
+# more than 2 in a year ---------------------------------------------------
+
+multi_year <- rbind(shapes_basic %>% filter(year %in% myears),
+                    shapes_double %>% filter(year %in% myears))
+
+
+
+# remove extra columns ----------------------------------------------------
+
+shapes_df <- 
+  shapes_double %>% # prepare for plots
+  select(-name, -year, -transition, -last_year, -month)
+  
 
 # plot everything in svg --------------------------------------------------
 
