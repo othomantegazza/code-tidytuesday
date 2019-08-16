@@ -34,7 +34,7 @@ if(!file.exists(data_path)) {
 
 emps_simple <- 
   emps %>% 
-  mutate(reign_start = case_when(name == "Augustus" ~ as_date("0000-01-01"),
+  mutate(reign_start = case_when(name == "Augustus" ~ as_date("0001-01-01"),
                                  TRUE ~ reign_start)) %>% 
   mutate(year = year(reign_start),
          month = month(reign_start)) %>% 
@@ -68,7 +68,7 @@ make_gpar <- function(name) {
 get_transition_year <- rollify(.f = function(i) i[1] != i[2], window = 2)
 
 emps_toplot <- 
-  tibble(year = 0:99) %>% 
+  tibble(year = 1:100) %>% 
   left_join(emps_simple, by = "year") %>% 
   fill(name, .direction = "down") %>% 
   # transition years
@@ -114,8 +114,7 @@ rect_x  <- rect_x_blocks + rect_x_small
 
 # function that returns x position
 
-get_x <- function(year) {rect_x[ (year %% 100) + 1 ]}
-
+get_x <- function(year) {rect_x[ ((year %% 100) + (year %/% 100)*100) ]}
 
 # bar height for years with multiple emperors -----------------------------
 
