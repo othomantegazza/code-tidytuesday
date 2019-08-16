@@ -78,6 +78,8 @@ emps_toplot <-
   # detect end year
   mutate(last_year = case_when(transition & new_year ~ n)) %>% mutate(last_year = last_year[c(2:n(), 1)])
 
+
+# add a record for the year in which each emperor loses its trone
 emps_toplot <-
   emps_toplot %>%
   bind_rows(emps_toplot %>% filter(last_year > 0) %>% mutate(year = year + 1, n = last_year, month = 0)) %>%
