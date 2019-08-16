@@ -79,10 +79,11 @@ emps_toplot <-
   # detect end year
   mutate(last_year = case_when(transition & new_year ~ n)) %>% mutate(last_year = last_year[c(2:n(), 1)])
 
-emps_toplot <- 
-  emps_toplot %>% 
-  bind_rows(emps_toplot %>% filter(last_year > 0) %>% mutate(year = year + 1, n = last_year, month = 0)) %>% 
-  arrange(year, month)
+emps_toplot <-
+  emps_toplot %>%
+  bind_rows(emps_toplot %>% filter(last_year > 0) %>% mutate(year = year + 1, n = last_year, month = 0)) %>%
+  arrange(year, month) %>%
+  mutate(n = case_when(year == 1 ~ as.integer(0), TRUE ~ n))
 
 # parameters - grid -------------------------------------------------------
 
@@ -135,28 +136,52 @@ shapes_basic <-
          width = rect_width,
          height = bar_height,
          gp = map(name, make_gpar),
-         vjust = 1) %>% 
+         vjust = 1) 
   # transition years
-  mutate(last_year = case_when(is.na(last_year) ~ as.integer(0), TRUE ~ last_year)) %>% 
-  mutate(height = case_when(n == 1 ~ (bar_height/2) - bar_gap/2,
-                            TRUE ~ height),
-         y = case_when(n == 1 & n != last_year ~ y - bar_height/2 - bar_gap/2,
-                       TRUE ~ y))
+  # mutate(last_year = case_when(is.na(last_year) ~ as.integer(0), TRUE ~ last_year)) %>% 
+  # mutate(height = case_when(n == 1 ~ (bar_height/2) - bar_gap/2,
+  #                           TRUE ~ height),
+  #        y = case_when(n == 1 & n != last_year ~ y - bar_height/2 - bar_gap/2,
+  #                      TRUE ~ y))
 
 
 # fix years with multiple transitions -------------------------------------
 
+years_multiple <- which(shapes_basic$n > 0)
 
-
-years_multiple <- which(shapes_basic$n > 1)
+fix_shapes <- function(df)
+{
+  n_changes <- nrow(df)
+  
+  ydiff <- seq(0, bar_height + bar_gap, length.out = n_changes + 1)[1:(n_changes)]
+  
+  df %>% 
+    mutate(height = (height + bar_gap)/(n_changes) - bar_gap,
+           y = y - ydiff)
+}
 
 shapes_multiple <- 
-  shapes_basic[years_multiple, ] %>%
-  filter(n > 1) %>% 
-  mutate(height = height/(n+1) - bar_gap,
-         y = y - seq(0, bar_height + bar_gap, length.out = 5)[1:4])
+  shapes_basic[years_multiple, ] %>% 
+  split(.$year) %>% 
+  map(fix_shapes) %>% 
+  reduce(bind_rows)
 
 shapes_basic <- bind_rows(shapes_basic[-years_multiple, ], shapes_multiple)
+
+# years_multiple <- which(shapes_basic$n > 1)
+# 
+# shapes_multiple <- 
+#   shapes_basic[years_multiple, ] %>%
+#   filter(n > 1) %>% 
+#   mutate(height = height/(n+1) - bar_gap,
+#          y = y - seq(0, bar_height + bar_gap, length.out = 5)[1:4])
+# 
+# shapes_basic <- bind_rows(shapes_basic[-years_multiple, ], shapes_multiple)
+
+
+# -------------------------------------------------------------------------
+
+
 
 # shapes_basic <-
 #   tibble(year = 0:99,
