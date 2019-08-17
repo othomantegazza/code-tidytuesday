@@ -201,6 +201,27 @@ shapes_df <-
   select(-year, -month, -name, -transition, -new_year, -n, -last_year)
   
 
+
+# AD block ----------------------------------------------------------------
+
+# only Augustus for around 30 years
+
+aug_rise_year <-
+  emps %>% 
+  filter(name == "Augustus") %>% 
+  pull(reign_start) %>% year()
+
+aug_ad_shapes <- 
+  tibble(year = 1:aug_rise_year,
+         # make x go backward
+         x = margin_left*.9 - (get_x(year) - margin_left*.9),
+         y = get_y(year),
+         width = rect_width,
+         height = bar_height,
+         vjust = 1,
+         gp = map("Augustus", make_gpar)) %>% 
+  select(-year)
+
 # plot everything in svg --------------------------------------------------
 
 
@@ -215,6 +236,8 @@ grid.newpage()
 grid.rect(gp = gpar(fill = bg_from_template, col = bg_from_template))
           
 shapes_df %>% 
+  pmap(grid.rect)
+aug_ad_shapes %>% 
   pmap(grid.rect)
 dev.off()
 
