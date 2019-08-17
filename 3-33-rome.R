@@ -243,7 +243,7 @@ aug_bc_shapes <-
 # plot everything in svg --------------------------------------------------
 
 
-svglite::svglite("plots/2-33-rome-2.svg",
+svglite::svglite("plots/2-33-rome.svg",
                  width = width,
                  height = height)
 
@@ -298,9 +298,9 @@ grid.text(label = "Roman Emperors",
 
 
 # signature
-grid.text(label = "Original Dataviz by ptgorman, reproduced in rstat grid by @othomn
-                   www.reddit.com/r/dataisbeautiful/comments/8tzfgz/roman_emperors_by_year_oc/ | Original Viz
-                   url | Grid version",
+grid.text(label = paste("Original Dataviz by Reddit user ptgorman | reproduced in R by @othomn",
+                        "www.reddit.com/r/dataisbeautiful/comments/8tzfgz/roman_emperors_by_year_oc/ | Original Viz",
+                        " | Grid version", sep = "\n"),
           x = 1 - margin_right,
           y = .09,
           vjust = 0,
