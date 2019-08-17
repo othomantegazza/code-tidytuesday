@@ -154,7 +154,7 @@ bar_gap <- bar_height*.1
 bar_y <- seq(.9, .4, length.out = 4)
 
 # function that returns y position
-get_y <- function(year) {bar_y[ (year %/% 100) + 1 ]}
+get_y <- function(year) {bar_y[((year - 1) %/% 100) + 1]}
 
 # make tibble with rectangle shapes --------------------------------------
 
