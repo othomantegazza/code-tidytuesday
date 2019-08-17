@@ -28,6 +28,30 @@ if(!file.exists(data_path)) {
   load(data_path)
 }
 
+
+# simplify timeline -------------------------------------------------------
+
+# reomove co-reign 
+# keep main emperors or emperors from the Rome province
+
+out <- c("Lucius Verus",
+         "Geta",
+         "Gordian II",
+         "Pupienus",
+         "Hostilian",
+         "Numerian",
+         "Maximian",
+         "Galerius",
+         "Severus II",
+         "Maxentius",
+         "Maximinus II",
+         "Lucinius I",
+         "Constantine II",
+         "Constans",
+         "Vetranio",
+         "Valens",
+         "Gratian")
+
 # try to reproduce the exact plot in grid ---------------------------------
 
 # prepare data ------------------------------------------------------------
@@ -39,7 +63,8 @@ emps_simple <-
   mutate(year = year(reign_start),
          month = month(reign_start)) %>% 
   # filter(year <= 100) %>% 
-  select(year, month, name)
+  select(year, month, name) %>% 
+  filter(! name %in% out)
 
 last_year <- emps$death %>% year() %>% max()
 
