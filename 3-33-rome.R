@@ -150,8 +150,12 @@ bar_height <- .08
 
 bar_gap <- bar_height*.1
 
+# set top and bottom "margins" (limits)
+y_top <- .8
+y_low <- .4
+
 # four rows
-bar_y <- seq(.9, .4, length.out = 4)
+bar_y <- seq(y_top, y_low, length.out = 4)
 
 # function that returns y position
 get_y <- function(year) {bar_y[((year - 1) %/% 100) + 1]}
@@ -202,7 +206,7 @@ shapes_df <-
   
 
 
-# AD block ----------------------------------------------------------------
+# BC block ----------------------------------------------------------------
 
 # only Augustus for around 30 years
 
@@ -211,16 +215,30 @@ aug_rise_year <-
   filter(name == "Augustus") %>% 
   pull(reign_start) %>% year()
 
-aug_ad_shapes <- 
+# make x go backward
+get_x_bc <- function(year) {margin_left*.9 - (get_x(year) - margin_left*.9)}
+
+aug_bc_shapes <- 
   tibble(year = 1:aug_rise_year,
          # make x go backward
-         x = margin_left*.9 - (get_x(year) - margin_left*.9),
+         x = get_x_bc(year),
          y = get_y(year),
          width = rect_width,
          height = bar_height,
          vjust = 1,
          gp = map("Augustus", make_gpar)) %>% 
   select(-year)
+
+
+# text --------------------------------------------------------------------
+
+# grid.text(label = "AD",
+#           x = get_x_ad(1),
+#           y = get_y(1) + .05,
+#           vjust = 1,
+#           hjust = 0,
+#           gp = gpar(col = "white",
+#                     fontsize = 5))
 
 # plot everything in svg --------------------------------------------------
 
@@ -237,7 +255,58 @@ grid.rect(gp = gpar(fill = bg_from_template, col = bg_from_template))
           
 shapes_df %>% 
   pmap(grid.rect)
-aug_ad_shapes %>% 
+aug_bc_shapes %>% 
   pmap(grid.rect)
+
+
+# text
+
+# bc
+grid.text(label = "BC",
+          x = get_x_bc(1),
+          y = get_y(1) + .05,
+          vjust = 1,
+          hjust = 1,
+          gp = gpar(col = "white",
+                    fontsize = 20))
+# ad
+grid.text(label = "AD",
+          x = get_x(1),
+          y = get_y(1) + .05,
+          vjust = 1,
+          hjust = 0,
+          gp = gpar(col = "white",
+                    fontsize = 20))
+
+# subtitle
+grid.text(label = "Simplified timeline of",
+          x = get_x_bc(1),
+          y = get_y(400) + 0.012,
+          vjust = 0,
+          hjust = 1,
+          gp = gpar(col = "white",
+                    fontsize = 24))
+
+# title
+grid.text(label = "Roman Emperors",
+          x = get_x_bc(1),
+          y = get_y(400) - 0.012,
+          vjust = 1,
+          hjust = 1,
+          gp = gpar(col = "white",
+                    fontsize = 40))
+
+
+# signature
+grid.text(label = "Original Dataviz by ptgorman, reproduced in rstat grid by @othomn
+                   www.reddit.com/r/dataisbeautiful/comments/8tzfgz/roman_emperors_by_year_oc/ | Original Viz
+                   url | Grid version",
+          x = 1 - margin_right,
+          y = .09,
+          vjust = 0,
+          hjust = 1,
+          gp = gpar(col = "white",
+                    fontsize = 15))
+
 dev.off()
 
