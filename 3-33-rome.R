@@ -38,8 +38,10 @@ emps_simple <-
                                  TRUE ~ reign_start)) %>% 
   mutate(year = year(reign_start),
          month = month(reign_start)) %>% 
-  filter(year <= 100) %>% 
+  # filter(year <= 100) %>% 
   select(year, month, name)
+
+last_year <- emps$death %>% year() %>% max()
 
 # parameters - colors -----------------------------------------------------
 
@@ -51,6 +53,7 @@ bg_from_template <- "#434343"
 
 # associate emperor to color --------------------------------------------
 
+# all names are unique
 emp_color <- 
   emps_simple %>% 
   {set_names(nm = .$name,
@@ -67,7 +70,7 @@ make_gpar <- function(name) {
 get_transition_year <- rollify(.f = function(i) i[1] != i[2], window = 2)
 
 emps_toplot <- 
-  tibble(year = 1:100) %>% 
+  tibble(year = 1:last_year) %>% 
   left_join(emps_simple, by = "year") %>% 
   fill(name, .direction = "down") %>% 
   # transition years
@@ -114,7 +117,7 @@ rect_x  <- rect_x_blocks + rect_x_small
 
 # function that returns x position
 
-get_x <- function(year) {rect_x[ ((year %% 100) + (year %/% 100)*100) ]}
+get_x <- function(year) {rect_x[ (year %% 100) %>% {case_when(. == 0 ~ 100, TRUE ~ .)} ]  }
 
 # bar height for years with multiple emperors -----------------------------
 
@@ -122,13 +125,19 @@ bar_height <- .08
 
 bar_gap <- bar_height*.1
 
+# four rows
+bar_y <- seq(.9, .4, length.out = 4)
+
+# function that returns y position
+get_y <- function(year) {bar_y[ (year %/% 100) + 1 ]}
+
 # make tibble with rectangle shapes --------------------------------------
 
 
 shapes_basic <- 
   emps_toplot %>% 
   mutate(x = get_x(year),
-         y = .9,
+         y = get_y(year),
          width = rect_width,
          height = bar_height,
          gp = map(name, make_gpar),
@@ -155,7 +164,9 @@ shapes_multiple <-
   map(fix_shapes) %>% 
   reduce(bind_rows)
 
-shapes_basic <- bind_rows(shapes_basic[-years_multiple, ], shapes_multiple)
+shapes_basic <-
+  bind_rows(shapes_basic[-years_multiple, ], shapes_multiple) %>% 
+  arrange(year, month)
 
 
 # remove extra columns ----------------------------------------------------
@@ -168,7 +179,7 @@ shapes_df <-
 # plot everything in svg --------------------------------------------------
 
 
-svglite::svglite("plots/2-33-rome.svg",
+svglite::svglite("plots/2-33-rome-2.svg",
                  width = width,
                  height = height)
 
