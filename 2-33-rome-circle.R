@@ -70,14 +70,30 @@ emps3 <-
          end_x = reign_end %>% rescale_reing(),
          r = (end_x - start_x)/2 ,
          x = end_x - r,
-         r = r * (width/height) * .75)
+         r = r * (width/height) * .75,
+         y = .7)
 
 
 to_circles <-
   emps3 %>% 
-  select(x, r) %>% 
+  select(x, r, y) %>% 
   mutate(gp = list(gpar(fill = "#ffffff66", col = "#ffffff00")))
 
+
+# labels ------------------------------------------------------------------
+
+to_labels <- 
+  emps3 %>% 
+  arrange(reign_start, reign_end) %>% 
+  mutate(n = 1:n(),
+         xlab = scales::rescale(n, from = range(n), to = c(margin_left, 1 - margin_right)),
+         gp = list(gpar(size = 10, col = "white")),
+         y = .36,
+         rot = 90,
+         hjust = 1) %>% 
+  select(label = name,
+         x = xlab,
+         y, gp, rot, hjust)
 
 # plot --------------------------------------------------------------------
 
@@ -93,6 +109,9 @@ grid.rect(gp = gpar(fill = bg_col, col = bg_col))
 
 to_circles %>%
   pmap(grid.circle)
+
+to_labels %>% 
+  pmap(grid.text)
 
 # point at reign start
 emps3 %>%
