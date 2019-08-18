@@ -50,6 +50,8 @@ margin_top <- .2; margin_low <- .1
 
 bg_col <- "#3752C3"
 
+x_labels <- .36
+
 # Turn all dates to numeric? ----------------------------------------------
 
 # to map them into the x space
@@ -82,18 +84,48 @@ to_circles <-
 
 # labels ------------------------------------------------------------------
 
-to_labels <-
+emps4 <-
   emps3 %>%
   arrange(reign_start, reign_end) %>%
   mutate(n = 1:n(),
          ylab = scales::rescale(n, from = range(n), to = c(1 - margin_top, margin_low)),
          gp = list(gpar(size = 10, col = "white")),
-         x = .36,
+         xlab = x_labels,
          rot = 0,
-         hjust = 1) %>%
+         hjust = 1)
+
+to_label <- 
+  emps4 %>%
   select(label = name,
          y = ylab,
-         x, gp, rot, hjust)
+         x = xlab,
+         gp, rot, hjust)
+
+
+
+# bezier curves -----------------------------------------------------------
+
+max_r <- emps4$r %>% max()
+
+xbez_stop <-  1 - x_labels - max_r
+
+
+
+make_bez_x <- function(xlab) {c(xlab, xbez_stop, xlab, xbez_stop)}
+make_bez_y <- function(ylab, y) {c(ylab, ylab, y, y)}
+
+bezier_y_in <- emps4 %>% select(ylab, y) %>% pmap(make_bez_y)
+
+
+emps5 <- 
+  emps4 %>% 
+  mutate(bezier_x = xlab %>% map(make_bez_x),
+         bezier_y = bezier_y_in) 
+
+to_bezier <- 
+  emps5 %>% 
+  select(x = bezier_x,
+         y = bezier_y)
 
 # plot --------------------------------------------------------------------
 
@@ -114,6 +146,10 @@ to_circles %>%
 # draw labels
 to_labels %>%
   pmap(grid.text)
+
+# draw_beziers
+to_bezier %>% 
+  pmap(grid.bezier)
 
 # point at reign start
 # emps3 %>%
