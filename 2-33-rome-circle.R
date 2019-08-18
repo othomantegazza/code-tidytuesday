@@ -30,13 +30,14 @@ if(!file.exists(data_path)) {
 
 # simplify dataset --------------------------------------------------------
 
-emps_simple <- 
+# and fix BC date (only 1: Augustus start)
+
+diffday <- (emps$reign_start[1] - as_date("0001-01-01")) %>% as.numeric()
+
+emps2 <- 
   emps %>% 
-  mutate(reign_start = case_when(name == "Augustus" ~ as_date("0001-01-01"),
+  mutate(reign_start = case_when(name == "Augustus" ~ (reign_start - 2*diffday),
                                  TRUE ~ reign_start)) %>%
-  # mutate(year = year(reign_start),
-  #        month = month(reign_start)) %>% 
-  # filter(year <= 100) %>% 
   select(reign_start, reign_end, name)
 
 
@@ -53,10 +54,6 @@ bg_col <- "#3752C3"
 
 # to map them into the x space
 
-emps2 <- 
-  emps_simple # %>% 
-  # mutate(start_num = as.numeric(reign_start),
-  #        end_num = as.numeric(reign_end))
 
 range_reign <- c(min(emps2$reign_start), max(emps2$reign_end))
 
@@ -97,10 +94,11 @@ grid.rect(gp = gpar(fill = bg_col, col = bg_col))
 to_circles %>%
   pmap(grid.circle)
 
+# point at reign start
 emps3 %>%
   select(x = start_x) %>%
   mutate(r = .001,
-         gp = list(gpar(col = "red"))) %>%
+         gp = list(gpar(col = "white"))) %>%
   pmap(grid.circle)
 
 
