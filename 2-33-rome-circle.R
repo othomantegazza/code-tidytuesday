@@ -52,6 +52,8 @@ bg_col <- "#3752C3"
 
 x_labels <- .36
 
+x_circle <- .7
+
 # Turn all dates to numeric? ----------------------------------------------
 
 # to map them into the x space
@@ -73,7 +75,7 @@ emps3 <-
          r = (start_y - end_y)/2 ,
          y = start_y - r,
          r = r * (height/width) * .75,
-         x = .7)
+         x = x_circle)
 
 
 to_circles <-
@@ -86,7 +88,7 @@ to_circles <-
 
 emps4 <-
   emps3 %>%
-  arrange(reign_start, reign_end) %>%
+  arrange(desc(y)) %>%
   mutate(n = 1:n(),
          ylab = scales::rescale(n, from = range(n), to = c(1 - margin_top, margin_low)),
          gp = list(gpar(size = 10, col = "white")),
@@ -107,25 +109,29 @@ to_label <-
 
 max_r <- emps4$r %>% max()
 
-xbez_stop <-  1 - x_labels - max_r
+xbez_stop <-  x_circle - max_r * 1.5
 
 
 
-make_bez_x <- function(xlab) {c(xlab, xbez_stop, xlab, xbez_stop)}
+make_bez_x <- function(xlab) {c(xlab, mean(xbez_stop, x_labels)*0.8, mean(xbez_stop, xlab)*0.8, xbez_stop)}
 make_bez_y <- function(ylab, y) {c(ylab, ylab, y, y)}
+make_gpar <- function(lty) {gpar(col = "white", lwd = .5, lty = lty)}
 
 bezier_y_in <- emps4 %>% select(ylab, y) %>% pmap(make_bez_y)
+bezier_gpar <- rep(1:3, length.out = nrow(emps4)) %>% map(make_gpar)
 
 
 emps5 <- 
   emps4 %>% 
   mutate(bezier_x = xlab %>% map(make_bez_x),
-         bezier_y = bezier_y_in) 
+         bezier_y = bezier_y_in,
+         gp = bezier_gpar)
 
 to_bezier <- 
   emps5 %>% 
   select(x = bezier_x,
-         y = bezier_y)
+         y = bezier_y,
+         gp) 
 
 # plot --------------------------------------------------------------------
 
