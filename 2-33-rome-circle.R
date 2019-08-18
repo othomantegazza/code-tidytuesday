@@ -44,9 +44,9 @@ emps2 <-
 
 # grid parameters ---------------------------------------------------------
 
-height  <- 5; width <- 40
+width  <- 15; height <- 40
 
-margin_left <- .2; margin_right <- .1; margin_side <- margin_left + margin_right
+margin_top <- .2; margin_low <- .1
 
 bg_col <- "#3752C3"
 
@@ -57,21 +57,21 @@ bg_col <- "#3752C3"
 
 range_reign <- c(min(emps2$reign_start), max(emps2$reign_end))
 
-rescale_reing <- function(x)
+rescale_reing <- function(y)
   {
-  scales::rescale(x,
-                  to = c(margin_left, 1 - margin_right),
+  scales::rescale(y,
+                  to = c(1 - margin_top, margin_low),
                   from = range_reign)
   }
 
 emps3 <- 
   emps2 %>% 
-  mutate(start_x = reign_start %>% rescale_reing(),
-         end_x = reign_end %>% rescale_reing(),
-         r = (end_x - start_x)/2 ,
-         x = end_x - r,
-         r = r * (width/height) * .75,
-         y = .7)
+  mutate(start_y = reign_start %>% rescale_reing(),
+         end_y = reign_end %>% rescale_reing(),
+         r = (start_y - end_y)/2 ,
+         y = start_y - r,
+         r = r * (height/width) * .75,
+         x = .7)
 
 
 to_circles <-
@@ -82,18 +82,18 @@ to_circles <-
 
 # labels ------------------------------------------------------------------
 
-to_labels <- 
-  emps3 %>% 
-  arrange(reign_start, reign_end) %>% 
+to_labels <-
+  emps3 %>%
+  arrange(reign_start, reign_end) %>%
   mutate(n = 1:n(),
-         xlab = scales::rescale(n, from = range(n), to = c(margin_left, 1 - margin_right)),
+         ylab = scales::rescale(n, from = range(n), to = c(1 - margin_top, margin_low)),
          gp = list(gpar(size = 10, col = "white")),
-         y = .36,
-         rot = 90,
-         hjust = 1) %>% 
+         x = .36,
+         rot = 0,
+         hjust = 1) %>%
   select(label = name,
-         x = xlab,
-         y, gp, rot, hjust)
+         y = ylab,
+         x, gp, rot, hjust)
 
 # plot --------------------------------------------------------------------
 
@@ -107,18 +107,20 @@ grid.newpage()
 # background blue rectangle
 grid.rect(gp = gpar(fill = bg_col, col = bg_col))
 
+# draw circles
 to_circles %>%
   pmap(grid.circle)
 
-to_labels %>% 
+# draw labels
+to_labels %>%
   pmap(grid.text)
 
 # point at reign start
-emps3 %>%
-  select(x = start_x) %>%
-  mutate(r = .001,
-         gp = list(gpar(col = "white"))) %>%
-  pmap(grid.circle)
+# emps3 %>%
+#   select(x = start_x) %>%
+#   mutate(r = .001,
+#          gp = list(gpar(col = "white"))) %>%
+#   pmap(grid.circle)
 
 
 dev.off()
