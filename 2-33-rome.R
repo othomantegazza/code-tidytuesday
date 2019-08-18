@@ -247,6 +247,10 @@ svglite::svglite("plots/2-33-rome.svg",
                  width = width,
                  height = height)
 
+# png("plots/2-33-rome.png",
+#     width = width,
+#     height = height, units = "in", res = 300)
+
 # new page, is it necessary?
 grid.newpage()
 
@@ -298,9 +302,9 @@ grid.text(label = "Roman Emperors",
 
 
 # signature
-grid.text(label = paste("Original Dataviz by Reddit user ptgorman | reproduced in R by @othomn",
+grid.text(label = paste("Original Dataviz by Reddit user ptgorman (Peter Gorman) | Reproduced in R by @othomn",
                         "www.reddit.com/r/dataisbeautiful/comments/8tzfgz/roman_emperors_by_year_oc/ | Original Viz",
-                        " | Grid version", sep = "\n"),
+                        "https://github.com/othomantegazza/code-tidytuesday/blob/master/2-33-rome.R | R version", sep = "\n"),
           x = 1 - margin_right,
           y = .09,
           vjust = 0,
