@@ -46,15 +46,20 @@ emps2 <-
 
 width  <- 18; height <- 40
 
-margin_top <- .08; margin_low <- .04
+margin_top <- .06; margin_low <- .04
 
 bg_col <- "#3752C3"
 
-x_labels <- .46
+x_labels <- .51
 
-x_circle <- .75
+x_circle <- .77
 
-x_ticks <- .9
+# x_ticks <- .9
+
+x_title <- .12
+
+# nope, define later at Augustus x
+y_sign <- margin_low + 1
 
 # Turn all dates to numeric? ----------------------------------------------
 
@@ -117,11 +122,11 @@ to_label <-
 
 max_r <- emps4$r %>% max()
 
-xbez_stop <-  x_circle - max_r * 1.5
+xbez_stop <-  x_circle - max_r * 1.4
 
 
 
-make_bez_x <- function(xlab) {c(xlab, mean(xbez_stop, x_labels)*0.82, mean(xbez_stop, xlab)*0.8, xbez_stop)}
+make_bez_x <- function(xlab) {c(xlab, mean(xbez_stop, x_labels)*0.87, mean(xbez_stop, xlab)*0.8, xbez_stop)}
 make_bez_y <- function(ylab, y) {c(ylab, ylab, y, y)}
 make_gpar <- function(lty) {gpar(col = "white", lwd = .5, lty = lty)}
 
@@ -176,6 +181,42 @@ to_segments <-
 #   select(label = tick_year,
 #          y, x, gp)
 
+
+# signature ---------------------------------------------------------------
+
+sig_x <- .15
+sig_y <- .07
+sig_r <- .013
+sig_col <- "#CB7BA5"
+
+make_circle_text <- function(label, x, y, r, angle) 
+{
+  angle_pi <- scales::rescale(angle, from = c(0, 360), to = c(0, 2*pi))
+  list(label = label,
+       x = x + sin(angle_pi)*r,
+       y = y + cos(angle_pi)*r*(width/height),
+       rot = -angle)
+}
+
+signature <- "plot by @othomn" %>% strsplit(split = "") %>% .[[1]]
+
+to_signature <- 
+  tibble(label = signature) %>% 
+  mutate(n = 1:n(),
+         angle = scales::rescale(n, from = range(n), to = c(-80, 80)),
+         x = sig_x,
+         y = sig_y,
+         r = sig_r + .016) %>% 
+  select(-n) %>% 
+  pmap_df(make_circle_text) %>% 
+  mutate(vjust = 0,
+         hjust = 0.5,
+         rot = rot - 1,
+         gp = list(gpar(fontsize = 16,
+                        col = sig_col,
+                        fontfamily = "mono",
+                        fontface = "bold")))
+
 # plot --------------------------------------------------------------------
 
 svglite::svglite("plots/2-33-rome-circle.svg",
@@ -207,7 +248,28 @@ to_segments %>%
 # year ticks
 # to_ticks %>% 
 #   pmap(grid.text)
-  
+
+# add title
+grid.text(label = str_wrap("Timeline of Roman Emperors", width = 6),
+          x = x_title,
+          y = (to_label %>% arrange(desc(y)) %>% pull(y) %>% .[1]) + .008,
+          hjust = 0,
+          vjust = 1,
+          gp = gpar(fontsize = 40,
+                    # fontface = "bold",
+                    col = "#D8DDF3", #  "#98F0D8",  #  "#44D4DC", # "#F6F6DF", #
+                    lineheight = 1))
+
+# add signature
+grid.circle(x = sig_x,
+            y = sig_y,
+            r = sig_r,
+            gp = gpar(fill = sig_col,
+                      col = sig_col,
+                      alpha = .9))
+
+to_signature %>% 
+  pmap(grid.text)
 
 # point at reign start
 # emps3 %>%
@@ -215,6 +277,7 @@ to_segments %>%
 #   mutate(r = .001,
 #          gp = list(gpar(col = "white"))) %>%
 #   pmap(grid.circle)
+
 
 
 dev.off()
