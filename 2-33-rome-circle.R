@@ -93,15 +93,20 @@ emps4 <-
   arrange(desc(y)) %>%
   mutate(n = 1:n(),
          ylab = scales::rescale(n, from = range(n), to = c(1 - margin_top, margin_low)),
-         gp = list(gpar(fontsize = 14, col = "white")),
+         gp = list(gpar(fontsize = 12, col = "white")),
          xlab = x_labels,
          rot = 0,
          hjust = 1) %>% 
-  mutate(ylab = (y + ylab)/2)
+  mutate(ylab = (y + ylab)/2) %>% 
+  mutate(reign_span = case_when(year(reign_start) == year(reign_end) ~ year(reign_start) %>% as.character(),
+                                year(reign_start) < 0 ~ paste(paste(-year(reign_start), "BC"),
+                                                            year(reign_end), sep = " - "),
+                                TRUE ~ paste(year(reign_start), year(reign_end), sep = " - ")),
+         label = paste(name, reign_span, sep = " | "))
 
 to_label <- 
   emps4 %>%
-  select(label = name,
+  select(label,
          y = ylab,
          x = xlab,
          gp, rot, hjust)
@@ -153,23 +158,23 @@ to_segments <-
 
 # year ticks --------------------------------------------------------------
 
-year_range <- c(min(emps5$reign_start) %>% year(),
-                max(emps5$reign_end) %>% year())
-
-ticks <- 
-  tibble(tick_year = seq(1, 350, by = 50) %>%
-           c(year_range)) %>% 
-  arrange(tick_year) %>% 
-  mutate(y = tick_year %>% scales::rescale(y,
-                                           to = c(1 - margin_top, margin_low),
-                                           from = year_range),
-         x = x_ticks,
-         gp = list(gpar(fontsize = 10, col = "white")))
-
-to_ticks <- 
-  ticks %>% 
-  select(label = tick_year,
-         y, x, gp)
+# year_range <- c(min(emps5$reign_start) %>% year(),
+#                 max(emps5$reign_end) %>% year())
+# 
+# ticks <- 
+#   tibble(tick_year = seq(1, 350, by = 50) %>%
+#            c(year_range)) %>% 
+#   arrange(tick_year) %>% 
+#   mutate(y = tick_year %>% scales::rescale(y,
+#                                            to = c(1 - margin_top, margin_low),
+#                                            from = year_range),
+#          x = x_ticks,
+#          gp = list(gpar(fontsize = 10, col = "white")))
+# 
+# to_ticks <- 
+#   ticks %>% 
+#   select(label = tick_year,
+#          y, x, gp)
 
 # plot --------------------------------------------------------------------
 
@@ -200,8 +205,8 @@ to_segments %>%
   pmap(grid.segments)
 
 # year ticks
-to_ticks %>% 
-  pmap(grid.text)
+# to_ticks %>% 
+#   pmap(grid.text)
   
 
 # point at reign start
