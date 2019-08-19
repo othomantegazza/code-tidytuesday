@@ -54,11 +54,8 @@ x_labels <- .51
 
 x_circle <- .77
 
-# x_ticks <- .9
-
 x_title <- .12
 
-# nope, define later at Augustus x
 y_sign <- margin_low + 1
 
 # Turn all dates to numeric? ----------------------------------------------
@@ -160,28 +157,6 @@ to_segments <-
             gp = gp)
 
 
-
-# year ticks --------------------------------------------------------------
-
-# year_range <- c(min(emps5$reign_start) %>% year(),
-#                 max(emps5$reign_end) %>% year())
-# 
-# ticks <- 
-#   tibble(tick_year = seq(1, 350, by = 50) %>%
-#            c(year_range)) %>% 
-#   arrange(tick_year) %>% 
-#   mutate(y = tick_year %>% scales::rescale(y,
-#                                            to = c(1 - margin_top, margin_low),
-#                                            from = year_range),
-#          x = x_ticks,
-#          gp = list(gpar(fontsize = 10, col = "white")))
-# 
-# to_ticks <- 
-#   ticks %>% 
-#   select(label = tick_year,
-#          y, x, gp)
-
-
 # signature ---------------------------------------------------------------
 
 sig_x <- .15
@@ -245,9 +220,6 @@ to_bezier %>%
 to_segments %>% 
   pmap(grid.segments)
 
-# year ticks
-# to_ticks %>% 
-#   pmap(grid.text)
 
 # add title
 grid.text(label = str_wrap("Timeline of Roman Emperors", width = 6),
@@ -271,13 +243,15 @@ grid.circle(x = sig_x,
 to_signature %>% 
   pmap(grid.text)
 
-# point at reign start
-# emps3 %>%
-#   select(x = start_x) %>%
-#   mutate(r = .001,
-#          gp = list(gpar(col = "white"))) %>%
-#   pmap(grid.circle)
-
+# add source
+grid.text("Data from Wikipedia.",
+          x = x_title,
+          y = margin_low + .005,
+          hjust = 0,
+          vjust = 0,
+          gp = gpar(fontsize = 12,
+                    fonttype = "mono",
+                    col = "#D8DDF3"))
 
 
 dev.off()
