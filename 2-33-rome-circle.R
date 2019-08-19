@@ -1,7 +1,3 @@
-## TRY TO REPRODUCE THIS PLOT:
-## https://www.reddit.com/r/dataisbeautiful/comments/8tzfgz/roman_emperors_by_year_oc/
-## IN R GRID
-
 library(tidyverse)
 library(lubridate)
 library(grid)
