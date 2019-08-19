@@ -44,15 +44,17 @@ emps2 <-
 
 # grid parameters ---------------------------------------------------------
 
-width  <- 15; height <- 40
+width  <- 18; height <- 40
 
-margin_top <- .2; margin_low <- .1
+margin_top <- .08; margin_low <- .04
 
 bg_col <- "#3752C3"
 
-x_labels <- .36
+x_labels <- .46
 
-x_circle <- .7
+x_circle <- .75
+
+x_ticks <- .9
 
 # Turn all dates to numeric? ----------------------------------------------
 
@@ -91,10 +93,11 @@ emps4 <-
   arrange(desc(y)) %>%
   mutate(n = 1:n(),
          ylab = scales::rescale(n, from = range(n), to = c(1 - margin_top, margin_low)),
-         gp = list(gpar(size = 10, col = "white")),
+         gp = list(gpar(fontsize = 14, col = "white")),
          xlab = x_labels,
          rot = 0,
-         hjust = 1)
+         hjust = 1) %>% 
+  mutate(ylab = (y + ylab)/2)
 
 to_label <- 
   emps4 %>%
@@ -113,7 +116,7 @@ xbez_stop <-  x_circle - max_r * 1.5
 
 
 
-make_bez_x <- function(xlab) {c(xlab, mean(xbez_stop, x_labels)*0.8, mean(xbez_stop, xlab)*0.8, xbez_stop)}
+make_bez_x <- function(xlab) {c(xlab, mean(xbez_stop, x_labels)*0.82, mean(xbez_stop, xlab)*0.8, xbez_stop)}
 make_bez_y <- function(ylab, y) {c(ylab, ylab, y, y)}
 make_gpar <- function(lty) {gpar(col = "white", lwd = .5, lty = lty)}
 
@@ -133,6 +136,41 @@ to_bezier <-
          y = bezier_y,
          gp) 
 
+
+# segments ----------------------------------------------------------------
+
+# connect beziers to circles
+
+to_segments <- 
+  emps5 %>% 
+  transmute(x0 = xbez_stop,
+            x1 = x - .02 - scales::rescale(r, from = range(r), to = c(median(r), max(r)*1.1)),
+            y0 = y,
+            y1 = y,
+            gp = gp)
+
+
+
+# year ticks --------------------------------------------------------------
+
+year_range <- c(min(emps5$reign_start) %>% year(),
+                max(emps5$reign_end) %>% year())
+
+ticks <- 
+  tibble(tick_year = seq(1, 350, by = 50) %>%
+           c(year_range)) %>% 
+  arrange(tick_year) %>% 
+  mutate(y = tick_year %>% scales::rescale(y,
+                                           to = c(1 - margin_top, margin_low),
+                                           from = year_range),
+         x = x_ticks,
+         gp = list(gpar(fontsize = 10, col = "white")))
+
+to_ticks <- 
+  ticks %>% 
+  select(label = tick_year,
+         y, x, gp)
+
 # plot --------------------------------------------------------------------
 
 svglite::svglite("plots/2-33-rome-circle.svg",
@@ -150,12 +188,21 @@ to_circles %>%
   pmap(grid.circle)
 
 # draw labels
-to_labels %>%
+to_label %>%
   pmap(grid.text)
 
 # draw_beziers
 to_bezier %>% 
   pmap(grid.bezier)
+
+# connect them to circles with segments
+to_segments %>% 
+  pmap(grid.segments)
+
+# year ticks
+to_ticks %>% 
+  pmap(grid.text)
+  
 
 # point at reign start
 # emps3 %>%
