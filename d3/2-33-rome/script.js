@@ -23,10 +23,7 @@ var parseTime = d3.timeParse("%Y-%m-%d");
 
 d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-13/emperors.csv").then(emps => {
 
-  /* emps[0].reign_start = "-0026-01-16" */
-
-    console.log(emps[0].reign_start) 
-
+ 
     emps.forEach(d => {
         d.reign_start = parseTime(d.reign_start);
         d.reign_end = parseTime(d.reign_end);
@@ -36,6 +33,8 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
     /* var time_aug = emps[0].reign_start */
     // ugly fix
     emps[0].reign_start = d3.timeYear.offset(emps[0].reign_start, -26*2);
+
+    console.log(emps[0].reign_start.getFullYear())
 
     /* d3.timeYear.offset( */
 
@@ -133,10 +132,12 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
         .enter().append("text")
             .attr("x", `${text_x}`)
             .attr("y", d => d.texty2)
-            .text(d => d.name)
+            .text(d => d.name + " | " + d.reign_start.getFullYear() + " - " +  d.reign_end.getFullYear())  
             .attr("font-size", "14px")
             .attr("fill", "#ffffff")
             .attr("text-anchor", "end")
+            .attr("dominant-baseline", "middle")
+            /* .style("text-align", "right") */
             .attr("class", d => d.name);
 
     // Lines --------------------------------------
