@@ -101,8 +101,9 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
     console.log(max_r)
 
     // points (white background) ----------------
-    svg.append("g")  
-        .selectAll(".circlecolor")
+    svg.append("g")
+        .attr("class", "circlebackground")  
+        .selectAll()
             .data(emps2)
             .enter().append("circle")
                 .attr("cx", `${circle_x}`)
@@ -112,7 +113,8 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
 
     // points ------------------------------------
     svg.append("g")  
-        .selectAll(".circlecolor")
+        .attr("class", "circlecolor")  
+        .selectAll()
             .data(emps2)
             .enter().append("circle")
                 .attr("cx", `${circle_x}`)
@@ -125,7 +127,8 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
 
     // Names -------------------------------------
     svg.append("g")
-      .selectAll("empnames")
+      .attr("class", "empnames")
+      .selectAll()
         .data(emps2)
         .enter().append("text")
             .attr("x", `${text_x}`)
@@ -138,7 +141,8 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
 
     // Lines --------------------------------------
     svg.append("g")
-      .selectAll("blines")
+      .attr("class", "linkbezier")
+      .selectAll()
       .data(emps2)
       .enter().append("path")
         .attr("d", d => {
@@ -152,7 +156,22 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
         })
         .attr("stroke", "#ffffff")
         .attr("fill", "transparent")
-        .attr("width", "3px")
+        .attr("stroke-width", "0.2")
+        .attr("class", d => d.name);
+
+     // connection
+     svg.append("g")
+      .attr("class", "linkline")
+      .selectAll()
+      .data(emps2)
+      .enter().append("line")
+        .attr("x1", circle_x - max_r)
+        .attr("x2", d => circle_x - d.r)
+        .attr("y1", d => d.y)
+        .attr("y2", d => d.y)
+        .attr("stroke", "#ffffff")
+        .attr("fill", "transparent")
+        .attr("stroke-width", "0.2")
         .attr("class", d => d.name);
 
 });
