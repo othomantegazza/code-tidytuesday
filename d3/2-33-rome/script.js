@@ -84,7 +84,7 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
     console.log(circle_x)
 
     // circle x
-    var text_x = 200;
+    var text_x = 300;
     console.log(text_x)
  
     // max circle radius
@@ -131,12 +131,18 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
     svg.append("g")
       .selectAll("blines")
       .data(emps2)
-      .enter().append("line")
-        .attr("x1", `${text_x + 5}`)
-        .attr("x2", `${circle_x - max_r}`)
-        .attr("y1", d => d.texty2)
-        .attr("y2", d => d.y)
+      .enter().append("path")
+        .attr("d", d => {
+          return `M 
+              ${text_x + 5} ${d.texty2} 
+           C 
+              ${(circle_x - max_r + text_x)/2} ${d.texty2} 
+              ${(circle_x - max_r + text_x)/2} ${d.y} 
+
+              ${circle_x - max_r} ${d.y}`
+        })
         .attr("stroke", "#ffffff")
+        .attr("fill", "transparent")
         .attr("width", "3px")
         .attr("class", d => d.name);
 
