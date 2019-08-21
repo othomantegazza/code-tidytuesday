@@ -57,18 +57,29 @@ var parseTime = d3.timeParse("%Y-%m-%d");
         d.ystart = y(d.reign_start);
         d.yend = y(d.reign_end);
         d.r = (y(d.reign_end) - y(d.reign_start))/2;
-        d.y = (y(d.reign_end) + y(d.reign_start))/2;})
-        d.index2 = d.index%3;
-        d.texty = d.index*(height/68);
-        d.texty2 = ((d.texty)*3+d.y)/4
+        d.y = (y(d.reign_end) + y(d.reign_start))/2;
+    })
+
+    var emps2 = emps.sort(function(a,b) { return +a.y - +b.y });
+    
+
+    for (i = 0; i < emps.length; i++) {
+      emps2[i].index = i + 1;
+    }
+
+    emps2.map(d => {
+      d.index2 = d.index%3;
+      d.texty = d.index*(height/68);
+      d.texty2 = ((d.texty)*1+d.y)/2;
     })
 
     console.log(emps)
+    console.log(emps2)
 
     // points (white background) ----------------
     svg.append("g")  
         .selectAll(".circlecolor")
-            .data(emps)
+            .data(emps2)
             .enter().append("circle")
                 .attr("cx", "500")
                 .attr("cy", d => d.y)
@@ -78,7 +89,7 @@ var parseTime = d3.timeParse("%Y-%m-%d");
     // points ------------------------------------
     svg.append("g")  
         .selectAll(".circlecolor")
-            .data(emps)
+            .data(emps2)
             .enter().append("circle")
                 .attr("cx", "500")
                 .attr("cy", d => d.y)
@@ -91,7 +102,7 @@ var parseTime = d3.timeParse("%Y-%m-%d");
     // Names -------------------------------------
     svg.append("g")
       .selectAll("empnames")
-        .data(emps)
+        .data(emps2)
         .enter().append("text")
             .attr("x", "200")
             .attr("y", d => d.texty2)
@@ -103,7 +114,7 @@ var parseTime = d3.timeParse("%Y-%m-%d");
     // Lines --------------------------------------
     svg.append("g")
       .selectAll("blines")
-      .data(emps)
+      .data(emps2)
       .enter().append("line")
         .attr("x1", "250")
         .attr("x2", "450")
