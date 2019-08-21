@@ -21,7 +21,7 @@ var svg = d3.select("#my_dataviz")
 var parseTime = d3.timeParse("%Y-%m-%d");
 
 
-d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-13/emperors.csv").then(emps => {
+/* d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-13/emperors.csv").then(emps => { */
 
  
     emps.forEach(d => {
@@ -79,6 +79,7 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
       d.index2 = d.index%3;
       d.texty = d.index*(height/68);
       d.texty2 = ((d.texty)*1+d.y)/2;
+      d.name_label = d.name.replace(/ /g, "_") //Not a good idea to use text with whitespace as id
     })
 
     console.log(emps)
@@ -98,6 +99,15 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
     // max circle radius
     var max_r = d3.max(emps, d => +d.r);
     console.log(max_r)
+
+    // circle opacity
+    var c_opacity = .6
+
+    // line and path size
+    var l_size = .2
+
+    // text size
+    var t_size = "14px"
 
     // points (white background) ----------------
     svg.append("g")
@@ -120,8 +130,10 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
                 .attr("cy", d => d.y)
                 .attr("r", d => d.r)
                 .attr("fill", d => color(d.index2))
-                .attr("fill-opacity", ".6")
-                .attr("class", d => d.name);
+                .attr("fill-opacity", c_opacity)
+                .attr("id", d => d.name_label)
+                .on("mouseover", highlight)
+                .on("mouseout", downlight);
 
 
     // Names -------------------------------------
@@ -133,12 +145,14 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
             .attr("x", `${text_x}`)
             .attr("y", d => d.texty2)
             .text(d => d.name + " | " + d.reign_start.getFullYear() + " - " +  d.reign_end.getFullYear())  
-            .attr("font-size", "14px")
+            .attr("font-size", t_size)
             .attr("fill", "#ffffff")
             .attr("text-anchor", "end")
             .attr("dominant-baseline", "middle")
             /* .style("text-align", "right") */
-            .attr("class", d => d.name);
+            .attr("id", d => d.name_label)
+            .on("mouseover", highlight)
+            .on("mouseout", downlight);
 
     // Lines --------------------------------------
     svg.append("g")
@@ -157,8 +171,10 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
         })
         .attr("stroke", "#ffffff")
         .attr("fill", "transparent")
-        .attr("stroke-width", "0.2")
-        .attr("class", d => d.name);
+        .attr("stroke-width", l_size)
+        .attr("id", d => d.name_label)
+        .on("mouseover", highlight)
+        .on("mouseout", downlight);
 
      // connection
      svg.append("g")
@@ -172,7 +188,67 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
         .attr("y2", d => d.y)
         .attr("stroke", "#ffffff")
         .attr("fill", "transparent")
-        .attr("stroke-width", "0.2")
-        .attr("class", d => d.name);
+        .attr("stroke-width", l_size)
+        .attr("id", d => d.name_label)
+        .on("mouseover", highlight)
+        .on("mouseout", downlight);
 
-});
+/* }); */
+
+// highlight info on selected emperor
+
+function highlight(emperor) {
+
+  // Each element has respective emperor name as id
+  var id_in = emperor.name_label;
+  console.log(id_in)
+
+  // modify circles
+  var elements_in = d3.select("circle#" + id_in);
+  console.log(elements_in)
+  /* elements_in.style("fill-opacity", 1); */
+  elements_in
+    .attr("fill-opacity", 1)
+    .attr("r", d => d.r + 2);
+
+
+  // thicker lines
+  d3.select("line#" + id_in)
+      .attr("stroke-width", 1);
+
+  // thicker bezier
+  d3.select("path#" + id_in)
+  .attr("stroke-width", 1);
+
+  // bigger text
+  d3.select("text#" + id_in)
+    .attr("font-weight", "bold");
+}
+
+function downlight(emperor) {
+
+  // Each element has respective emperor name as id
+  var id_in = emperor.name_label;
+  console.log(id_in)
+  console.log(id_in.replace(" ", "_"))
+
+  // modify circles
+  var elements_in = d3.select("circle#" + id_in);
+  console.log(elements_in)
+  /* elements_in.style("fill-opacity", 1); */
+  elements_in
+    .attr("fill-opacity", c_opacity)
+    .attr("r", d => d.r);
+
+  // thinner lines
+  d3.select("line#" + id_in)
+      .attr("stroke-width", l_size);
+  
+  // thinner bezier
+  d3.select("path#" + id_in)
+      .attr("stroke-width", l_size);
+
+  // bigger text
+  d3.select("text#" + id_in)
+    .attr("font-weight", "normal");
+}
