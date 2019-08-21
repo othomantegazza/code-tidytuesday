@@ -23,12 +23,21 @@ var parseTime = d3.timeParse("%Y-%m-%d");
 
 d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-13/emperors.csv").then(emps => {
 
+  /* emps[0].reign_start = "-0026-01-16" */
+
+    console.log(emps[0].reign_start) 
+
     emps.forEach(d => {
         d.reign_start = parseTime(d.reign_start);
         d.reign_end = parseTime(d.reign_end);
     });
     
-    
+
+    /* var time_aug = emps[0].reign_start */
+    // ugly fix
+    emps[0].reign_start = d3.timeYear.offset(emps[0].reign_start, -26*2);
+
+    /* d3.timeYear.offset( */
 
     // y axis ------------------------------------
     var y = d3.scaleTime()
