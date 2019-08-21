@@ -21,7 +21,7 @@ var svg = d3.select("#my_dataviz")
 var parseTime = d3.timeParse("%Y-%m-%d");
 
 
-/* d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-13/emperors.csv").then(emps => { */
+d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-13/emperors.csv").then(emps => {
 
     emps.forEach(d => {
         d.reign_start = parseTime(d.reign_start);
@@ -124,4 +124,4 @@ var parseTime = d3.timeParse("%Y-%m-%d");
         .attr("width", "3px")
         .attr("class", d => d.name);
 
-// });
+});
