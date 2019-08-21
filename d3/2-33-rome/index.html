@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+
+        <title>Turn a painting into a Voronoi grid</title>
+
+        <!-- Load d3.js - saved locally -->
+        <!-- <script src="https://d3js.org/d3.v5.js"></script> -->
+         <script src="../d3.v5.min.js"></script>
+       
+        <!-- jQuery, saved locally -->
+	    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <!-- <script src="../1.11.1-jquery.min.js"></script> -->
+
+
+        <!-- Some lines are from: https://gist.github.com/nbremer/c0ffc07b23b1c556a66b -->
+
+        <style>
+                body {
+                  font-family: 'Open Sans', sans-serif;
+                  font-size: 12px;
+                  font-weight: 400;
+                  color: #FFF;
+                  text-align: center;
+                  background-color: #3752C3;
+                }
+                
+                html, body { 
+                    width:auto; 
+                    height:auto; 
+                }
+                
+                .axis path,
+                .axis line {
+                    fill: none;
+                    stroke: #B3B3B3;
+                }
+                .axis text {
+                    font-size: 10px;
+                    fill: #6B6B6B;
+                }
+
+              
+              </style>
+
+    </head>
+    <body>
+        <h2>Timeline of Roman emperors</h2>
+
+         <div id="my_dataviz"></div>
+
+        <!-- This are the data, already cleaned in R -->    
+         <script src="data.js"></script> 
+
+         <!-- This is the d3 chart -->
+        <script src='script.js'></script>
+    </body>
+</html>
