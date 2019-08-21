@@ -28,6 +28,8 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
         d.reign_end = parseTime(d.reign_end);
     });
     
+    
+
     // y axis ------------------------------------
     var y = d3.scaleTime()
                 .domain([d3.min(emps, d => d.reign_start), d3.max(emps, d => d.reign_end)])
@@ -35,7 +37,7 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
 
 
     // colors
-    var colorz = ["#4C63C3", "#DE1288", "#F1C232"]
+    var colorz = ["#4C63C3", "#F1C232", "#DE1288"]
     /* var colorz2 = colorz.fill(colorz, 0, 68) */
     for (var i = 0; i < 5; i++) {
       var colorz = colorz.concat(colorz)
@@ -50,8 +52,6 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
                       .domain([0, 2]);
 
     // y values in data --------------------------
-
-    
 
     emps.map(d => {
         d.ystart = y(d.reign_start);
@@ -76,12 +76,27 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
     console.log(emps)
     console.log(emps2)
 
+
+    // more parameters ---------------------------
+
+    // circle x
+    var circle_x = 500;
+    console.log(circle_x)
+
+    // circle x
+    var text_x = 200;
+    console.log(text_x)
+ 
+    // max circle radius
+    var max_r = d3.max(emps, d => +d.r);
+    console.log(max_r)
+
     // points (white background) ----------------
     svg.append("g")  
         .selectAll(".circlecolor")
             .data(emps2)
             .enter().append("circle")
-                .attr("cx", "500")
+                .attr("cx", `${circle_x}`)
                 .attr("cy", d => d.y)
                 .attr("r", d => d.r)
                 .attr("fill", "#FFF");
@@ -91,7 +106,7 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
         .selectAll(".circlecolor")
             .data(emps2)
             .enter().append("circle")
-                .attr("cx", "500")
+                .attr("cx", `${circle_x}`)
                 .attr("cy", d => d.y)
                 .attr("r", d => d.r)
                 .attr("fill", d => color(d.index2))
@@ -104,11 +119,12 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
       .selectAll("empnames")
         .data(emps2)
         .enter().append("text")
-            .attr("x", "200")
+            .attr("x", `${text_x}`)
             .attr("y", d => d.texty2)
             .text(d => d.name)
-            .attr("font-size", "8px")
+            .attr("font-size", "14px")
             .attr("fill", "#ffffff")
+            .attr("text-anchor", "end")
             .attr("class", d => d.name);
 
     // Lines --------------------------------------
@@ -116,8 +132,8 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
       .selectAll("blines")
       .data(emps2)
       .enter().append("line")
-        .attr("x1", "250")
-        .attr("x2", "450")
+        .attr("x1", `${text_x + 5}`)
+        .attr("x2", `${circle_x - max_r}`)
         .attr("y1", d => d.texty2)
         .attr("y2", d => d.y)
         .attr("stroke", "#ffffff")
