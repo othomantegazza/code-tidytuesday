@@ -110,7 +110,7 @@ var parseTime = d3.timeParse("%Y-%m-%d");
     var t_size = "14px"
 
     // additional info y
-    var text2_x
+    var text2_x = circle_x + max_r + 10
 
     // points (white background) ----------------
     svg.append("g")
@@ -196,6 +196,24 @@ var parseTime = d3.timeParse("%Y-%m-%d");
         .on("mouseover", highlight)
         .on("mouseout", downlight);
 
+
+      //additional text label
+      svg.append("g")
+      .attr("class", "empinfo")
+      .selectAll()
+        .data(emps2)
+        .enter().append("text")
+            .attr("x", `${text2_x}`)
+            .attr("y", d => d.y)
+            // .text(d => d.name + " | " + d.reign_start.getFullYear() + " - " +  d.reign_end.getFullYear())  
+            .attr("font-size", t_size)
+            .attr("fill", "#ffffff")
+            .attr("text-anchor", "start")
+            .attr("dominant-baseline", "middle")
+            .attr("id", d => d.name_label + "info")
+            .on("mouseover", highlight)
+            .on("mouseout", downlight);
+
 /* }); */
 
 // highlight info on selected emperor -----------------------
@@ -226,6 +244,24 @@ function highlight(emperor) {
   // bigger text
   d3.select("text#" + id_in)
     .attr("font-weight", "bold");
+
+
+  // push info  
+  d3.select("text#" + id_in + "info")
+      /* .text(d => `Family: ${d.dynasty}</br>
+                    Killer: ${d.killer}`); */
+          .append('svg:tspan')
+          .attr('x', `${text2_x}`)
+          .attr('dy', -15)
+          .text(d => `Family: ${d.dynasty}`)
+          .append('svg:tspan')
+          .attr('x', `${text2_x}`)
+          .attr('dy', 15)
+          .text(d => `Rise: ${d.rise}`)
+          .append('svg:tspan')
+          .attr('x', `${text2_x}`)
+          .attr('dy', 15)
+          .text(d => `Death: ${d.cause}`)
 }
 
 function downlight(emperor) {
@@ -254,4 +290,8 @@ function downlight(emperor) {
   // bigger text
   d3.select("text#" + id_in)
     .attr("font-weight", "normal");
+
+  // push info  
+  d3.select("text#" + id_in + "info")
+      .text("");
 }
