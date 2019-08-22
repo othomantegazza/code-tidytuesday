@@ -109,6 +109,9 @@ var parseTime = d3.timeParse("%Y-%m-%d");
     // text size
     var t_size = "14px"
 
+    // additional info y
+    var text2_x
+
     // points (white background) ----------------
     svg.append("g")
         .attr("class", "circlebackground")  
@@ -124,7 +127,7 @@ var parseTime = d3.timeParse("%Y-%m-%d");
     svg.append("g")  
         .attr("class", "circlecolor")  
         .selectAll()
-            .data(emps2)
+            .data(emps2.sort(function(a,b) { return b.r > a.r; })) // smaller circles on top
             .enter().append("circle")
                 .attr("cx", `${circle_x}`)
                 .attr("cy", d => d.y)
@@ -195,7 +198,7 @@ var parseTime = d3.timeParse("%Y-%m-%d");
 
 /* }); */
 
-// highlight info on selected emperor
+// highlight info on selected emperor -----------------------
 
 function highlight(emperor) {
 
