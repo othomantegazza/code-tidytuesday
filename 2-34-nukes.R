@@ -131,16 +131,20 @@ predict(object = tst$USA, x = 1960, deriv = 1)
 
 plot_ratio <- .03
 
-make_text_coords <- function(smooth_obj)
+make_text_coords <- function(smooth_obj,
+                             start_at = median(yrs))
   {
   yrs <- nukes$year %>% unique()
   n <- length(yrs)/2
-  start_at <- median(yrs)
   
   at_x <- rep(start_at, length.out = n)
   
   for(i in 2:n) {
-    at_x[i] <- at_x[i - 1] + 10 / predict(object = smooth_obj, x = at_x[i - 1], deriv = 1)$y
+    slop <- (predict(object = smooth_obj, x = at_x[i - 1], deriv = 1)$y)*plot_ratio
+    print(slop)
+    dist_factor <- sin(atan(slop))/slop
+    print(dist_factor)
+    at_x[i] <- at_x[i - 1] + dist_factor
   }
   
   tibble(year = at_x) %>% 
@@ -152,7 +156,8 @@ make_text_coords <- function(smooth_obj)
   
 }
 
-text_data <- make_text_coords(tst$USA)
+text_data <- make_text_coords(tst$USA,
+                              start_at = 1965) #nukes$year %>% unique() %>% median())
 
 # nukes3 <- 
 #   nukes2 %>% 
@@ -175,15 +180,12 @@ nukes3 %>%
             aes(label = "A",
                 angle = angle),
             vjust = 0,
-            hjust = 0) +
+            hjust = .5) +
   coord_fixed(ratio = plot_ratio)
   # geom_point(shape = 2) 
   # geom_point(aes(y = smooth_n)) +
   # geom_point()
   # geom_smooth()
-
-nukes3 %>% 
-filter(country == "FRANCE") %>% 
   
 
 # many plots --------------------------------------------------------------
