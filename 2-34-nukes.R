@@ -131,15 +131,18 @@ predict(object = tst$USA, x = 1960, deriv = 1)
 
 plot_ratio <- .03
 
-make_text_coords <- function(smooth_obj,
+make_text_coords <- function(label = "CROSTATA AI MIRTILLI CON PANNA MONTATA ALLE 3",
+                             smooth_obj = tst$USA,
                              start_at = median(yrs))
   {
+  label <-  strsplit(label, split = "")[[1]]
+  
   yrs <- nukes$year %>% unique()
   
   # approximate at pair number
-  n <- length(yrs)/2 + length(yrs)%%2 
+  n <- length(label)/2 + length(label)%%2 
   
-  at_x <- rep(start_at, length.out = n)
+  at_x <- rep(start_at, length.out = n + 1 - length(label)%%2)
   
   # forward steps
   for(i in 2:length(at_x)) {
@@ -152,7 +155,7 @@ make_text_coords <- function(smooth_obj,
   }
   
   
-  at_x_back <- rep(start_at, length.out = n - length(yrs)%%2)
+  at_x_back <- rep(start_at, length.out = n)
   # back steps
   for(i in 2:length(at_x_back)) {
     # slope - adjusted for xy plot ratio
@@ -164,9 +167,10 @@ make_text_coords <- function(smooth_obj,
   }
   
   # put together
-  at_x <- c(at_x, at_x_back)
+  at_x <- c(rev(at_x_back[-1]), at_x)
   
-  tibble(year = at_x) %>% 
+  tibble(label = label,
+         year = at_x) %>% 
     # cumulative points
     mutate(n_cumulative = predict(object = smooth_obj, x = year)$y,
            # first derivative, need it for letter spacing and angles
@@ -179,8 +183,9 @@ make_text_coords <- function(smooth_obj,
   
 }
 
-text_data <- make_text_coords(tst$USA,
-                              start_at = 1965) #nukes$year %>% unique() %>% median())
+text_data <- make_text_coords(#label = "ciao",
+                              smooth_obj = tst$USA,
+                              start_at = 1975) #nukes$year %>% unique() %>% median())
 
 # nukes3 <- 
 #   nukes2 %>% 
@@ -197,14 +202,16 @@ nukes3 %>%
   ggplot(aes(x = year,
              y = n_cumulative)) +
              #colour = country)) +
-  geom_line() +
+  geom_line(colour = "grey") +
   geom_line(aes(y = d1), colour = "red") +
   geom_text(data = text_data,
-            aes(label = "A",
+            aes(label = label,
                 angle = angle),
             vjust = 0,
-            hjust = .5) +
-  coord_fixed(ratio = plot_ratio)
+            hjust = .5,
+            family = "courier") +
+  coord_fixed(ratio = plot_ratio) +
+  theme_bw()
 
 # many plots --------------------------------------------------------------
 
