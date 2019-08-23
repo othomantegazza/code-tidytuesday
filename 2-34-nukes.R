@@ -148,10 +148,14 @@ make_text_coords <- function(smooth_obj,
   }
   
   tibble(year = at_x) %>% 
+    # cumulative points
     mutate(n_cumulative = predict(object = smooth_obj, x = year)$y,
+           # first derivative, need it for letter spacing and angles
            d1 = predict(object = smooth_obj, x = year, deriv = 1)$y,
-           angle = d1*plot_ratio %>% 
-             atan() %>% as_units("radians") %>%
+           # angle is arctangent of 1st derivative
+           # need to correct for xy ratio
+           angle_rad = atan(d1*plot_ratio),
+           angle =  angle_rad %>% as_units("radians") %>%
              set_units("degrees"))
   
 }
