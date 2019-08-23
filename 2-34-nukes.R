@@ -135,17 +135,36 @@ make_text_coords <- function(smooth_obj,
                              start_at = median(yrs))
   {
   yrs <- nukes$year %>% unique()
-  n <- length(yrs)/2
+  
+  # approximate at pair number
+  n <- length(yrs)/2 + length(yrs)%%2 
   
   at_x <- rep(start_at, length.out = n)
   
-  for(i in 2:n) {
+  # forward steps
+  for(i in 2:length(at_x)) {
+    # slope - adjusted for xy plot ratio
     slop <- (predict(object = smooth_obj, x = at_x[i - 1], deriv = 1)$y)*plot_ratio
-    print(slop)
+    # distance  between the points, is cosine of slope angle
     dist_factor <- sin(atan(slop))/slop
-    print(dist_factor)
+    # update
     at_x[i] <- at_x[i - 1] + dist_factor
   }
+  
+  
+  at_x_back <- rep(start_at, length.out = n - length(yrs)%%2)
+  # back steps
+  for(i in 2:length(at_x_back)) {
+    # slope - adjusted for xy plot ratio
+    slop <- (predict(object = smooth_obj, x = at_x_back[i - 1], deriv = 1)$y)*plot_ratio
+    # distance  between the points, is cosine of slope angle
+    dist_factor <- sin(atan(slop))/slop
+    # update
+    at_x_back[i] <- at_x_back[i - 1] - dist_factor
+  }
+  
+  # put together
+  at_x <- c(at_x, at_x_back)
   
   tibble(year = at_x) %>% 
     # cumulative points
@@ -186,11 +205,6 @@ nukes3 %>%
             vjust = 0,
             hjust = .5) +
   coord_fixed(ratio = plot_ratio)
-  # geom_point(shape = 2) 
-  # geom_point(aes(y = smooth_n)) +
-  # geom_point()
-  # geom_smooth()
-  
 
 # many plots --------------------------------------------------------------
 
