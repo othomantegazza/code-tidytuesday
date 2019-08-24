@@ -108,7 +108,8 @@ plot_ratio <- .03
 
 make_text_coords <- function(label = "CROSTATA AI MIRTILLI CON PANNA MONTATA ALLE 3",
                              smooth_obj = tst$USA,
-                             start_at = median(yrs))
+                             start_at = median(yrs),
+                             nm = "USA")
   {
   label <-  strsplit(label, split = "")[[1]]
   
@@ -154,31 +155,50 @@ make_text_coords <- function(label = "CROSTATA AI MIRTILLI CON PANNA MONTATA ALL
            # need to correct for xy ratio
            angle_rad = atan(d1*plot_ratio),
            angle =  angle_rad %>% as_units("radians") %>%
-             set_units("degrees"))
+             set_units("degrees"),
+           nm = nm)
   
 }
 
 
-text_data <- make_text_coords(#label = "ciao",
-                              smooth_obj = tst$USA,
-                              start_at = 1975) #nukes$year %>% unique() %>% median())
+# text_data <- make_text_coords(#label = "ciao",
+#                               smooth_obj = tst$USA,
+#                               start_at = 1975) #nukes$year %>% unique() %>% median())
 
+text_data <- 
+  tibble(label = c("THANKS",
+                   "2051 NUKES WERE DETONATED WORLDWIDE SINCE 1945",
+                   "PLEASE, NO MORE!"),
+         smooth_obj = tst,
+         start_at = c(1990, 1975, 1975),
+         nm = names(tst)) %>% 
+  pmap(make_text_coords) %>% 
+  reduce(bind_rows)
+  
 
 # plot cumulative smoothed spline and text --------------------------------
 
-
+# 
+# 
+# nukes3 <- 
+#   tibble(year = nukes2 %>% filter(country == "USA") %>% pull(year)) %>% 
+#   mutate(n_cumulative = predict(object = tst$USA, x = year)$y,
+#          d1 = predict(object = tst$USA, x = year, deriv = 1)$y)
 
 nukes3 <- 
-  tibble(year = nukes2 %>% filter(country == "USA") %>% pull(year)) %>% 
-  mutate(n_cumulative = predict(object = tst$USA, x = year)$y,
-         d1 = predict(object = tst$USA, x = year, deriv = 1)$y)
+  names(tst) %>% 
+  map_df(~tibble(year = nukes2$year %>% unique(),
+                 country = .) %>% 
+         mutate(n_cumulative = predict(object = tst[[.x]], x = year)$y,
+                d1 = predict(object = tst[[.x]], x = year, deriv = 1)$y))
 
 nukes3 %>% 
   ggplot(aes(x = year,
              y = n_cumulative)) +
              #colour = country)) +
-  geom_line(colour = "grey") +
-  geom_line(aes(y = d1), colour = "red") +
+  # geom_line(colour = "grey") +
+  geom_line(aes(colour = country), size = .2) +
+  # geom_line(aes(y = d1), colour = "red") +
   geom_text(data = text_data,
             aes(label = label,
                 angle = angle),
@@ -187,3 +207,4 @@ nukes3 %>%
             family = "courier") +
   coord_fixed(ratio = plot_ratio) +
   theme_bw()
+
