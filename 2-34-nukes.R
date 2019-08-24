@@ -2,8 +2,6 @@ library(tidyverse)
 library(lubridate)
 library(grid)
 library(tibbletime)
-library(maptools)
-library(sf)
 library(units)
 
 bg_col <- "#3752C3"
@@ -31,34 +29,6 @@ if(!file.exists(data_path)) {
 } else {
   load(data_path)
 }
-
-
-# plot --------------------------------------------------------------------
-
-nukes %>% 
-  ggplot() +
-  borders(fill = fill_col, colour = bg_col, size = .4) +
-  geom_point(aes(x = longitude,
-                 y = latitude,
-                 size = yield_lower),
-             colour = "yellow",
-             alpha = .05) +
-  coord_map(projection = "mollweide", orientation = c(90, 0, 0)) +
-  theme_void() +
-  guides(size = FALSE) +
-  theme(panel.background = element_rect(fill = bg_col))
-
-
-# months ------------------------------------------------------------------
-
-my <- 
-  nukes %>% 
-  arrange(date_long) %>% 
-  mutate(my = paste(year, month, "01", sep = "-")) %>% 
-  pull(my) %>% unique()
-
-nukes %>% 
-  filter(date_long < as_date(my[5]))
 
 
 
@@ -96,13 +66,18 @@ nukes %>%
 
   
 
-# cumulative plot ---------------------------------------------------------
+# make smoothed spline ---------------------------------------------------------
+# for cumulative plot
 
 
+# every year for every country
+# I need to merge it later to get a comprehensive dataset
 year_states <- 
   expand.grid(year = min(nukes$year):max(nukes$year),
               country = unique(nukes$country), stringsAsFactors = FALSE)
 
+# comprehensive dataset with row for every year/country
+# and cumulative counts
 nukes2 <- 
   nukes %>% 
   count(year, country) %>% 
@@ -183,15 +158,15 @@ make_text_coords <- function(label = "CROSTATA AI MIRTILLI CON PANNA MONTATA ALL
   
 }
 
+
 text_data <- make_text_coords(#label = "ciao",
                               smooth_obj = tst$USA,
                               start_at = 1975) #nukes$year %>% unique() %>% median())
 
-# nukes3 <- 
-#   nukes2 %>% 
-#   group_by(country) %>% 
-#   mutate(smooth_n = loess(n_cumulative ~ year, span = .2)$fitted) %>% 
-#   mutate(dn = c(0, diff(smooth_n)/diff(year)))
+
+# plot cumulative smoothed spline and text --------------------------------
+
+
 
 nukes3 <- 
   tibble(year = nukes2 %>% filter(country == "USA") %>% pull(year)) %>% 
@@ -212,55 +187,3 @@ nukes3 %>%
             family = "courier") +
   coord_fixed(ratio = plot_ratio) +
   theme_bw()
-
-# many plots --------------------------------------------------------------
-
-# plot_nukes <- function(my_in) {
-#   p <-
-#     nukes %>%
-#     filter(date_long <= as_date(my_in))
-#   
-#   print(p)
-#   
-#   d2 <-
-#     nukes %>%
-#     filter(month == month(my_in),
-#            year == year(my_in))
-#    
-#   print(d2)
-#   
-#   p <- p %>%
-#     ggplot() +
-#     borders(fill = fill_col,
-#             colour = bg_col,
-#             size = .4) +
-#     {
-#       if (nrow(d2) > 0) {
-#         geom_point(
-#           data = d2 ,
-#           aes(x = longitude,
-#               y = latitude,
-#               size = yield_lower),
-#           size = 5,
-#           fill = "yellow"
-#         )
-#       }
-#     } +
-#     geom_point(
-#       aes(x = longitude,
-#           y = latitude,
-#           size = yield_lower),
-#       colour = "yellow",
-#       alpha = .05
-#     ) +
-#     coord_map(projection = "mollweide", orientation = c(90, 0, 0)) +
-#     theme_void() +
-#     guides(size = FALSE) +
-#     theme(panel.background = element_rect(fill = bg_col))
-#   
-#   print(my_in)
-#   
-#   ggsave(paste0("plots/2-34-nukes/", my_in, ".png"),  p)
-# }
-
-
