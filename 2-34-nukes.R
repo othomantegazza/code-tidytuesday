@@ -3,6 +3,14 @@ library(lubridate)
 library(grid)
 library(tibbletime)
 library(units)
+library(showtext)
+
+font_families()
+font_add_google("Cookie", family = "hand")
+font_add_google("Cutive Mono", #"Cutive Mono",
+                family = "imono")
+
+
 
 bg_col <- "#3752C3"
 fill_col <- "#5867A6"
@@ -166,11 +174,11 @@ make_text_coords <- function(label = "CROSTATA AI MIRTILLI CON PANNA MONTATA ALL
 #                               start_at = 1975) #nukes$year %>% unique() %>% median())
 
 text_data <- 
-  tibble(label = c("THANKS",
+  tibble(label = c("THANKS...",
                    "2051 NUKES WERE DETONATED WORLDWIDE SINCE 1945",
                    "PLEASE, NO MORE!"),
          smooth_obj = tst,
-         start_at = c(1990, 1975, 1975),
+         start_at = c(1990, 1974.5, 1979),
          nm = names(tst)) %>% 
   pmap(make_text_coords) %>% 
   reduce(bind_rows)
@@ -192,7 +200,8 @@ nukes3 <-
          mutate(n_cumulative = predict(object = tst[[.x]], x = year)$y,
                 d1 = predict(object = tst[[.x]], x = year, deriv = 1)$y))
 
-nukes3 %>% 
+p <- 
+  nukes3 %>% 
   ggplot(aes(x = year,
              y = n_cumulative)) +
              #colour = country)) +
@@ -204,7 +213,30 @@ nukes3 %>%
                 angle = angle),
             vjust = 0,
             hjust = .5,
-            family = "courier") +
+            family = "imono") +
+  geom_text(data = . %>% 
+              filter(year == max(year)),
+            aes(label = paste0("(", country, ")"),
+                colour = country),
+            hjust = 0,
+            family = "hand") +
   coord_fixed(ratio = plot_ratio) +
-  theme_bw()
+  scale_x_continuous(limits = c(NA, 2003)) +
+  theme_minimal()
 
+p
+
+ggsave(filename = "plots/2-34-nukes.svg")
+
+svg("plots/2-34-nukes.svg")
+showtext_auto()
+p %>% print()
+dev.off()
+
+png("plots/2-34-nukes.png")
+showtext_auto()
+p %>% print()
+dev.off()
+
+nukes3%>% 
+  filter(year == max(year))
