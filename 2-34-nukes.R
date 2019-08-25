@@ -6,9 +6,12 @@ library(units)
 library(showtext)
 
 font_families()
-font_add_google("Cookie", family = "hand")
+font_add_google("Cookie",
+                family = "hand", bold.wt = 1000)
 font_add_google("Cutive Mono", #"Cutive Mono",
                 family = "imono")
+font_add_google("Major Mono Display",
+                family = "titles")
 
 
 
@@ -193,6 +196,10 @@ text_data <-
 #   mutate(n_cumulative = predict(object = tst$USA, x = year)$y,
 #          d1 = predict(object = tst$USA, x = year, deriv = 1)$y)
 
+grey <- '#2E3036'
+violet <- '#8B1A75'
+blue <- '#263A89'
+
 nukes3 <- 
   names(tst) %>% 
   map_df(~tibble(year = nukes2$year %>% unique(),
@@ -206,34 +213,60 @@ p <-
              y = n_cumulative)) +
              #colour = country)) +
   # geom_line(colour = "grey") +
-  geom_line(aes(colour = country), size = .2) +
+  geom_line(aes(colour = country), size = .12) +
   # geom_line(aes(y = d1), colour = "red") +
   geom_text(data = text_data,
             aes(label = label,
                 angle = angle),
             vjust = 0,
             hjust = .5,
-            family = "imono") +
+            family = "imono",
+            size = 6.7) +
   geom_text(data = . %>% 
               filter(year == max(year)),
-            aes(label = paste0("(", country, ")"),
+            aes(x = year + .5,
+                label = paste0("(", country, ")"),
                 colour = country),
             hjust = 0,
-            family = "hand") +
+            family = "hand",
+            fontface = "bold",
+            size = 5) +
+  annotate("text", x = 2003, y = 0,
+           label = "Data from SIPRi | Plot by @othomn",
+           hjust = .9, vjust = 0,
+           family = "hand",
+           colour = violet,
+           size = 5) +
   coord_fixed(ratio = plot_ratio) +
   scale_x_continuous(limits = c(NA, 2003)) +
-  theme_minimal()
+  scale_colour_manual(values = c(grey, violet, blue), guide = FALSE) +
+  # guides(colour = FALSE) +
+  labs(x = "Year",
+       y = "Cumulative Detonations [n]",
+       title = "Nuclear Bombs Detonated Worldwide Until 1998",
+       subtitle = "(An exercise on placing text onto a path in R)") +
+  theme_bw() +
+  theme(text = element_text(family = "titles"),
+        plot.title = element_text(size = 18),
+        plot.subtitle = element_text(size = 14, colour = blue), 
+        panel.grid = element_line(size = .05, colour = "grey40"),
+        panel.border = element_rect(size = .2))
 
-p
 
-ggsave(filename = "plots/2-34-nukes.svg")
+
+# p
+
+# ggsave(filename = "plots/2-34-nukes.svg")
 
 svg("plots/2-34-nukes.svg")
 showtext_auto()
 p %>% print()
 dev.off()
 
-png("plots/2-34-nukes.png")
+png("plots/2-34-nukes.png",
+    height = 750,
+    width = 1200,
+    res = 300)
 showtext_auto()
 p %>% print()
 dev.off()
