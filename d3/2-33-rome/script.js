@@ -1,6 +1,4 @@
 
-/* d3.min(emps, function(d) { return +d.reign_start; }) */
-
 // svg area ---------------------------------------------
 
 var margin = {top: 10, right: 30, bottom: 30, left: 40},
@@ -30,13 +28,12 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
     });
     
 
-    /* var time_aug = emps[0].reign_start */
-    // ugly fix
+    
+    // ugly fix for BC reign start (only one: Augustus)
     emps[0].reign_start = d3.timeYear.offset(emps[0].reign_start, -26*2);
 
     console.log(emps[0].reign_start.getFullYear())
 
-    /* d3.timeYear.offset( */
 
     // y axis ------------------------------------
     var y = d3.scaleTime()
@@ -46,20 +43,18 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
 
     // colors
     var colorz = ["#4C63C3", "#F1C232", "#DE1288"]
-    /* var colorz2 = colorz.fill(colorz, 0, 68) */
     for (var i = 0; i < 5; i++) {
       var colorz = colorz.concat(colorz)
     };
     
-    console.log(colorz)
-    /* console.log(colorz2) */
+    
 
     	//Set the color for each region
       var color = d3.scaleOrdinal()
                       .range( ["#4C63C3", "#DE1288", "#F1C232"])
                       .domain([0, 2]);
 
-    // y values in data --------------------------
+    // store y values directly in data array --------------------------
 
     emps.map(d => {
         d.ystart = y(d.reign_start);
@@ -81,9 +76,6 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
       d.texty2 = ((d.texty)*1+d.y)/2;
       d.name_label = d.name.replace(/ /g, "_") //Not a good idea to use text with whitespace as id
     })
-
-    console.log(emps)
-    console.log(emps2)
 
 
     // more parameters ---------------------------
@@ -157,7 +149,7 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
             .on("mouseover", highlight)
             .on("mouseout", downlight);
 
-    // Lines --------------------------------------
+    // Lines (bezier) --------------------------------------
     svg.append("g")
       .attr("class", "linkbezier")
       .selectAll()
@@ -179,7 +171,7 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
         .on("mouseover", highlight)
         .on("mouseout", downlight);
 
-     // connection
+     // Lines (straight line connection) ----------------------------------
      svg.append("g")
       .attr("class", "linkline")
       .selectAll()
@@ -197,7 +189,7 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
         .on("mouseout", downlight);
 
 
-      //additional text label
+      // additional text label ---------------------------------------
       svg.append("g")
       .attr("class", "empinfo")
       .selectAll()
@@ -205,7 +197,6 @@ d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
         .enter().append("text")
             .attr("x", `${text2_x}`)
             .attr("y", d => d.y)
-            // .text(d => d.name + " | " + d.reign_start.getFullYear() + " - " +  d.reign_end.getFullYear())  
             .attr("font-size", t_size)
             .attr("fill", "#ffffff")
             .attr("text-anchor", "start")
@@ -221,12 +212,10 @@ function highlight(emperor) {
 
   // Each element has respective emperor name as id
   var id_in = emperor.name_label;
-  console.log(id_in)
 
   // modify circles
   var elements_in = d3.select("circle#" + id_in);
-  console.log(elements_in)
-  /* elements_in.style("fill-opacity", 1); */
+
   elements_in
     .attr("fill-opacity", 1)
     .attr("r", d => d.r + 2);
@@ -247,8 +236,6 @@ function highlight(emperor) {
 
   // push info  
   d3.select("text#" + id_in + "info")
-      /* .text(d => `Family: ${d.dynasty}</br>
-                    Killer: ${d.killer}`); */
           .append('svg:tspan')
           .attr('x', `${text2_x}`)
           .attr('dy', -15)
@@ -272,8 +259,7 @@ function downlight(emperor) {
 
   // modify circles
   var elements_in = d3.select("circle#" + id_in);
-  console.log(elements_in)
-  /* elements_in.style("fill-opacity", 1); */
+  
   elements_in
     .attr("fill-opacity", c_opacity)
     .attr("r", d => d.r);
