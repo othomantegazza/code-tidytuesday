@@ -21,7 +21,7 @@ var svg = d3.select("#my_dataviz")
 var parseTime = d3.timeParse("%Y-%m-%d");
 
 
-/* d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-13/emperors.csv").then(emps => { */
+d3.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-13/emperors.csv").then(emps => {
 
  
     emps.forEach(d => {
@@ -214,7 +214,6 @@ var parseTime = d3.timeParse("%Y-%m-%d");
             .on("mouseover", highlight)
             .on("mouseout", downlight);
 
-/* }); */
 
 // highlight info on selected emperor -----------------------
 
@@ -295,3 +294,6 @@ function downlight(emperor) {
   d3.select("text#" + id_in + "info")
       .text("");
 }
+
+
+});
