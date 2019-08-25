@@ -8,7 +8,7 @@ library(showtext)
 font_families()
 font_add_google("Cookie",
                 family = "hand", bold.wt = 1000)
-font_add_google("Cutive Mono", #"Cutive Mono",
+font_add_google("Cutive Mono", 
                 family = "imono")
 font_add_google("Major Mono Display",
                 family = "titles")
@@ -106,8 +106,7 @@ nukes2 <-
   filter(country %in% c( "USA", "USSR", "FRANCE"))
 
 tst <-nukes2 %>% 
-  split(.$country) %>% 
-  # map(~loess(formula = n_cumulative ~ year, data = ., span = .2))
+  split(.$country) %>%
   map(~smooth.spline(.$year, .$n_cumulative))
 
 predict(object = tst$USA, x = 1960, deriv = 1)
@@ -211,10 +210,7 @@ p <-
   nukes3 %>% 
   ggplot(aes(x = year,
              y = n_cumulative)) +
-             #colour = country)) +
-  # geom_line(colour = "grey") +
   geom_line(aes(colour = country), size = .12) +
-  # geom_line(aes(y = d1), colour = "red") +
   geom_text(data = text_data,
             aes(label = label,
                 angle = angle),
@@ -252,16 +248,10 @@ p <-
         panel.grid = element_line(size = .05, colour = "grey40"),
         panel.border = element_rect(size = .2))
 
-
-
-# p
-
-# ggsave(filename = "plots/2-34-nukes.svg")
-
-svg("plots/2-34-nukes.svg")
-showtext_auto()
-p %>% print()
-dev.off()
+# svg("plots/2-34-nukes.svg")
+# showtext_auto()
+# p %>% print()
+# dev.off()
 
 png("plots/2-34-nukes.png",
     height = 750,
@@ -271,5 +261,3 @@ showtext_auto()
 p %>% print()
 dev.off()
 
-nukes3%>% 
-  filter(year == max(year))
