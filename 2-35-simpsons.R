@@ -44,7 +44,7 @@ start_at <-
   #            nm = .$guest_star)}
 
 seasons <-
-  simpsons3 %>% 
+  simpsons2 %>% 
   group_by(season) %>% 
   summarise(ep_min_season = min(episode_count))
 
@@ -177,3 +177,56 @@ grid.newpage()
 p_lines2 %>% print(vp = viewport(width = .6, height = .6, angle = 45))
 dev.off()
 
+
+# fix episode lines -------------------------------------------------------
+
+simpsons4 <- 
+  simpsons3 %>% 
+  filter(guest_star %in% stars_in)
+
+episodes <- 
+  simpsons4 %>% 
+  pull(episode_count) %>% 
+  unique()
+
+episode_lines <- 
+  expand.grid(guest_star = simpsons4 %>% pull(guest_star) %>% unique(),
+              episode = episodes) %>% 
+  left_join(start_at) %>% 
+  mutate(y = episode - (ep_min - 2)) %>% 
+  filter(y > 0)
+
+# episode_lines %>% 
+#   filter(episode == 100) %>% 
+#   View()
+
+p_lines3 <- simpsons4 %>% 
+  ggplot(aes(x = guest_star %>% as_factor() %>% fct_rev())) +
+  # point at episode guest star
+  geom_point(aes(y = y),
+             size = .2,
+             alpha = .4) +
+  # line for eacg guest star
+  geom_line(aes(group = guest_star,
+                y = y),
+            size = .2,
+            alpha = .7) +
+  # episodes
+  geom_line(data = episode_lines,
+            aes(y = y,
+                group = episode),
+            size = .2,
+            alpha = .7) +
+  coord_flip() +
+  guides(colour = FALSE,
+         fill = FALSE) +
+  theme_void()
+
+p_lines3
+
+svglite::svglite(file = "plots/2-35-simpsons2.svg",
+                 height = 20,
+                 width = 20)
+grid.newpage()
+p_lines3 %>% print(vp = viewport(width = .6, height = .6, angle = 45))
+dev.off()
