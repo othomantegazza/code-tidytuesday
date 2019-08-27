@@ -182,19 +182,30 @@ dev.off()
 
 simpsons4 <- 
   simpsons3 %>% 
-  filter(guest_star %in% stars_in)
+  filter(guest_star %in% stars_in) %>% 
+  mutate(guest_star = guest_star %>% as_factor()) 
 
 episodes <- 
   simpsons4 %>% 
   pull(episode_count) %>% 
   unique()
 
+g_stars <- 
+  simpsons4 %>% 
+  group_by(episode_count) %>% 
+  summarise(ep_high = max(as.numeric(guest_star)),
+            ep_low = min(as.numeric(guest_star)))
+
 episode_lines <- 
   expand.grid(guest_star = simpsons4 %>% pull(guest_star) %>% unique(),
-              episode = episodes) %>% 
+              episode_count = episodes) %>% 
   left_join(start_at) %>% 
-  mutate(y = episode - (ep_min - 2)) %>% 
-  filter(y > 0)
+  left_join(g_stars) %>% 
+  mutate(y = episode_count - (ep_min )) %>% 
+  filter(y > 0) %>% 
+  mutate(guest_star = factor(guest_star, levels = levels(simpsons4$guest_star))) %>% 
+  filter(as.numeric(guest_star) <= ep_high,
+         as.numeric(guest_star) >= ep_low)
 
 # episode_lines %>% 
 #   filter(episode == 100) %>% 
@@ -214,7 +225,7 @@ p_lines3 <- simpsons4 %>%
   # episodes
   geom_line(data = episode_lines,
             aes(y = y,
-                group = episode),
+                group = episode_count),
             size = .2,
             alpha = .7) +
   coord_flip() +
