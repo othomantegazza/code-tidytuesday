@@ -139,3 +139,41 @@ grid.newpage()
 p_lines %>% print(vp = viewport(width = .6, height = .6, angle = 45))
 dev.off()
 
+
+# lines vs lines ----------------------------------------------------------
+
+stars_in <- 
+  simpsons3 %>% 
+  group_by(guest_star) %>% 
+  count() %>% 
+  filter(n > 1) %>% 
+  pull(guest_star)
+
+p_lines2 <- simpsons3 %>% 
+  filter(guest_star %in% stars_in) %>%
+  ggplot(aes(x = guest_star %>% as_factor() %>% fct_rev())) +
+  geom_point(aes(y = y),
+             size = .2,
+             alpha = .4) +
+  geom_line(aes(y = y,
+                group = episode_count),
+            size = .2,
+            alpha = .7) +
+  geom_line(aes(group = guest_star,
+                y = y),
+            size = .2,
+            alpha = .7) +
+  coord_flip() +
+  guides(colour = FALSE,
+         fill = FALSE) +
+  theme_void()
+
+p_lines2
+
+svglite::svglite(file = "plots/2-35-simpsons.svg",
+                 height = 15,
+                 width = 15)
+grid.newpage()
+p_lines2 %>% print(vp = viewport(width = .6, height = .6, angle = 45))
+dev.off()
+
