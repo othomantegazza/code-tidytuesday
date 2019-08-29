@@ -133,18 +133,39 @@ width <- 14
 svglite::svglite(file = "plots/2-35-simpsons3.svg",
                  height = height,
                  width = width)
+# png("plots/2-35-simpsons3.png",
+#     height = height,
+#     width = width,
+#     units = "in", res = 100)
 grid.newpage()
-# grid.rect(gp = gpar(fill = "#F1F3F4"))
+grid.rect(gp = gpar(fill = "#F8F9FA", col = "#F8F9FA"))
 showtext_begin()
 p %>% print(vp = viewport(x = .3, width = .94, height = .94*(width/height), angle = 315))
 str_wrap("The Simposons, by Matt Groening, have been running for more the 30 seasons
-         and had hundreds of guest stars, acting as themeselves or someone else.",
+         and hosted hundreds of guest stars, acting as themeselves or someone else.",
          width = 14) %>% 
   grid.text(hjust = 0, rot = 45,
             x = .63, y = .74, 
             gp = gpar(lineheight = 1,
                       fontsize = 14,
                       fontfamily = "titles"))
+grid.text("How guest stars\nare woven into the\nepisodes of The Simpsons", #%>% str_wrap(30), 
+          # hjust = .5, rot = 45,
+          # x = .72, y = .22,
+          x = .9, y = .095, 
+          hjust = 1,
+          gp = gpar(lineheight = 1,
+                    fontsize = 18,
+                    fontfamily = "titles"))
+grid.text("Data from Wikipedia | Plot by @othomn", 
+          # hjust = .5, rot = 45,
+          # x = .72, y = .22,
+          x = .9, y = .14, 
+          hjust = 1,
+          gp = gpar(lineheight = 1,
+                    fontsize = 12,
+                    col = orange,
+                    fontfamily = "labels"))
 showtext_end()
 dev.off()
  
