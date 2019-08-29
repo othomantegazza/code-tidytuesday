@@ -6,6 +6,11 @@ library(showtext)
 font_add_google("Major Mono Display",
                 family = "titles")
 
+"The Girl Next Door"
+"Text Me One" 
+"Yrsa"
+"Dancing Script" %>% font_add_google(family = "labels")
+
 # get data ----------------------------------------------------------------
 
 data_url <- paste0('https://raw.githubusercontent.com/rfordatascience/tidytuesday/',
@@ -65,8 +70,8 @@ p <-
   # lines for guest stars
   geom_line(aes(y = episode_count,
                 group = guest_star),
-            size = .4,
-            alpha = .4,
+            size = .2,
+            alpha = 1,
             colour = "grey30") +
   # lines for episodes
   geom_line(aes(y = episode_count,
@@ -78,17 +83,19 @@ p <-
   # point each cross episode and guest star
   geom_point(aes(y = episode_count,
                  colour = as.character(season)),
-             size = .2,
+             size = .15,
              # colour = "grey30",
-             alpha = .6) +
+             alpha = 1) +
   # guest star name
   geom_text(data = . %>% group_by(guest_star) %>% filter(episode_count == min(episode_count)),
             aes(y = episode_count,
                 label = guest_star),
-            size = 1.2,
+            size = 1.8,
             hjust = 1.1,
-            vjust = .7,
-            angle = 45) +
+            vjust = .3,
+            angle = 45,
+            family = "labels",
+            colour = "grey20") +
   # season mark
   geom_segment(data = . %>% group_by(season) %>%
               summarize(max_s = max(episode_count),
@@ -102,32 +109,41 @@ p <-
               alpha = .7) +
   # season label
   geom_text(data = . %>% group_by(season) %>%
-                 summarize(y = mean(episode_count)),
-               aes(x = 137,
-                   label = paste("Season", season),
-                   y = y,
-                   colour = season %>% as.character()),
-               hjust = 0,
-               size = 2,
-               alpha = .7) +
+              summarize(y = mean(episode_count)),
+            aes(x = 137,
+                label = paste("Season", season),
+                y = y,
+                colour = season %>% as.character()),
+            hjust = 0,
+            vjust = .3,
+            size = 3,
+            alpha = .7,
+            family = "labels") +
   scale_colour_manual(values = colors, guide = FALSE) +
   theme_void()
 
 p
 
+
+# save in grid ------------------------------------------------------------
+
+height <- 20
+width <- 14
+
 svglite::svglite(file = "plots/2-35-simpsons3.svg",
-                 height = 20,
-                 width = 20)
+                 height = height,
+                 width = width)
 grid.newpage()
-p %>% print(vp = viewport(width = .6, height = .6, angle = 315))
+# grid.rect(gp = gpar(fill = "#F1F3F4"))
 showtext_begin()
+p %>% print(vp = viewport(x = .3, width = .94, height = .94*(width/height), angle = 315))
 str_wrap("The Simposons, by Matt Groening, have been running for more the 30 seasons
          and had hundreds of guest stars, acting as themeselves or someone else.",
-         width = 15) %>% 
+         width = 14) %>% 
   grid.text(hjust = 0, rot = 45,
-            x = .72, y = .72, 
+            x = .63, y = .74, 
             gp = gpar(lineheight = 1,
-                      textsize = 2,
+                      fontsize = 14,
                       fontfamily = "titles"))
 showtext_end()
 dev.off()
