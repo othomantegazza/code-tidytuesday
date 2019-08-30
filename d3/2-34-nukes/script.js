@@ -126,7 +126,7 @@ folds.forEach(fd => {
   });
 });
 
-console.log(folds2)
+/* console.log(folds2) */
 
 var fold_feature = []
 
@@ -135,61 +135,25 @@ folds.forEach(fd => {
                      geometry: fd})
 })
 
-/* fold_feature.forEach(ff => {
-  ff.geometry.type = "Polygon"
-})
- */
+
 console.log("fold_feature")
 console.log(fold_feature)
 
 const folds3 = {type: "FeatureCollection",
                 features: fold_feature}
-
-/* folds.forEach(fd => {
-  folds3.features.push({feature: fd})
-}) */
-                            
-console.log("folds3")
+                     
+/* console.log("folds3")
 console.log(folds3)
 
 console.log("geogen folds3")
 console.log(geoGenerator(folds3))
-console.log(geoGenerator(world))
-
-// var folds_flat = folds.forEach
-
-/* svg.append("g")
-    .attr("class", "foldline")
-    //.attr("translate(" + margin.left + "," + margin.top + ")")
-    .selectAll()
-    .data(folds)
-    .enter().append("line")
-    .attr("x1", d => d.coordinates[0][0])
-    .attr("y1", d => d.coordinates[0][1])
-    .attr("x2", d => d.coordinates[1][0])
-    .attr("y2", d => d.coordinates[1][1])
-    .attr("stroke", "red")
-    .attr("stroke-width", "4px"); */
-   
-
-
-/* svg.append("g")
-    .attr("class", "foldline")
-    .selectAll()
-    .data(folds2)
-    .enter().append("line")
-    .attr("x1", d => d.p1[0])
-    .attr("y1", d => d.p1[1])
-    .attr("x2", d => d.p2[0])
-    .attr("y2", d => d.p2[1][1])
-    .attr("stroke", "#ffffff")
-    .attr("stroke-width", "4px"); */
+console.log(geoGenerator(world)) */
 
   svg.append("g")
     .attr("class", "foldline")
     .selectAll('path')
     .data(folds3.features)
-// Create path elements and update the d attribute using the geo generator
+    // Create path elements and update the d attribute using the geo generator
     .enter()
     .append('path')
     .attr('d', geoGenerator)
@@ -205,7 +169,8 @@ projection.rotate(rotate);
 console.log("path-sphere")
 console.log(geoGenerator({type: "Sphere"}))
 
-// draw map borders
+// draw map borders --------------------------------
+
 svg.append("g")
   .attr("class", "mapborder")
   .append("path")
