@@ -16,14 +16,14 @@ var svg = d3.select("#my_dataviz")
 // Function that renders world borders -----------------------------
 
 const render = world => {
-console.log(world)
+/* console.log(world) */
 
 // set projection
 var projection = d3.geoAirocean()
                  .fitExtent([[0, 0], [width, height]], world);
 
-console.log(projection.tree(4))
-
+/* console.log(projection.tree(4))
+ */
 // Set SVG generator on projection
 var geoGenerator = d3.geoPath()
                    .projection(projection);
@@ -32,7 +32,7 @@ var geoGenerator = d3.geoPath()
 // set graticule
 var graticule = d3.geoGraticule();
 
-console.log(geoGenerator(graticule()))
+/* console.log(geoGenerator(graticule())) */
 
 // Join the FeatureCollection's features array to path elements
 svg.append("g")
@@ -56,15 +56,6 @@ svg.append("g")
     .attr('fill', 'transparent')
     .attr("stroke-width", "0.1mm");
 
-/* svg.append("g")
-.selectAll('path')
-.data(world.features)
-.enter().append("path")
-.attr('d', geoGenerator(graticule()))
-.attr('stroke', '#E8EDEF')
-.attr('fill', 'transparent')
-.attr("stroke-width", "0.005mm"); */
-
 // This extracts centroids and folds from the projection object -----------------------
 // from: https://observablehq.com/@fil/airocean-projection
 
@@ -75,9 +66,9 @@ svg.append("g")
  projection.rotate([0,0,0]);
 
 
-console.log("rotate")
+/* console.log("rotate")
 console.log(rotate)
-console.log(projection.rotate())
+console.log(projection.rotate()) */
 
 // run the tree of faces to get all sites and folds
 var sites = [], folds = [], i = 0;
@@ -102,31 +93,11 @@ function recurse(face) {
 }
 recurse(projection.tree());
 
-console.log(sites)
+/* console.log(sites)
 console.log("folds")
-console.log(folds)
+console.log(folds) */
 
 // reproject the folds???? ----------------------------
-
-const folds2 = []
-
-/* folds.forEach(fd => {
-  fd.coordinates.forEach(fc => {
-    folds2.push({
-      p1: projection(fc[0]),
-      p2: projection(fc[1])
-    });
-  });
-}); */
-
-folds.forEach(fd => {
-  folds2.push({
-    p1: projection(fd.coordinates[0]),
-    p2: projection(fd.coordinates[1])
-  });
-});
-
-/* console.log(folds2) */
 
 var fold_feature = []
 
@@ -135,24 +106,35 @@ folds.forEach(fd => {
                      geometry: fd})
 })
 
-
+/* 
 console.log("fold_feature")
-console.log(fold_feature)
+console.log(fold_feature) */
 
 const folds3 = {type: "FeatureCollection",
                 features: fold_feature}
                      
 /* console.log("folds3")
-console.log(folds3)
-
 console.log("geogen folds3")
 console.log(geoGenerator(folds3))
 console.log(geoGenerator(world)) */
 
+// clean misplaced fold line
+folds3.features = folds3.features.filter(d =>(d.geometry.coordinates[1][0] > -36 || d.geometry.coordinates[1][1] > -30));
+
+// 0: Array [ 0, -26.56505117707799 ]
+// 1: Array [ -36, -31.717474411461016 ]
+
+folds3.features.forEach(d => {
+  console.log(d.geometry.coordinates)
+})
+
+
+// plot fold lines
   svg.append("g")
     .attr("class", "foldline")
     .selectAll('path')
     .data(folds3.features)
+    // .filter(d => d.geometry.coordinates[0][0] > -180)
     // Create path elements and update the d attribute using the geo generator
     .enter()
     .append('path')
@@ -166,8 +148,8 @@ console.log(geoGenerator(world)) */
 // restore the projection’s rotate
 projection.rotate(rotate);
 
-console.log("path-sphere")
-console.log(geoGenerator({type: "Sphere"}))
+/* console.log("path-sphere")
+console.log(geoGenerator({type: "Sphere"})) */
 
 // draw map borders --------------------------------
 
@@ -177,7 +159,7 @@ svg.append("g")
   .attr('d', geoGenerator({type: "Sphere"}))
   .attr("fill", "transparent")
   .attr("stroke", "white")
-  .attr("stroke-width", "10px");
+  .attr("stroke-width", "3px");
 
 
 }
