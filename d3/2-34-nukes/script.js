@@ -15,7 +15,7 @@ var svg = d3.select("#my_dataviz")
 
 // Function that renders world borders -----------------------------
 
-const render = world => {
+const render = (world, nukes) => {
 /* console.log(world) */
 
 // set projection
@@ -162,12 +162,49 @@ svg.append("g")
   .attr("stroke-width", "3px");
 
 
+  console.log("nukes")
+  console.log(nukes)
+ 
+  // dots for nukes
+  svg.selectAll("nukeDots")
+  .data(nukes)
+  .enter().append("circle")
+    .attr("cx", d => projection([d.longitude, d.latitude])[0])
+    .attr("cy", d => projection([d.longitude, d.latitude])[1])
+    .attr("r", "4")
+    .style("fill", "#E9E95C")
+    .attr("fill-opacity", .4)
+  
+
 }
 
-// Render world borders
 
-d3.json("https://enjalot.github.io/wwsd/data/world/world-110m.geojson").then(world => {
+// Read data and render everything -------------------------------
 
-render(world)
+// Multiple CSV/JSON files at once
 
-})
+const nukes_url = "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-20/nuclear_explosions.csv"
+
+
+Promise.all([
+  d3.json("https://enjalot.github.io/wwsd/data/world/world-110m.geojson"),
+  d3.csv(nukes_url)
+]).then(files => {
+  console.log(files[0])
+  //console.log(files[1])
+
+  var world = files[0];
+  var nukes = files[1];
+
+  // tidy array ----------------------------
+  var parseTime = d3.timeParse("%Y%m%d");
+
+  nukes.forEach(d => {
+    d.date_long = parseTime(d.date_long);
+   /*  d.latitude = +d.latitude;
+    d.longitude = +d.longitude; */
+  })
+
+  render(world, nukes);
+
+});
