@@ -1,9 +1,10 @@
 
 // Set page parameters -------------------------------------------------
 
-var margin = { top: 10, right: 30, bottom: 30, left: 40 },
+var margin = { top: 10, right: 30, bottom: 30, left: 20 },
   width = 1700 - margin.left - margin.right,
-  height = 1200 - margin.top - margin.bottom;
+  height = 1000 - margin.top - margin.bottom;
+  offset = width*0.05
 
 // append the svg object to the body of the page --------------------------
 
@@ -12,8 +13,7 @@ var svg = d3.select("#my_dataviz")
   .attr("width", width + margin.left + margin.right)
   .attr("height", height + margin.top + margin.bottom)
   .append("g")
-  .attr("transform",
-    "translate(" + margin.left + "," + margin.top + ")");
+  .attr("transform", `translate(${margin.left + offset}, ${margin.top})`);
 
 
 // Function that renders world borders and data --------------------
@@ -22,7 +22,7 @@ const render = (world, nukes) => {
 
   // set projection
   var projection = d3.geoAirocean()
-    .fitExtent([[0, 0], [width, height]], world);
+    .fitExtent([[0, 0], [width - offset, height]], world);
 
   // Set SVG generator on projection
   var geoGenerator = d3.geoPath()
@@ -32,36 +32,10 @@ const render = (world, nukes) => {
   // set graticule
   var graticule = d3.geoGraticule();
 
-  // Join the FeatureCollection's features array to path elements
-  svg.append("g")
-    .attr("class", "countries")
-    .selectAll('path')
-    .data(world.features)
-    // Create path elements and update the d attribute using the geo generator
-    .enter()
-    .append('path')
-    .attr('d', geoGenerator)
-    .attr("fill", "white")
-    .attr("stroke", "#3752C3")
-    .attr("stroke-width", "1px");
-
-
-  svg.append("g")
-    .attr("class", "graticule")
-    .append("path")
-    .attr('d', geoGenerator(graticule()))
-    .attr('stroke', '#E8EDEF')
-    .attr('fill', 'transparent')
-    .attr("stroke-width", "0.1mm");
-
   // This extracts centroids and folds from the projection object -----------------------
   // from: https://observablehq.com/@fil/airocean-projection
 
   // Polyhedral projections expose their structure as projection.tree()
-  // To draw them we need to cancel the rotate
-
-  var rotate = projection.rotate();
-  projection.rotate([0, 0, 0]);
 
   // run the tree of faces to get all sites and folds
   var sites = [], folds = [], i = 0;
@@ -93,7 +67,7 @@ const render = (world, nukes) => {
     })
   })
 
-  
+
 
   const folds3 = {
     type: "FeatureCollection",
@@ -106,8 +80,31 @@ const render = (world, nukes) => {
   // 0: Array [ 0, -26.56505117707799 ]
   // 1: Array [ -36, -31.717474411461016 ]
 
+  // draw map borders --------------------------------
+  svg.append("g")
+    .attr("class", "mapborder")
+    .append("path")
+    .attr('d', geoGenerator({ type: "Sphere" }))
+    .attr("fill", "#263A89")
+    .attr("stroke", "white")
+    .attr("stroke-width", "3px");
 
-  // plot fold lines
+  // Render Graticule -------------------------------------
+  svg.append("g")
+    .attr("class", "graticule")
+    .append("path")
+    .attr('d', geoGenerator(graticule()))
+    .attr('stroke', '#E8EDEF')
+    .attr('fill', 'transparent')
+    .attr("stroke-width", "0.1mm");
+
+
+  // plot fold lines -----------------------------------
+
+  // To draw them we need to cancel the rotate
+  var rotate = projection.rotate();
+
+  projection.rotate([0, 0, 0]);
   svg.append("g")
     .attr("class", "foldline")
     .selectAll('path')
@@ -125,17 +122,20 @@ const render = (world, nukes) => {
   // restore the projection’s rotate
   projection.rotate(rotate);
 
-  // draw map borders --------------------------------
-
+  // Render Countries -------------------------------------
   svg.append("g")
-    .attr("class", "mapborder")
-    .append("path")
-    .attr('d', geoGenerator({ type: "Sphere" }))
-    .attr("fill", "transparent")
-    .attr("stroke", "white")
-    .attr("stroke-width", "3px");
+    .attr("class", "countries")
+    .selectAll('path')
+    .data(world.features)
+    // Create path elements and update the d attribute using the geo generator
+    .enter()
+    .append('path')
+    .attr('d', geoGenerator)
+    .attr("fill", "white")
+    .attr("stroke", "#3752C3")
+    .attr("stroke-width", "1px");
 
-  // dots for nukes
+  // dots for nukes ---------------------------------
   svg.selectAll("nukeDots")
     .data(nukes)
     .enter().append("circle")
