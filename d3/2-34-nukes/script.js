@@ -4,7 +4,7 @@
 var margin = { top: 10, right: 30, bottom: 30, left: 20 },
   width = 1700 - margin.left - margin.right,
   height = 1000 - margin.top - margin.bottom;
-  offset = width*0.05
+offset = width * 0.05
 
 // append the svg object to the body of the page --------------------------
 
@@ -37,7 +37,7 @@ const render = (world, nukes) => {
 
   // Polyhedral projections expose their structure as projection.tree()
 
-  // run the tree of faces to get all sites and folds
+  // iterate on the tree of faces to get all sites and folds
   var sites = [], folds = [], i = 0;
   function recurse(face) {
     var site = d3.geoCentroid({ type: "MultiPoint", coordinates: face.face });
@@ -74,11 +74,35 @@ const render = (world, nukes) => {
     features: fold_feature
   }
 
-  // clean misplaced fold line
+  // clean misplaced fold line -----------------------
+
   folds3.features = folds3.features.filter(d => (d.geometry.coordinates[1][0] > -36 || d.geometry.coordinates[1][1] > -30));
 
   // 0: Array [ 0, -26.56505117707799 ]
   // 1: Array [ -36, -31.717474411461016 ]
+
+
+  //select nuclear countries for centroids
+  //var countries_in = ["USA", "RUS", "FRA", "IND", "CHN", "PAK", "AUS"];
+  var countries_in = ["USA"]
+
+  var countries_in = world.features.filter((d, i) => countries_in.indexOf(d.id) >= 0);
+
+  // Make new JSON only with those features
+  var country_centr = {
+    type: "FeatureCollection",
+    features: countries_in
+  };
+
+  console.log(world)
+  console.log(country_centr)
+  console.log(country_centr.features.map(geoGenerator.centroid))
+
+  var usa_centroid = country_centr.features.map(geoGenerator.centroid)
+
+  // select only USA detonations
+  var nukes_usa = nukes.filter(d => d.country == "USA")
+  console.log(nukes_usa)
 
   // draw map borders --------------------------------
   svg.append("g")
@@ -87,7 +111,7 @@ const render = (world, nukes) => {
     .attr('d', geoGenerator({ type: "Sphere" }))
     .attr("fill", "#263A89")
     .attr("stroke", "white")
-    .attr("stroke-width", "3px");
+    .attr("stroke-width", "1px");
 
   // Render Graticule -------------------------------------
   svg.append("g")
@@ -131,8 +155,8 @@ const render = (world, nukes) => {
     .enter()
     .append('path')
     .attr('d', geoGenerator)
-    .attr("fill", "white")
-    .attr("stroke", "#3752C3")
+    .attr("fill", "#3752C3")
+    .attr("stroke", "#263A89")
     .attr("stroke-width", "1px");
 
   // dots for nukes ---------------------------------
@@ -141,9 +165,21 @@ const render = (world, nukes) => {
     .enter().append("circle")
     .attr("cx", d => projection([d.longitude, d.latitude])[0])
     .attr("cy", d => projection([d.longitude, d.latitude])[1])
-    .attr("r", "4")
+    .attr("r", "2")
     .style("fill", "#E9E95C")
-    .attr("fill-opacity", .4)
+    .attr("fill-opacity", .8);
+
+  // line connecting to origin country ---------------
+  svg.selectAll("nukelink")
+    .data(nukes_usa)
+    .enter().append("line")
+    .attr("x1", usa_centroid[0][0])
+    .attr("y1", usa_centroid[0][1])
+    .attr("x2", d => projection([d.longitude, d.latitude])[0])
+    .attr("y2", d => projection([d.longitude, d.latitude])[1])
+    .attr("stroke", "#ffffff")
+    .attr("fill", "transparent")
+    .attr("stroke-width", "0.6px");
 
 
 }
