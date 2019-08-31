@@ -3,8 +3,24 @@
 
 var margin = { top: 10, right: 30, bottom: 30, left: 20 },
   width = 1700 - margin.left - margin.right,
-  height = 1000 - margin.top - margin.bottom;
-offset = width * 0.05
+  height = 1000 - margin.top - margin.bottom,
+  offset = width * 0.05;
+
+var bluefill = "#3752C3",
+  violetfill = "#B9239B";
+
+// country name mapping
+
+var country_names = {
+  USA: "USA",
+  RUS: "USSR",
+  FRA: "FRANCE",
+  CHN: "CHINA",
+  IND: "INDIA",
+  PAK: "PAKISTAN",
+  AUS: "AUSTRALIA",
+}
+
 
 // append the svg object to the body of the page --------------------------
 
@@ -84,25 +100,25 @@ const render = (world, nukes) => {
 
   //select nuclear countries for centroids
   //var countries_in = ["USA", "RUS", "FRA", "IND", "CHN", "PAK", "AUS"];
-  var countries_in = ["USA"]
-
-  var countries_in = world.features.filter((d, i) => countries_in.indexOf(d.id) >= 0);
-
-  // Make new JSON only with those features
-  var country_centr = {
-    type: "FeatureCollection",
-    features: countries_in
-  };
-
-  console.log(world)
-  console.log(country_centr)
-  console.log(country_centr.features.map(geoGenerator.centroid))
-
-  var usa_centroid = country_centr.features.map(geoGenerator.centroid)
-
-  // select only USA detonations
-  var nukes_usa = nukes.filter(d => d.country == "USA")
-  console.log(nukes_usa)
+  /*   var countries_in = ["USA"]
+  
+    var countries_in = world.features.filter((d, i) => countries_in.indexOf(d.id) >= 0);
+  
+    // Make new JSON only with those features
+    var country_centr = {
+      type: "FeatureCollection",
+      features: countries_in
+    };
+  
+    console.log(world)
+    console.log(country_centr)
+    console.log(country_centr.features.map(geoGenerator.centroid))
+  
+    var usa_centroid = country_centr.features.map(geoGenerator.centroid)
+  
+    // select only USA detonations
+    var nukes_usa = nukes.filter(d => d.country == "USA")
+    console.log(nukes_usa) */
 
   // draw map borders --------------------------------
   svg.append("g")
@@ -129,6 +145,7 @@ const render = (world, nukes) => {
   var rotate = projection.rotate();
 
   projection.rotate([0, 0, 0]);
+
   svg.append("g")
     .attr("class", "foldline")
     .selectAll('path')
@@ -155,12 +172,17 @@ const render = (world, nukes) => {
     .enter()
     .append('path')
     .attr('d', geoGenerator)
-    .attr("fill", "#3752C3")
+    .attr("fill", bluefill)
     .attr("stroke", "#263A89")
-    .attr("stroke-width", "1px");
+    .attr("stroke-width", "1px")
+    .attr("id", d => d.id)
+    .on("mouseover", showlink)
+    .on("mouseout", hidelink);
 
   // dots for nukes ---------------------------------
-  svg.selectAll("nukeDots")
+  svg.append("g")
+    .attr("class", "nukedots")
+    .selectAll()
     .data(nukes)
     .enter().append("circle")
     .attr("cx", d => projection([d.longitude, d.latitude])[0])
@@ -169,18 +191,58 @@ const render = (world, nukes) => {
     .style("fill", "#E9E95C")
     .attr("fill-opacity", .8);
 
-  // line connecting to origin country ---------------
-  svg.selectAll("nukelink")
-    .data(nukes_usa)
-    .enter().append("line")
-    .attr("x1", usa_centroid[0][0])
-    .attr("y1", usa_centroid[0][1])
-    .attr("x2", d => projection([d.longitude, d.latitude])[0])
-    .attr("y2", d => projection([d.longitude, d.latitude])[1])
-    .attr("stroke", "#ffffff")
-    .attr("fill", "transparent")
-    .attr("stroke-width", "0.6px");
+  function showlink(country) {
 
+    console.log(country)
+
+    var id_in = country.id
+
+    console.log(id_in)
+
+    // color selected country violet
+    d3.select("path#" + id_in)
+      .attr("fill", violetfill)
+
+
+    // find centroid of select country
+    country_centroid = geoGenerator.centroid(country)
+
+    // select detonations by selecte country
+    var country_nukes = nukes.filter(d => d.country == country_names[id_in])
+    console.log(country_nukes)
+
+    // line connecting to origin country ---------------
+    svg.append("g")
+      .attr("class", "nukelink")
+      .selectAll()
+      .data(country_nukes)
+      .enter().append("line")
+      .attr("x1", country_centroid[0])
+      .attr("y1", country_centroid[1])
+      .attr("x2", d => projection([d.longitude, d.latitude])[0])
+      .attr("y2", d => projection([d.longitude, d.latitude])[1])
+      .attr("stroke", "#ffffff")
+      .attr("fill", "transparent")
+      .attr("stroke-width", "0.6px");
+
+  }
+
+
+  function hidelink(country) {
+
+    var id_in = country.id
+
+    console.log(id_in)
+
+    // color selected country blue
+    d3.select("path#" + id_in)
+      .attr("fill", bluefill)
+
+
+    d3.select(".nukelink").remove()
+
+
+  }
 
 }
 
@@ -199,6 +261,8 @@ Promise.all([
 
   var world = files[0];
   var nukes = files[1];
+
+  console.log(nukes)
 
   // tidy array ----------------------------
   var parseTime = d3.timeParse("%Y%m%d");
