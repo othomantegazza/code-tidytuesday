@@ -191,24 +191,32 @@ const render = (world, nukes) => {
     .style("fill", "#E9E95C")
     .attr("fill-opacity", .8);
 
+  // need this to clear old selections
+  // random id, updated later
+  var id_out = "USA"
+
   function showlink(country) {
 
-    console.log(country)
+    // clear previous highlight ----------
+    d3.select(".nukelink").remove();
 
-    var id_in = country.id
+    d3.selectAll(".countries")
+      .select("path#" + id_out)
+      .attr("fill", bluefill);
 
-    console.log(id_in)
+    var id_in = country.id;
 
-    // color selected country violet
-    d3.select("path#" + id_in)
-      .attr("fill", violetfill)
+    // color selected country violet --------------
+    d3.selectAll(".countries")
+      .select("path#" + id_in)
+      .attr("fill", violetfill);
 
+    // connect detonations to country --------------
+    // find centroid of select country 
+    country_centroid = geoGenerator.centroid(country);
 
-    // find centroid of select country
-    country_centroid = geoGenerator.centroid(country)
-
-    // select detonations by selecte country
-    var country_nukes = nukes.filter(d => d.country == country_names[id_in])
+    // select detonations by selected country
+    var country_nukes = nukes.filter(d => d.country == country_names[id_in]);
     console.log(country_nukes)
 
     // line connecting to origin country ---------------
@@ -225,21 +233,19 @@ const render = (world, nukes) => {
       .attr("fill", "transparent")
       .attr("stroke-width", "0.6px");
 
+    // clear later
+    id_out = id_in
+
   }
 
 
   function hidelink(country) {
 
-    var id_in = country.id
-
-    console.log(id_in)
+    /* var id_in = country.id
 
     // color selected country blue
     d3.select("path#" + id_in)
-      .attr("fill", bluefill)
-
-
-    d3.select(".nukelink").remove()
+      .attr("fill", bluefill) */
 
 
   }
