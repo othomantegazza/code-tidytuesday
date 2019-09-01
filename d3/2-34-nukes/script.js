@@ -3,13 +3,14 @@
 
 var margin = { top: 10, right: 30, bottom: 30, left: 20 },
   width = 1700 - margin.left - margin.right,
-  height = 1000 - margin.top - margin.bottom,
+  height = 950 - margin.top - margin.bottom,
   offset = width * 0.05;
 
 var bluefill = "#3752C3",
-  violetfill = "#B9239B";
+  violetfill = "#B9239B",
+  bluefillnuc = "#324BB3"; //"#413BB6";
 
-// country name mapping
+// country name mapping ----------------------------------------------------
 
 var country_names = {
   USA: "USA",
@@ -155,15 +156,27 @@ const render = (world, nukes) => {
     .append('path')
     .attr('d', geoGenerator)
     .attr("fill", "transparent")
-    .attr("stroke", "#100089")
+    .attr("stroke", '#838798')//"#100089")
     .attr("stroke-dasharray", "10,10")
-    .attr("stroke-width", "2px");
+    .attr("stroke-width", "1px");
 
 
   // restore the projection’s rotate
   projection.rotate(rotate);
 
   // Render Countries -------------------------------------
+
+  // in country array, state the ones that detonated nukes
+  // and encode color directly
+
+  const get_color = function(c_id) {
+    if (d3.keys(country_names).includes(c_id)) {
+      return(bluefillnuc)
+    } else {
+      return(bluefill)
+    };
+  };
+
   svg.append("g")
     .attr("class", "countries")
     .selectAll('path')
@@ -172,7 +185,7 @@ const render = (world, nukes) => {
     .enter()
     .append('path')
     .attr('d', geoGenerator)
-    .attr("fill", bluefill)
+    .attr("fill", d => get_color(d.id))
     .attr("stroke", "#263A89")
     .attr("stroke-width", "1px")
     .attr("id", d => d.id)
@@ -203,7 +216,7 @@ const render = (world, nukes) => {
 
     d3.selectAll(".countries")
       .select("path#" + id_out)
-      .attr("fill", bluefill);
+      .attr("fill", d => get_color(d.id));
 
     var id_in = country.id;
 
@@ -219,7 +232,7 @@ const render = (world, nukes) => {
     console.log(id_in)
     console.log(projection([2.3508, 48.8567]))
 
-    if (id_in == "FRA") {country_centroid = projection([2.3508, 48.8567]);};
+    if (id_in == "FRA") { country_centroid = projection([2.3508, 48.8567]); };
 
     // select detonations by selected country
     var country_nukes = nukes.filter(d => d.country == country_names[id_in]);
@@ -289,5 +302,22 @@ Promise.all([
   nukes = nukes.filter(d => !(d.country == "USA" && d.longitude == 52.400));
 
   render(world, nukes);
+
+  // in country array, state the ones that detonated nukes ------------------
+  // and encode color directly
+
+ /*  const get_color = function(c_id) {
+    if (d3.keys(country_names).includes(c_id)) {
+      return(bluefillnuc)
+    } else {
+      return(bluefill)
+    };
+  };
+
+  world.features.map(d => {
+    d.nuclear = get_color(d.id);
+  });
+
+  console.log(world) */
 
 });
