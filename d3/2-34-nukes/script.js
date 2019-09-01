@@ -17,8 +17,8 @@ var country_names = {
   FRA: "FRANCE",
   CHN: "CHINA",
   IND: "INDIA",
-  PAK: "PAKISTAN",
-  AUS: "AUSTRALIA",
+  PAK: "PAKIST",
+  GBR: "UK",
 }
 
 
@@ -90,7 +90,7 @@ const render = (world, nukes) => {
     features: fold_feature
   }
 
-  // clean misplaced fold line -----------------------
+  // clean misplaced fold line ----------------------------------
 
   folds3.features = folds3.features.filter(d => (d.geometry.coordinates[1][0] > -36 || d.geometry.coordinates[1][1] > -30));
 
@@ -188,12 +188,13 @@ const render = (world, nukes) => {
     .attr("cx", d => projection([d.longitude, d.latitude])[0])
     .attr("cy", d => projection([d.longitude, d.latitude])[1])
     .attr("r", "2")
+    .attr("id", d => d.id_no)
     .style("fill", "#E9E95C")
     .attr("fill-opacity", .8);
 
   // need this to clear old selections
   // random id, updated later
-  var id_out = "USA"
+  var id_out = "USA";
 
   function showlink(country) {
 
@@ -214,10 +215,14 @@ const render = (world, nukes) => {
     // connect detonations to country --------------
     // find centroid of select country 
     country_centroid = geoGenerator.centroid(country);
+    console.log(country_centroid)
+    console.log(id_in)
+    console.log(projection([2.3508, 48.8567]))
+
+    if (id_in == "FRA") {country_centroid = projection([2.3508, 48.8567]);};
 
     // select detonations by selected country
     var country_nukes = nukes.filter(d => d.country == country_names[id_in]);
-    console.log(country_nukes)
 
     // line connecting to origin country ---------------
     svg.append("g")
@@ -230,6 +235,7 @@ const render = (world, nukes) => {
       .attr("x2", d => projection([d.longitude, d.latitude])[0])
       .attr("y2", d => projection([d.longitude, d.latitude])[1])
       .attr("stroke", "#ffffff")
+      .attr("id", d => d.id_no)
       .attr("fill", "transparent")
       .attr("stroke-width", "0.6px");
 
@@ -276,6 +282,11 @@ Promise.all([
   nukes.forEach(d => {
     d.date_long = parseTime(d.date_long);
   })
+
+  // Clean records with unreliable coordinates [0, 0] ------------
+
+  nukes = nukes.filter(d => (d.latitude != 0 || d.longitude != 0));
+  nukes = nukes.filter(d => !(d.country == "USA" && d.longitude == 52.400));
 
   render(world, nukes);
 
