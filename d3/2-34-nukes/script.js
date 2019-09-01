@@ -1,14 +1,14 @@
 
 // Set page parameters -------------------------------------------------
 
-var margin = { top: 10, right: 30, bottom: 30, left: 20 },
+var margin = { top: 10, right: 30, bottom: 20, left: 20 },
   width = 1700 - margin.left - margin.right,
-  height = 950 - margin.top - margin.bottom,
+  height = 900 - margin.top - margin.bottom,
   offset = width * 0.05;
 
-var bluefill = "#3752C3",
+var bluefill = "#3767C3",//"#3752C3",
   violetfill = "#B9239B",
-  bluefillnuc = "#324BB3"; //"#413BB6";
+  bluefillnuc = "#3752C3";//"#324BB3"; //"#413BB6";
 
 // country name mapping ----------------------------------------------------
 

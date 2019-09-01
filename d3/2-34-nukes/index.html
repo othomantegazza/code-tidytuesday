@@ -1,65 +1,94 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
 
-        <title>Map of Nuclear Bomb Detonations</title>
+<head>
+    <meta charset="utf-8">
 
-        <!-- Load d3.js - saved locally -->
-        <!-- <script src="https://d3js.org/d3.v5.js"></script> -->
-         <script src="../d3.v5.min.js"></script>
+    <title>Map of Nuclear Bomb Detonations</title>
 
-         <!-- <script src="https://unpkg.com/d3-geo@1"></script> -->
-         <script src="../d3-geo.min.js"></script>
+    <!-- Load d3.js - saved locally -->
+    <!-- <script src="https://d3js.org/d3.v5.js"></script> -->
+    <script src="../d3.v5.min.js"></script>
 
-         <!-- <script src="https://unpkg.com/d3-geo-polygon@1"></script> -->
-         <script src="../d3-geo-polygon.min.js"></script>
-       
-        <!-- jQuery, saved locally -->
-	    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-        <!-- <script src="../1.11.1-jquery.min.js"></script> -->
+    <!-- <script src="https://unpkg.com/d3-geo@1"></script> -->
+    <script src="../d3-geo.min.js"></script>
+
+    <!-- <script src="https://unpkg.com/d3-geo-polygon@1"></script> -->
+    <script src="../d3-geo-polygon.min.js"></script>
+
+    <!-- jQuery, saved locally -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- <script src="../1.11.1-jquery.min.js"></script> -->
 
 
-        <!-- Some lines are from: https://gist.github.com/nbremer/c0ffc07b23b1c556a66b -->
+    <!-- Some lines are from: https://gist.github.com/nbremer/c0ffc07b23b1c556a66b -->
 
-        <style>
-                body {
-                  font-family: 'Open Sans', sans-serif;
-                  font-size: 12px;
-                  font-weight: 400;
-                  color: #FFF;
-                  text-align: center;
-                  background-color: #3752C3;
-                }
-                
-                html, body { 
-                    width:auto; 
-                    height:auto; 
-                }
-                
-                .axis path,
-                .axis line {
-                    fill: none;
-                    stroke: #B3B3B3;
-                }
-                .axis text {
-                    font-size: 10px;
-                    fill: #6B6B6B;
-                }
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 18px;
+            font-weight: 400;
+            color: #dddddd;
+            text-align: center;
+            background-color: #3752C3;
+        }
 
-              
-              </style>
+        a {
+            color: #44D4DC;
+        }
 
-    </head>
-    <body>
-        <h2>Map of nuclear bomb detonations</h2>
+        html,
+        body {
+            width: auto;
+            height: auto;
+        }
 
-         <div id="my_dataviz"></div>
+        .flex-container {
+            display: flex;
+            flex-wrap: nowrap;
+            max-width: 1000px;
+            margin: auto;
+        }
 
-        <!-- This are the data, already cleaned in R -->    
-         <!-- <script src="data.js"></script>  -->
+        .flex-container .box {
+            width: 50%;
+            margin-left: 100px;
+            margin-right: 100px;
+            text-align: left;
+        }
+    </style>
 
-         <!-- This is the d3 chart -->
-        <script src='script.js'></script>
-    </body>
+</head>
+
+<body>
+    <h2>Map of nuclear bomb detonations</h2>
+    <p style="font-style: italic;">Data from SIPRI, parsed by <a
+            href="https://github.com/data-is-plural/nuclear-explosions">Data is Plural</a>.
+        | Country border data from <a href="https://enjalot.github.io/">Ian Johnson</a>.
+        | Viz by <a href="https://twitter.com/othomn">Otho</a>.</p>
+
+    <div id="my_dataviz"></div>
+
+    <!-- This are the data, already cleaned in R -->
+    <!-- <script src="data.js"></script>  -->
+    <div class="flex-container" ,>
+        <p class="box">
+            The <strong>map</strong> is rendered in the <a href="https://en.wikipedia.org/wiki/Dymaxion_map">"Spaceship Earth"
+                icosahedral
+                projection</a>,
+            developed by B. Fuller with Shoji Sadao, and it is ported in D3 by
+            <a href="https://observablehq.com/@fil/airocean-projection">Philippe Rivière</a>.
+        </p>
+        <p class="box">
+            <strong>Nuclear weapons</strong> have been developed and tested worldwide, mostly by USA, Russias UK and France, and to a
+            lesser
+            extent
+            by China, India, Pakistan, possibly Israel and lately North Korea. With disastrous consequences.
+        </p>
+    </div>
+
+    <!-- This is the d3 chart -->
+    <script src='script.js'></script>
+</body>
+
 </html>
