@@ -36,7 +36,7 @@ visits %>%
 
 
 # any NA?
-visits2 %>% 
+visits %>% 
   map(~is.na(.) %>% sum())
 # the column parkname has a lot of NA and can be removed
 # redundant with unit_name ?
@@ -138,7 +138,7 @@ p_lines <-
             alpha = .2)
   # scale_y_log10()
 
-p
+p_lines
 
 visits_top <- 
   visits2 %>%
@@ -146,8 +146,8 @@ visits_top <-
   filter(visitors > quantile(visitors, .99))
   
 
-p2 <- 
-  p + 
+p_lines2 <- 
+  p_lines + 
   geom_line(data = . %>% 
               filter(unit_code %in% visits_top$unit_code),
             aes(colour = unit_code,
@@ -163,7 +163,7 @@ p2 <-
   theme_minimal()  
  
 
-p2
+p_lines2
 
 
 
@@ -176,10 +176,51 @@ library(geojsonsf)
 
 # park_maps <- geojson_sf("https://opendata.arcgis.com/datasets/6042ea0d29894cc4a694d34b5812b4a1_0.geojson")
 
-map_file <- "data/2-38-park-visits.zip"
+# map_file <- "data/2-38-park-visits.zip"
+# 
+# download.file(url = "https://opendata.arcgis.com/datasets/6042ea0d29894cc4a694d34b5812b4a1_0.zip",
+#               destfile = map_file)
+# map_file <- unzip(map_file, overwrite = T)
+# 
+# read_sf(temp %>% unzip())
 
-download.file(url = "https://opendata.arcgis.com/datasets/6042ea0d29894cc4a694d34b5812b4a1_0.zip",
-              destfile = map_file)
-map_file <- unzip(map_file, overwrite = T)
+centroid_url <- "https://opendata.arcgis.com/datasets/c54be84491364a04a0caecc837ab492a_0.csv"
 
-read_sf(temp %>% unzip())
+centroid_path <- "data/2-38-park-centroids.Rdata"
+
+if(!file.exists(centroid_path)) {
+  centroid_parks <-
+    read_csv(centroid_url) %>% 
+    clean_names()
+  
+  save(centroid_parks, file = centroid_path)
+} else {
+  load(centroid_path)
+}
+
+visits_centroid <- 
+  visits2 %>% 
+  group_by(unit_code, unit_name) %>% 
+  summarise(visitors = sum(visitors)) %>% 
+  left_join(centroid_parks, by = "unit_code") %>% 
+  distinct(x, y, .keep_all = T)
+
+usa <- map_data("usa")
+
+visits_centroid %>% 
+  filter(y > 25,
+         y < 50,
+         x < -70,
+         x > -140) %>% 
+  ggplot(aes(x = x,
+             y = y)) + 
+  # geom_point() +
+  ggvoronoi::geom_voronoi(aes(fill = visitors),
+                          colour = "white",
+                          # alpha = .5,
+                          outline = usa) + 
+  geom_point(colour = "grey60",
+             size = .2) +
+  scale_fill_viridis_c(trans = "log") +
+  theme_minimal()
+
