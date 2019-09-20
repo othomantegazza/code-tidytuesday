@@ -1,6 +1,7 @@
 library(tidyverse)
 library(janitor)
 library(ggrepel)
+library(ggvoronoi)
 
 
 # get the data ------------------------------------------------------------
@@ -14,6 +15,7 @@ park_visit_path <- "data/2-38-park-visits.Rdata"
 
 # Check if data have already been downloaded,
 # If not, read data from github and saves them locally
+# YOU MUST MAKE a new FOLDER NAMED DATA
 if(!file.exists(park_visit_path)) {
   visits <- 
     park_visit_url %>% 
@@ -41,11 +43,6 @@ visits %>%
 # the column parkname has a lot of NA and can be removed
 # redundant with unit_name ?
 
-# filtering in base R
-visits_base <- visits[visits$year_raw != "Total", ]
-visits_base$year <- NULL
-visits_base$parkname <- NULL
-visits_base$year_raw <- as.numeric(visits_base$year_raw)
 
 # tidy year raw and remove year column
 # with declarative sintax
@@ -67,76 +64,13 @@ visits2 %>%
 visits2 %>% 
   count(unit_name, sort = TRUE)
 
-# plot --------------------------------------------------------------------
-
-
-p_box <- 
-  visits2 %>% 
-  ggplot(aes(x = year_raw,
-             y = visitors,
-             group = year_raw)) +
-  geom_boxplot(fill = "#68DDFF")
-
-p_box
-
-p_box +
-  scale_y_log10()
-
-p_points <-
-  visits2 %>% 
-  ggplot(aes(x = year_raw,
-             y = visitors)) +
-  theme_bw()
-
-p_points
-
-p_points2 <- 
-  p_points +
-  geom_point(aes(colour = region),
-             alpha = .7)
-
-p_points2
-
-p_points +
-  geom_point(alpha = .3, colour = "grey70") +
-  geom_smooth(aes(colour = region)) +
-  scale_y_log10()
-
-
-visits_by_region <- 
-  visits2 %>% 
-  group_by(year_raw, region) %>% 
-  summarize(visitors = sum(visitors))
-
-p_bars <- 
-  visits_by_region %>% 
-  ggplot(aes(x = reorder(region, visitors),
-             y = visitors,
-             fill = visitors)) +
-  geom_bar(stat = "identity") +
-  scale_fill_viridis_c()
-
-p_bars
-
-p_bars_facets <- 
-  p_bars +
-  facet_wrap(facets = "year_raw")
-
-p_bars_facets
-
-# fix the x labels
-p_bars_facets+
-  theme(axis.text.x = element_text(angle = 90,
-                                   hjust = 1,
-                                   vjust = .5))
-
 p_lines <- 
   visits2 %>% 
   ggplot(aes(x = year_raw,
              y = visitors)) +
   geom_line(aes(group = unit_code),
             alpha = .2)
-  # scale_y_log10()
+# scale_y_log10()
 
 p_lines
 
@@ -144,7 +78,7 @@ visits_top <-
   visits2 %>%
   filter(year_raw == max(year_raw)) %>% 
   filter(visitors > quantile(visitors, .99))
-  
+
 
 p_lines2 <- 
   p_lines + 
@@ -154,14 +88,14 @@ p_lines2 <-
                 group = unit_code),
             size = 1) +
   geom_label_repel(data = visits_top,
-                  aes(label = unit_name %>% str_wrap(width = 20),
-                      colour = unit_code),
-                  xlim = c(2020, NA),
-                  size = 3) +
+                   aes(label = unit_name %>% str_wrap(width = 20),
+                       colour = unit_code),
+                   xlim = c(2020, NA),
+                   size = 3) +
   lims(x = c(NA, 2050)) +
   guides(colour = FALSE) +
   theme_minimal()  
- 
+
 
 p_lines2
 
@@ -171,18 +105,9 @@ p_lines2
 
 library(sf)
 library(geojsonsf)
+library(grid)
 
 # read_map_data -----------------------------------------------------------
-
-# park_maps <- geojson_sf("https://opendata.arcgis.com/datasets/6042ea0d29894cc4a694d34b5812b4a1_0.geojson")
-
-# map_file <- "data/2-38-park-visits.zip"
-# 
-# download.file(url = "https://opendata.arcgis.com/datasets/6042ea0d29894cc4a694d34b5812b4a1_0.zip",
-#               destfile = map_file)
-# map_file <- unzip(map_file, overwrite = T)
-# 
-# read_sf(temp %>% unzip())
 
 centroid_url <- "https://opendata.arcgis.com/datasets/c54be84491364a04a0caecc837ab492a_0.csv"
 
@@ -207,20 +132,59 @@ visits_centroid <-
 
 usa <- map_data("usa")
 
-visits_centroid %>% 
+bg_color <- "#F1F3F4"
+
+text_color <- "grey20"
+
+p <- 
+  visits_centroid %>%
   filter(y > 25,
          y < 50,
          x < -70,
-         x > -140) %>% 
+         x > -140) %>%
   ggplot(aes(x = x,
              y = y)) + 
-  # geom_point() +
   ggvoronoi::geom_voronoi(aes(fill = visitors),
-                          colour = "white",
-                          # alpha = .5,
+                          colour = bg_color,
+                          size = .2,
                           outline = usa) + 
-  geom_point(colour = "grey60",
-             size = .2) +
-  scale_fill_viridis_c(trans = "log") +
-  theme_minimal()
+  geom_point(colour = "white",
+             size = .2,
+             shape = 3) +
+  scale_fill_viridis_c(trans = "log10",
+                       breaks = c(1e4, 1e5, 1e6, 1e7, 1e8),
+                       guide = guide_legend(nrow = 1,
+                                            label.position = "bottom", title.position = "top",
+                                            keywidth = unit(6, units = "mm"),
+                                            keyheight = unit(1.2, units = "mm"))) +
+  lims(x = c(-125, -45)) +
+  coord_map() +
+  theme_void(base_size = 14, base_family = "courier") +
+  theme(legend.position = c(.95, .7),
+        plot.margin = margin(10, 30, 10, 0, unit = "mm"))
+
+svglite::svglite("plots/2-38-parks-voronoi.svg",
+                 width = 12,
+                 height = 5)
+grid.newpage()
+grid.rect(gp = gpar(fill = bg_color, col = bg_color))
+p %>% print(vp = viewport())
+grid.text(label = "Voronoi grid of US Natural Parks",
+          x = .965, y = .3, hjust = 1,
+          gp = gpar(fontfamily = "courier",
+                    fontface = "bold",
+                    fontsize = 15,
+                    col = text_color))
+grid.text(label = "With total visitors from 1900 until now",
+          x = .965, y = .25, hjust = 1,
+          gp = gpar(fontfamily = "courier",
+                    fontsize = 8,
+                    col = text_color))
+grid.text(label = "Data from data.world | Plot by @othomn",
+          x = .965, y = .03, hjust = 1,
+          gp = gpar(fontfamily = "courier",
+                    fontsize = 8,
+                    col = text_color))
+dev.off()
+
 
