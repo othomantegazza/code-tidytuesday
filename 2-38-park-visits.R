@@ -2,6 +2,7 @@ library(tidyverse)
 library(janitor)
 library(ggrepel)
 library(ggvoronoi)
+library(ggtext)
 
 
 # get the data ------------------------------------------------------------
@@ -151,17 +152,22 @@ p <-
   geom_point(colour = "white",
              size = .2,
              shape = 3) +
-  scale_fill_viridis_c(trans = "log10",
-                       breaks = c(1e4, 1e5, 1e6, 1e7, 1e8),
+  scale_fill_viridis_c(trans = "log",
+                       breaks = c(1e4, 1e5, 1e6, 1e7, 1e8), 
+                       labels = paste0(10, "^", 4:8),
                        guide = guide_legend(nrow = 1,
                                             label.position = "bottom", title.position = "top",
-                                            keywidth = unit(6, units = "mm"),
-                                            keyheight = unit(1.2, units = "mm"))) +
+                                            keywidth = unit(9, units = "mm"),
+                                            keyheight = unit(2, units = "mm"),
+                                            label.hjust = 0)) +
   lims(x = c(-125, -45)) +
   coord_map() +
   theme_void(base_size = 14, base_family = "courier") +
   theme(legend.position = c(.95, .7),
-        plot.margin = margin(10, 30, 10, 0, unit = "mm"))
+        plot.margin = margin(10, 30, 10, 0, unit = "mm"),
+        legend.text = element_markdown(size = 9))
+
+p
 
 svglite::svglite("plots/2-38-parks-voronoi.svg",
                  width = 12,
@@ -170,16 +176,22 @@ grid.newpage()
 grid.rect(gp = gpar(fill = bg_color, col = bg_color))
 p %>% print(vp = viewport())
 grid.text(label = "Voronoi grid of US Natural Parks",
-          x = .965, y = .3, hjust = 1,
+          x = .965, y = .35, hjust = 1,
           gp = gpar(fontfamily = "courier",
                     fontface = "bold",
                     fontsize = 15,
                     col = text_color))
-grid.text(label = "With total visitors from 1900 until now",
-          x = .965, y = .25, hjust = 1,
+grid.text(label = str_wrap("The voronoi tesselation is built on the centroids
+                          of national parks. The fill color is mapped to the 
+                          total visitors from 1900 until now.",
+                          width = 38),
+          x = .965, y = .3,
+          hjust = 1,
+          vjust = 1,
           gp = gpar(fontfamily = "courier",
                     fontsize = 8,
-                    col = text_color))
+                    col = text_color,
+                    lineheight = 1))
 grid.text(label = "Data from data.world | Plot by @othomn",
           x = .965, y = .03, hjust = 1,
           gp = gpar(fontfamily = "courier",
