@@ -74,7 +74,7 @@ emps3 <-
          end_y = reign_end %>% rescale_reing(),
          r = (start_y - end_y)/2 ,
          y = start_y - r,
-         r = r * (height/width) * .75,
+         r = r * (height/width),
          x = x_circle)
 
 
@@ -189,10 +189,14 @@ to_signature <-
                         fontface = "bold")))
 
 # plot --------------------------------------------------------------------
+ 
+# svglite::svglite("plots/2-33-rome-circle.svg",
+#                  width = width,
+#                  height = height)
 
-svglite::svglite("plots/2-33-rome-circle.svg",
-                 width = width,
-                 height = height)
+png("plots/2-33-rome-circle.png",
+    width = width,
+    height = height, units = "in", res = 300)
 
 # new page, is it necessary?
 grid.newpage()
@@ -251,6 +255,16 @@ grid.text("Data from Wikipedia.",
 
 
 dev.off()
+
+
+# save json var -----------------------------------------------------------
+
+library(jsonlite)
+
+emps %>% 
+  toJSON() %>%
+  {paste("var emps = ", .)} %>% 
+  cat(file = "d3/json_data/2-33-rome.js")
 
 
 

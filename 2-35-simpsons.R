@@ -201,11 +201,12 @@ episode_lines <-
               episode_count = episodes) %>% 
   left_join(start_at) %>% 
   left_join(g_stars) %>% 
+  left_join(simpsons4 %>% select(season, episode_count)) %>% 
   mutate(y = episode_count - (ep_min )) %>% 
   filter(y > 0) %>% 
   mutate(guest_star = factor(guest_star, levels = levels(simpsons4$guest_star))) %>% 
   filter(as.numeric(guest_star) <= ep_high,
-         as.numeric(guest_star) >= ep_low)
+         as.numeric(guest_star) >= ep_low) 
 
 # episode_lines %>% 
 #   filter(episode == 100) %>% 
@@ -220,14 +221,15 @@ p_lines3 <- simpsons4 %>%
   # line for eacg guest star
   geom_line(aes(group = guest_star,
                 y = y),
-            size = .2,
-            alpha = .7) +
+            size = .6,
+            alpha = .4) +
   # episodes
   geom_line(data = episode_lines,
             aes(y = y,
-                group = episode_count),
-            size = .2,
-            alpha = .7) +
+                group = episode_count,
+                colour = season),
+            size = .6,
+            alpha = .4) +
   coord_flip() +
   guides(colour = FALSE,
          fill = FALSE) +
