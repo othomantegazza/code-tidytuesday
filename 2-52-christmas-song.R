@@ -77,17 +77,28 @@ songs %>%
 
 songs %>% 
   filter(songid == peak_10$songid[1]) %>%
-  ggplot(aes(x = as.numeric(weekid),
-             y = week_position,
-             group = songid)) +
+  mutate(weekid = as.numeric(weekid),
+         weekid_bar = weekid + 1.2) %>% 
+  ggplot(aes(x = weekid,
+             y = week_position)) +
   # geom_point(size = 3) +
   geom_ellipse(aes(x0 = as.numeric(weekid),
                    y0 = week_position,
-                   a = 2, b = 1,
+                   a = 1.5, b = 1,
                    angle = 1), fill = "black") +
-  coord_fixed() +
+  geom_segment(data = . %>% 
+                 summarize(min_weekid = min(weekid_bar),
+                           max_weekid = max(weekid_bar)),
+               mapping = aes(x = min_weekid,
+                             xend = max_weekid,
+                             y = 100,
+                             yend = 100)) +
+  geom_segment(aes(x = weekid_bar,
+                   xend = weekid_bar,
+                   yend = 100)) +
+  # geom_hline(yintercept = 100, size = 3) +
+  coord_fixed(ratio = 1/2) +
   # geom_point(shape = 1, size = 3) +
-  geom_hline(yintercept = 100, size = 3) +
   # scale_y_reverse() +
   theme_minimal()
   
@@ -107,3 +118,4 @@ songs %>%
   ggplot() +
     geom_ellipse(aes(x0 = 0, y0 = 0, a = 6, b = 3, angle = -pi / 3, m1 = 3)) +
     coord_fixed()
+  
