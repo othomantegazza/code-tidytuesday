@@ -1,6 +1,7 @@
 library(tidyverse)
 library(lubridate)
 library(ggforce)
+library(broom)
 
 lyrics_url <- "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-24/christmas_lyrics.tsv"
 
@@ -64,58 +65,38 @@ peak_10 <-
 
 # prototype ---------------------------------------------------------------
 
-songs %>% 
-  filter(year == 2011) %>%
-  ggplot(aes(x = weekid,
-             y = week_position,
-             group = songid)) +
-  geom_point() +
-  geom_point(shape = 1, size = 3) +
-  geom_line() +
-  scale_y_reverse() +
-  theme_minimal()
+offset_y <- 80
 
 songs %>% 
   filter(songid == peak_10$songid[1]) %>%
+  {broom::augment(lm(week_position ~ weekid, data = .))} %>% 
   mutate(weekid = as.numeric(weekid),
          weekid_bar = weekid + 1.2) %>% 
   ggplot(aes(x = weekid,
              y = week_position)) +
   # geom_point(size = 3) +
+  geom_hline(yintercept = 100,
+             size = .1) +
   geom_ellipse(aes(x0 = as.numeric(weekid),
                    y0 = week_position,
                    a = 1.5, b = 1,
                    angle = 1), fill = "black") +
-  geom_segment(data = . %>% 
-                 summarize(min_weekid = min(weekid_bar),
-                           max_weekid = max(weekid_bar)),
-               mapping = aes(x = min_weekid,
-                             xend = max_weekid,
-                             y = 100,
-                             yend = 100)) +
+  geom_smooth(data = . %>% mutate(week_position = week_position + offset_y),
+              mapping = aes(x = weekid_bar),
+              method = "lm", se = FALSE, colour = "black") +
+  # geom_segment(data = . %>% 
+  #                summarize(min_weekid = min(weekid_bar),
+  #                          max_weekid = max(weekid_bar),
+  #                          y = ),
+  #              mapping = aes(x = min_weekid,
+  #                            xend = max_weekid,
+  #                            y = 100,
+  #                            yend = 100)) +
   geom_segment(aes(x = weekid_bar,
                    xend = weekid_bar,
-                   yend = 100)) +
+                   yend = .fitted + offset_y)) +
   # geom_hline(yintercept = 100, size = 3) +
-  coord_fixed(ratio = 1/2) +
+  coord_fixed(ratio = .4) +
   # geom_point(shape = 1, size = 3) +
   # scale_y_reverse() +
   theme_minimal()
-  
-
-  # Basic usage
-  ggplot() +
-    geom_ellipse(aes(x0 = 0, y0 = 0, a = 1, b = 3, angle = 0)) +
-    coord_fixed()
-  
-  # Rotation
-  # Note that it expects radians and rotates the ellipse counter-clockwise
-  ggplot() +
-    geom_ellipse(aes(x0 = 0, y0 = 0, a = 10, b = 3, angle = pi / 4)) +
-    coord_fixed()
-  
-  # Draw a super ellipse
-  ggplot() +
-    geom_ellipse(aes(x0 = 0, y0 = 0, a = 6, b = 3, angle = -pi / 3, m1 = 3)) +
-    coord_fixed()
-  
