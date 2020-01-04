@@ -77,17 +77,13 @@ model_rank <- function(df) {broom::augment(lm(week_position ~ weekid, data = df)
 
 songs %>% 
   filter(songid == peak_10$songid[5]) %>%
-  # group_by(year) %>%
   nest(-year) %>% 
   mutate(data = data %>% map(model_rank)) %>% 
   unnest(cols = c(data)) %>% 
-  # split(.$year) %>% 
-  # map(model_rank) %>% flatten_df(.id = "year")
   mutate(weekid = as.numeric(weekid),
          weekid_bar = weekid + 1.2) %>%
   ggplot(aes(x = weekid,
              y = week_position)) +
-  # geom_point(size = 3) +
   geom_hline(yintercept = seq(0, 100, length.out = 5),
              size = .05) +
   geom_ellipse(aes(x0 = as.numeric(weekid),
@@ -97,20 +93,8 @@ songs %>%
   geom_smooth(data = . %>% mutate(week_position = week_position + offset_y),
               mapping = aes(x = weekid_bar),
               method = "lm", se = FALSE, colour = "black") +
-  # geom_segment(data = . %>% 
-  #                summarize(min_weekid = min(weekid_bar),
-  #                          max_weekid = max(weekid_bar),
-  #                          y = ),
-  #              mapping = aes(x = min_weekid,
-  #                            xend = max_weekid,
-  #                            y = 100,
-  #                            yend = 100)) +
   geom_segment(aes(x = weekid_bar,
                    xend = weekid_bar,
                    yend = .fitted + offset_y)) +
-  # geom_hline(yintercept = 100, size = 3) +
-  # coord_fixed(ratio = .4) +
   facet_grid(. ~ year, scales = "free_x", space = "free_x") +
-  # geom_point(shape = 1, size = 3) +
-  # scale_y_reverse() +
   theme_void()
