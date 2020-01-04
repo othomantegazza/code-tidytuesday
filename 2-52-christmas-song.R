@@ -63,20 +63,33 @@ peak_10 <-
   distinct(song, performer, songid) %>% 
   slice(1:10)
 
+peak_10_all <- 
+  songs %>% 
+  filter(songid %in% peak_10$songid) %>% 
+  arrange(peak_position, year)
+
 # prototype ---------------------------------------------------------------
 
 offset_y <- 80
+model_rank <- function(df) {broom::augment(lm(week_position ~ weekid, data = df))}
+
+# how to split apply comine with broom??????
 
 songs %>% 
-  filter(songid == peak_10$songid[1]) %>%
-  {broom::augment(lm(week_position ~ weekid, data = .))} %>% 
+  filter(songid == peak_10$songid[5]) %>%
+  # group_by(year) %>%
+  nest(-year) %>% 
+  mutate(data = data %>% map(model_rank)) %>% 
+  unnest(cols = c(data)) %>% 
+  # split(.$year) %>% 
+  # map(model_rank) %>% flatten_df(.id = "year")
   mutate(weekid = as.numeric(weekid),
-         weekid_bar = weekid + 1.2) %>% 
+         weekid_bar = weekid + 1.2) %>%
   ggplot(aes(x = weekid,
              y = week_position)) +
   # geom_point(size = 3) +
-  geom_hline(yintercept = 100,
-             size = .1) +
+  geom_hline(yintercept = seq(0, 100, length.out = 5),
+             size = .05) +
   geom_ellipse(aes(x0 = as.numeric(weekid),
                    y0 = week_position,
                    a = 1.5, b = 1,
@@ -96,7 +109,8 @@ songs %>%
                    xend = weekid_bar,
                    yend = .fitted + offset_y)) +
   # geom_hline(yintercept = 100, size = 3) +
-  coord_fixed(ratio = .4) +
+  # coord_fixed(ratio = .4) +
+  facet_grid(. ~ year, scales = "free_x", space = "free_x") +
   # geom_point(shape = 1, size = 3) +
   # scale_y_reverse() +
-  theme_minimal()
+  theme_void()
